@@ -16,10 +16,11 @@ body {
   font-weight: 400;
   line-height: var(--lh-body);
   color: var(--text-primary);
-  background:
-    radial-gradient(1200px 600px at 10% -10%, rgba(122, 58, 58, 0.08), transparent 55%),
-    radial-gradient(900px 500px at 100% 0%, rgba(217, 196, 189, 0.45), transparent 50%),
-    linear-gradient(180deg, var(--color-mist) 0%, var(--bg-page) 28%, var(--bg-page) 100%);
+  background-color: var(--bg-page);
+  background-image:
+    radial-gradient(ellipse 90% 55% at 0% -5%, rgba(201, 163, 154, 0.28), transparent 55%),
+    radial-gradient(ellipse 70% 45% at 100% 8%, rgba(138, 69, 64, 0.08), transparent 50%),
+    linear-gradient(180deg, var(--color-mist) 0%, var(--color-ivory) 22%, var(--color-ivory) 100%);
   background-attachment: fixed;
   -webkit-font-smoothing: antialiased;
 }
@@ -33,7 +34,7 @@ img {
 a {
   color: inherit;
   text-decoration-thickness: 1px;
-  text-underline-offset: 0.2em;
+  text-underline-offset: 0.22em;
 }
 
 a:hover {
@@ -75,7 +76,7 @@ a:hover {
 .eyebrow {
   margin: 0 0 var(--space-3);
   font-size: var(--fs-xs);
-  letter-spacing: 0.22em;
+  letter-spacing: 0.24em;
   text-transform: uppercase;
   color: var(--color-burgundy);
   font-weight: 500;
@@ -88,4 +89,5 @@ h3 {
   font-weight: 500;
   line-height: var(--lh-tight);
   margin: 0;
+  color: var(--color-ink);
 }

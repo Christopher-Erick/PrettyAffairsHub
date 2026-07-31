@@ -22,4 +22,25 @@
       toggle.setAttribute("aria-expanded", String(open));
     });
   }
+
+  const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  if (!reduceMotion && "IntersectionObserver" in window) {
+    document
+      .querySelectorAll(".section, .band, .story-grid, .product-card")
+      .forEach((el) => el.classList.add("reveal-on-scroll"));
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add("is-visible");
+            observer.unobserve(entry.target);
+          }
+        });
+      },
+      { threshold: 0.12, rootMargin: "0px 0px -6% 0px" }
+    );
+
+    document.querySelectorAll(".reveal-on-scroll").forEach((el) => observer.observe(el));
+  }
 })();

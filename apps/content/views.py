@@ -2,7 +2,7 @@ from django.contrib import messages
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.generic import DetailView, ListView, TemplateView
 
-from apps.catalog.models import Product
+from apps.catalog.models import Category, Product
 from apps.content.forms import ContactForm, NewsletterForm
 from apps.content.models import BlogPost, FAQ, HomepageSection, SitePage, Testimonial
 from apps.discounts.models import FlashSale, GiftCard
@@ -13,15 +13,15 @@ class HomeView(TemplateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context["featured_products"] = Product.objects.featured()[:4]
-        if context["featured_products"].count() < 4:
-            context["featured_products"] = Product.objects.published()[:4]
+        featured = Product.objects.featured()[:4]
+        context["featured_products"] = featured if featured.exists() else Product.objects.published()[:4]
         context["new_arrivals"] = Product.objects.new_arrivals()[:4]
         context["bestsellers"] = Product.objects.best_sellers()[:4]
+        context["categories"] = Category.objects.filter(is_active=True, parent__isnull=True)[:8]
         context["testimonials"] = Testimonial.objects.filter(is_featured=True)[:3]
         context["sections"] = HomepageSection.objects.filter(is_active=True)
         context["flash_sales"] = [s for s in FlashSale.objects.filter(is_active=True) if s.is_live][:1]
-        context["blog_posts"] = BlogPost.objects.filter(is_published=True, is_tutorial=False)[:3]
+        context["blog_posts"] = BlogPost.objects.filter(is_published=True)[:3]
         return context
 
 

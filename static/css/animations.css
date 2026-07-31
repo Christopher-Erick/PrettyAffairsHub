@@ -3,14 +3,14 @@
     transform: scale(1.02) translate3d(0, 0, 0);
   }
   to {
-    transform: scale(1.06) translate3d(-1.5%, 1%, 0);
+    transform: scale(1.07) translate3d(-1.2%, 1.2%, 0);
   }
 }
 
 @keyframes fade-up {
   from {
     opacity: 0;
-    transform: translateY(18px);
+    transform: translateY(22px);
   }
   to {
     opacity: 1;
@@ -20,19 +20,32 @@
 
 .reveal {
   opacity: 0;
-  animation: fade-up 0.9s var(--ease-out) forwards;
+  animation: fade-up 0.95s var(--ease-out) forwards;
 }
 
 .reveal--delay-1 {
-  animation-delay: 0.12s;
+  animation-delay: 0.1s;
 }
 
 .reveal--delay-2 {
-  animation-delay: 0.24s;
+  animation-delay: 0.2s;
 }
 
 .reveal--delay-3 {
-  animation-delay: 0.36s;
+  animation-delay: 0.32s;
+}
+
+.reveal-on-scroll {
+  opacity: 0;
+  transform: translateY(24px);
+  transition:
+    opacity 0.8s var(--ease-out),
+    transform 0.8s var(--ease-out);
+}
+
+.reveal-on-scroll.is-visible {
+  opacity: 1;
+  transform: translateY(0);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -47,7 +60,9 @@
     transition: none !important;
   }
 
-  .reveal {
+  .reveal,
+  .reveal-on-scroll {
     opacity: 1;
+    transform: none;
   }
 }

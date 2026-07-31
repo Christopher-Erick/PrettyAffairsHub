@@ -193,6 +193,35 @@
   border-top: 1px solid var(--color-border);
 }
 
+.quote p {
+  font-family: var(--font-display);
+  font-size: var(--fs-md);
+  line-height: var(--lh-snug);
+  margin: 0 0 var(--space-3);
+  color: var(--color-ink);
+}
+
+.quote footer {
+  font-size: var(--fs-xs);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--color-burgundy);
+}
+
+.post-card h3 {
+  margin-bottom: var(--space-2);
+}
+
+.post-card h3 a {
+  text-decoration: none;
+}
+
+.post-card p {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--fs-sm);
+}
+
 .flash-messages {
   max-width: var(--container);
   margin: 0 auto;
