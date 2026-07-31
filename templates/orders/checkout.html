@@ -3,7 +3,10 @@
 {% block content %}
 <section class="checkout-layout section">
   <div>
-    <h1 class="section__title">Checkout</h1>
+    <p class="eyebrow">Secure checkout</p>
+    <h1 class="section__title">Delivery details</h1>
+    <p class="section__text">We’ll confirm payment and dispatch from Kenya. M-Pesa phone numbers help us verify faster.</p>
+
     <form method="post" class="stack-form" data-checkout-form>
       {% csrf_token %}
       {% for field in form %}
@@ -34,22 +37,61 @@
           </p>
         {% endif %}
       {% endfor %}
-      <aside class="trust-inline">
-        <p>Shipping from Kenya · M-Pesa phone helps us confirm payment · Free over KSh 5,000</p>
+
+      <aside class="checkout-trust" aria-label="Why shop with us">
+        <div>
+          <p class="trust-strip__label">Pay your way</p>
+          <p class="trust-strip__text">M-Pesa ready · We’ll confirm before dispatch</p>
+        </div>
+        <div>
+          <p class="trust-strip__label">Delivery</p>
+          <p class="trust-strip__text">Nairobi 1–2 days · Major cities 2–4 days</p>
+        </div>
+        <div>
+          <p class="trust-strip__label">Peace of mind</p>
+          <p class="trust-strip__text">Free over KSh 5,000 · 7-day returns on unopened items</p>
+        </div>
       </aside>
-      <button class="btn btn--primary" type="submit">Place order</button>
+
+      <button class="btn btn--primary btn--full" type="submit">Place order</button>
+      <p class="checkout-fineprint">By placing this order you agree we may contact you by phone or WhatsApp about payment and delivery.</p>
     </form>
   </div>
+
   <aside class="checkout-summary">
-    <h2 class="section__title">Order summary</h2>
-    {% for item in items %}
-    <p>{{ item.product.name }} × {{ item.quantity }} — {{ SITE_CURRENCY_SYMBOL }} {{ item.line_total }}</p>
-    {% endfor %}
-    <hr>
-    <p>Subtotal: {{ SITE_CURRENCY_SYMBOL }} {{ totals.subtotal }}</p>
-    <p>Discount: {{ SITE_CURRENCY_SYMBOL }} {{ totals.discount_amount }}</p>
-    <p>Shipping: {{ SITE_CURRENCY_SYMBOL }} {{ totals.shipping_amount }}</p>
-    <p><strong>Total: {{ SITE_CURRENCY_SYMBOL }} {{ totals.total }}</strong></p>
+    <h2 class="cart-aside__title">Order summary</h2>
+    <ul class="checkout-summary__items">
+      {% for item in items %}
+      <li class="checkout-summary__item">
+        <span class="checkout-summary__media" aria-hidden="true">
+          {% if item.variant and item.variant.image %}
+            <img src="{{ item.variant.image.url }}" alt="" loading="lazy" width="56" height="70">
+          {% elif item.product.primary_image and item.product.primary_image.image %}
+            <img src="{{ item.product.primary_image.image.url }}" alt="" loading="lazy" width="56" height="70">
+          {% else %}
+            <span class="product-card__placeholder"></span>
+          {% endif %}
+        </span>
+        <span class="checkout-summary__copy">
+          <strong>{{ item.product.name }}</strong>
+          {% if item.variant %}<span>Shade: {{ item.variant.name }}</span>{% endif %}
+          <span>× {{ item.quantity }}</span>
+        </span>
+        <span class="checkout-summary__price">{{ SITE_CURRENCY_SYMBOL }} {{ item.line_total }}</span>
+      </li>
+      {% endfor %}
+    </ul>
+    <dl class="totals__list">
+      <div><dt>Subtotal</dt><dd>{{ SITE_CURRENCY_SYMBOL }} {{ totals.subtotal }}</dd></div>
+      <div><dt>Discount</dt><dd>− {{ SITE_CURRENCY_SYMBOL }} {{ totals.discount_amount }}</dd></div>
+      <div><dt>Shipping</dt><dd>{% if totals.shipping_amount == 0 %}Free{% else %}{{ SITE_CURRENCY_SYMBOL }} {{ totals.shipping_amount }}{% endif %}</dd></div>
+      <div class="totals__total"><dt>Total</dt><dd>{{ SITE_CURRENCY_SYMBOL }} {{ totals.total }}</dd></div>
+    </dl>
+    {% if free_shipping_remaining > 0 %}
+    <p class="shipping-meter__copy shipping-meter__copy--compact">
+      {{ SITE_CURRENCY_SYMBOL }} {{ free_shipping_remaining|floatformat:0 }} away from free delivery.
+    </p>
+    {% endif %}
   </aside>
 </section>
 {% endblock %}

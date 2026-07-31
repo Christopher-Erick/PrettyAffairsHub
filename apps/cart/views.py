@@ -28,10 +28,21 @@ def cart_detail(request):
         else DEFAULT_SHIPPING
     )
     totals = cart_totals(cart, discount, shipping)
+    toward_free = cart.subtotal - discount
+    remaining = max(FREE_SHIPPING_THRESHOLD - toward_free, Decimal("0"))
+    progress = min(100, int((toward_free / FREE_SHIPPING_THRESHOLD) * 100)) if FREE_SHIPPING_THRESHOLD else 100
     return render(
         request,
         "cart/cart.html",
-        {"cart": cart, "items": cart.items.select_related("product", "variant"), "totals": totals},
+        {
+            "cart": cart,
+            "items": cart.items.select_related("product", "variant").prefetch_related(
+                "product__images"
+            ),
+            "totals": totals,
+            "free_shipping_remaining": remaining,
+            "free_shipping_progress": progress,
+        },
     )
 
 

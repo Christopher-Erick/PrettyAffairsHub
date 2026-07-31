@@ -59,10 +59,18 @@ def checkout(request):
         else DEFAULT_SHIPPING
     )
     totals = cart_totals(cart, discount, shipping)
+    toward_free = cart.subtotal - discount
+    remaining = max(FREE_SHIPPING_THRESHOLD - toward_free, Decimal("0"))
     return render(
         request,
         "orders/checkout.html",
-        {"form": form, "cart": cart, "items": items, "totals": totals},
+        {
+            "form": form,
+            "cart": cart,
+            "items": items.prefetch_related("product__images"),
+            "totals": totals,
+            "free_shipping_remaining": remaining,
+        },
     )
 
 

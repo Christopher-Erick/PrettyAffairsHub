@@ -1,47 +1,104 @@
 {% extends "base.html" %}
 {% block title %}Cart — {{ SITE_NAME }}{% endblock %}
 {% block content %}
-<section class="section">
-  <h1 class="section__title">Your cart</h1>
-  {% if items %}
-  <div class="cart-table">
-    {% for item in items %}
-    <div class="cart-row">
-      <div>
-        <strong><a href="{{ item.product.get_absolute_url }}">{{ item.product.name }}</a></strong>
-        {% if item.variant %}<p>{{ item.variant.name }}</p>{% endif %}
-        <p>{{ SITE_CURRENCY_SYMBOL }} {{ item.unit_price }}</p>
-      </div>
-      <form action="{% url 'cart:update' item.id %}" method="post" class="inline-form">
-        {% csrf_token %}
-        <label class="visually-hidden" for="qty-{{ item.id }}">Quantity</label>
-        <input class="field field--sm" id="qty-{{ item.id }}" type="number" name="quantity" value="{{ item.quantity }}" min="0">
-        <button class="btn btn--ghost" type="submit">Update</button>
-      </form>
-      <p>{{ SITE_CURRENCY_SYMBOL }} {{ item.line_total }}</p>
-      <form action="{% url 'cart:remove' item.id %}" method="post">
-        {% csrf_token %}
-        <button class="text-link" type="submit">Remove</button>
-      </form>
-    </div>
-    {% endfor %}
+<section class="section cart-page">
+  <div class="cart-page__intro">
+    <p class="eyebrow">Bag</p>
+    <h1 class="section__title">Your cart</h1>
+    {% if items %}
+    <p class="section__text">{{ items|length }} item{{ items|length|pluralize }} ready for checkout.</p>
+    {% endif %}
   </div>
-  <form action="{% url 'cart:apply_coupon' %}" method="post" class="inline-form">
-    {% csrf_token %}
-    <label class="visually-hidden" for="coupon">Coupon</label>
-    <input class="field" id="coupon" name="coupon_code" placeholder="Coupon code" value="{{ cart.coupon_code }}">
-    <button class="btn btn--ghost" type="submit">Apply</button>
-  </form>
-  <div class="totals">
-    <p>Subtotal: {{ SITE_CURRENCY_SYMBOL }} {{ totals.subtotal }}</p>
-    <p>Discount: − {{ SITE_CURRENCY_SYMBOL }} {{ totals.discount_amount }}</p>
-    <p>Shipping: {{ SITE_CURRENCY_SYMBOL }} {{ totals.shipping_amount }}</p>
-    <p><strong>Total: {{ SITE_CURRENCY_SYMBOL }} {{ totals.total }}</strong></p>
-    <a class="btn btn--primary" href="{% url 'orders:checkout' %}">Checkout</a>
+
+  {% if items %}
+  {% if free_shipping_remaining > 0 %}
+  <div class="shipping-meter" role="status">
+    <p class="shipping-meter__copy">
+      Add <strong>{{ SITE_CURRENCY_SYMBOL }} {{ free_shipping_remaining|floatformat:0 }}</strong> more for free delivery across Kenya.
+    </p>
+    <div class="shipping-meter__track" aria-hidden="true">
+      <span class="shipping-meter__fill" style="width: {{ free_shipping_progress }}%"></span>
+    </div>
   </div>
   {% else %}
-  <p>Your cart is empty.</p>
-  <a class="btn btn--primary" href="{% url 'catalog:shop' %}">Continue shopping</a>
+  <p class="shipping-meter shipping-meter--met" role="status">You’ve unlocked free delivery on this order.</p>
+  {% endif %}
+
+  <div class="cart-layout">
+    <div class="cart-table">
+      {% for item in items %}
+      <article class="cart-row">
+        <a class="cart-row__media" href="{{ item.product.get_absolute_url }}">
+          {% if item.variant and item.variant.image %}
+            <img src="{{ item.variant.image.url }}" alt="" loading="lazy" width="96" height="120">
+          {% elif item.product.primary_image and item.product.primary_image.image %}
+            <img src="{{ item.product.primary_image.image.url }}" alt="" loading="lazy" width="96" height="120">
+          {% else %}
+            <span class="product-card__placeholder" aria-hidden="true"></span>
+          {% endif %}
+        </a>
+        <div class="cart-row__body">
+          <h2 class="cart-row__title"><a href="{{ item.product.get_absolute_url }}">{{ item.product.name }}</a></h2>
+          {% if item.variant %}
+          <p class="cart-row__meta">
+            {% if item.variant.color_hex %}
+            <span class="cart-row__swatch" style="--swatch: {{ item.variant.color_hex }}" aria-hidden="true"></span>
+            {% endif %}
+            Shade: {{ item.variant.name }}
+          </p>
+          {% endif %}
+          <p class="cart-row__price">{{ SITE_CURRENCY_SYMBOL }} {{ item.unit_price }}</p>
+          <div class="cart-row__actions">
+            <form action="{% url 'cart:update' item.id %}" method="post" class="inline-form">
+              {% csrf_token %}
+              <label class="visually-hidden" for="qty-{{ item.id }}">Quantity</label>
+              <input class="field field--sm" id="qty-{{ item.id }}" type="number" name="quantity" value="{{ item.quantity }}" min="0">
+              <button class="btn btn--ghost" type="submit">Update</button>
+            </form>
+            <form action="{% url 'cart:remove' item.id %}" method="post">
+              {% csrf_token %}
+              <button class="text-link" type="submit">Remove</button>
+            </form>
+          </div>
+        </div>
+        <p class="cart-row__line">{{ SITE_CURRENCY_SYMBOL }} {{ item.line_total }}</p>
+      </article>
+      {% endfor %}
+    </div>
+
+    <aside class="cart-aside">
+      <div class="totals">
+        <h2 class="cart-aside__title">Order summary</h2>
+        <form action="{% url 'cart:apply_coupon' %}" method="post" class="inline-form cart-aside__coupon">
+          {% csrf_token %}
+          <label class="visually-hidden" for="coupon">Coupon</label>
+          <input class="field" id="coupon" name="coupon_code" placeholder="Coupon code" value="{{ cart.coupon_code }}">
+          <button class="btn btn--ghost" type="submit">Apply</button>
+        </form>
+        <dl class="totals__list">
+          <div><dt>Subtotal</dt><dd>{{ SITE_CURRENCY_SYMBOL }} {{ totals.subtotal }}</dd></div>
+          <div><dt>Discount</dt><dd>− {{ SITE_CURRENCY_SYMBOL }} {{ totals.discount_amount }}</dd></div>
+          <div><dt>Shipping</dt><dd>{% if totals.shipping_amount == 0 %}Free{% else %}{{ SITE_CURRENCY_SYMBOL }} {{ totals.shipping_amount }}{% endif %}</dd></div>
+          <div class="totals__total"><dt>Total</dt><dd>{{ SITE_CURRENCY_SYMBOL }} {{ totals.total }}</dd></div>
+        </dl>
+        <a class="btn btn--primary btn--full" href="{% url 'orders:checkout' %}">Checkout securely</a>
+        <a class="btn btn--ghost btn--full" href="{% url 'catalog:shop' %}">Continue shopping</a>
+      </div>
+      <aside class="trust-inline trust-inline--panel">
+        <p><strong>Ships from Kenya</strong></p>
+        <p>M-Pesa friendly checkout · Free delivery over KSh 5,000 · Track anytime with your order number</p>
+        {% if WHATSAPP_NUMBER %}
+        <a class="text-link" href="https://wa.me/{{ WHATSAPP_NUMBER }}?text=Hi%20Pretty%20Affairs%20Hub%20—%20I%20have%20a%20cart%20question" target="_blank" rel="noopener">Need help? WhatsApp us</a>
+        {% endif %}
+      </aside>
+    </aside>
+  </div>
+  {% else %}
+  <div class="shop-empty">
+    <p class="shop-empty__title">Your bag is empty</p>
+    <p>Browse the edit and add a shade, scent, or ritual piece when you’re ready.</p>
+    <a class="btn btn--primary" href="{% url 'catalog:shop' %}">Shop the collection</a>
+  </div>
   {% endif %}
 </section>
 {% endblock %}

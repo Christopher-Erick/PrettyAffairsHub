@@ -1,18 +1,41 @@
 {% extends "base.html" %}
 {% block title %}Order {{ order.order_number }} — {{ SITE_NAME }}{% endblock %}
 {% block content %}
-<section class="section">
+<section class="section narrow confirmation">
+  <p class="eyebrow">Order confirmed</p>
   <h1 class="section__title">Thank you</h1>
-  <p>Your order <strong>{{ order.order_number }}</strong> is confirmed.</p>
-  <p>Status: {{ order.get_status_display }} · Total: {{ SITE_CURRENCY_SYMBOL }} {{ order.total }}</p>
-  <p>A confirmation email was sent to {{ order.email }}.</p>
+  <p class="section__text">
+    Your order <strong>{{ order.order_number }}</strong> is in. We’ll be in touch about payment and delivery.
+  </p>
+
+  <div class="confirmation__panel">
+    <dl class="totals__list">
+      <div><dt>Status</dt><dd>{{ order.get_status_display }}</dd></div>
+      <div><dt>Total</dt><dd>{{ SITE_CURRENCY_SYMBOL }} {{ order.total }}</dd></div>
+      <div><dt>Email</dt><dd>{{ order.email }}</dd></div>
+      {% if order.phone %}<div><dt>Phone</dt><dd>{{ order.phone }}</dd></div>{% endif %}
+      <div><dt>Ship to</dt><dd>{{ order.shipping_city }}, {{ order.shipping_country }}</dd></div>
+    </dl>
+  </div>
+
   {% if order.is_gift and order.gift_note %}
   <div class="gift-preview gift-preview--confirm">
     <p class="gift-preview__label">Gift note</p>
     <p class="gift-preview__script">{{ order.gift_note }}</p>
   </div>
   {% endif %}
-  <a class="btn btn--primary" href="{% url 'catalog:shop' %}">Keep shopping</a>
-  <a class="btn btn--ghost" href="{% url 'orders:track' %}">Track order</a>
+
+  <aside class="trust-inline trust-inline--panel">
+    <p><strong>What happens next</strong></p>
+    <p>1. We confirm M-Pesa / payment · 2. We pack your order · 3. You track with your order number</p>
+    {% if WHATSAPP_NUMBER %}
+    <a class="text-link" href="https://wa.me/{{ WHATSAPP_NUMBER }}?text=Hi%20—%20order%20{{ order.order_number }}" target="_blank" rel="noopener">Message us on WhatsApp about this order</a>
+    {% endif %}
+  </aside>
+
+  <div class="confirmation__actions">
+    <a class="btn btn--primary" href="{% url 'orders:track' %}">Track order</a>
+    <a class="btn btn--ghost" href="{% url 'catalog:shop' %}">Keep shopping</a>
+  </div>
 </section>
 {% endblock %}
