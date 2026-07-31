@@ -29,3 +29,6 @@ Tokens live in `static/css/tokens.css`. Brand logo: `static/img/logo.png`.
 ## Deployment target
 
 App host (Railway / Render / VPS) + Cloudflare (DNS, TLS, caching, optional R2/Images).
+
+Firebase is optional and phased — see [`docs/firebase-cloudflare-migration.md`](firebase-cloudflare-migration.md).
+Keep Django admin for catalogue ops until a deliberate cutover.

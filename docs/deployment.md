@@ -24,4 +24,5 @@
 - Cache static assets aggressively
 - Consider R2 for media later
 
-Details for Workers/Pages fronting will expand once the app host is chosen.
+Full phased plan (Firebase data options, admin story, Workers/Pages): see
+[`docs/firebase-cloudflare-migration.md`](firebase-cloudflare-migration.md).
