@@ -716,12 +716,19 @@
   }
 }
 
+.pdp__gallery {
+  background: transparent;
+}
+
 .pdp__main-image {
   overflow: hidden;
-  background: var(--bg-media);
   aspect-ratio: 4 / 5;
-  padding: clamp(0.75rem, 2vw, 1.5rem);
-  box-shadow: inset 0 0 0 1px var(--hairline);
+  padding: 0;
+  box-shadow: none;
+  background:
+    radial-gradient(circle at 30% 18%, rgba(255, 252, 250, 0.4), transparent 48%),
+    radial-gradient(circle at 82% 88%, rgba(201, 163, 154, 0.12), transparent 42%),
+    var(--bg-page);
 }
 
 .pdp__main-image img {
@@ -730,10 +737,14 @@
   height: 100%;
   object-fit: contain;
   object-position: center;
+  background: transparent;
 }
 
 .pdp__placeholder {
   min-height: 100%;
+  background:
+    radial-gradient(circle at 28% 22%, rgba(255, 252, 250, 0.35), transparent 42%),
+    var(--bg-page);
 }
 
 .pdp__thumbs {

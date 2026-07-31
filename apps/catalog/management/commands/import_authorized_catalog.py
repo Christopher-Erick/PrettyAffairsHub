@@ -9,6 +9,7 @@ from __future__ import annotations
 import hashlib
 import html
 import json
+import os
 import re
 from collections import defaultdict
 from decimal import Decimal
@@ -33,9 +34,14 @@ from apps.catalog.models import (
 from apps.catalog.shade_colors import resolve_shade_color
 
 
-LIP_TRIBE_FEED = "https://theliptribe.co.ke/products.json?limit=250"
-LINTONS_SHOP = "https://www.lintonsbeauty.com/shopall"
-USER_AGENT = "PrettyAffairsHub/1.0 authorized catalogue importer"
+# Fetch endpoints come from the environment only — see CATALOG_FEED_A_URL / CATALOG_FEED_B_URL.
+# Product records store opaque catalog-import URLs, never supplier hostnames.
+IMPORT_SOURCE_BASE = "https://catalog-import"
+BRAND_NAME = "Pretty Affairs Edit"
+# Internal source labels only — never customer-facing supplier brand names.
+SOURCE_ATELIER = "Atelier Edit"
+SOURCE_HARBOUR = "Harbour Edit"
+USER_AGENT = "PrettyAffairsHub/1.0 catalogue importer"
 
 CATEGORY_RULES = {
     "Lip Oil": (
@@ -94,7 +100,7 @@ CATEGORY_RULES = {
     "Cologne": ("cologne", "eau de toilette", " edt", " for him", " him "),
 }
 
-LIP_TRIBE_CATEGORIES = {
+FEED_A_CATEGORIES = {
     "Lip Oil",
     "Lip Gloss",
     "Lipstick",
@@ -102,7 +108,7 @@ LIP_TRIBE_CATEGORIES = {
     "Lashes",
     "Face Masks",
 }
-LINTONS_CATEGORIES = {
+FEED_B_CATEGORIES = {
     "Lip Gloss",
     "Lipstick",
     "Lip Oil",
@@ -112,7 +118,7 @@ LINTONS_CATEGORIES = {
     "Body Splash",
 }
 
-LINTONS_FRAGRANCE_HINTS = (
+FEED_B_FRAGRANCE_HINTS = (
     "calvin klein",
     "carolina herrera",
     "jean paul",
@@ -188,6 +194,20 @@ COPY = {
 }
 
 
+def catalog_feed_urls() -> tuple[str, str]:
+    feed_a = os.environ.get("CATALOG_FEED_A_URL", "").strip()
+    feed_b = os.environ.get("CATALOG_FEED_B_URL", "").strip()
+    if not feed_a or not feed_b:
+        raise CommandError(
+            "Set CATALOG_FEED_A_URL and CATALOG_FEED_B_URL in the environment before importing."
+        )
+    return feed_a, feed_b
+
+
+def source_url_for(feed: str, path: str) -> str:
+    return f"{IMPORT_SOURCE_BASE}/{feed}/{path.lstrip('/')}"
+
+
 def fetch(url: str) -> bytes:
     request = Request(url, headers={"User-Agent": USER_AGENT, "Accept": "*/*"})
     with urlopen(request, timeout=90) as response:
@@ -210,8 +230,8 @@ def category_for(title: str, allowed: set[str] | None = None) -> str | None:
     return None
 
 
-def lintons_category(title: str) -> str | None:
-    matched = category_for(title, LINTONS_CATEGORIES)
+def feed_b_category(title: str) -> str | None:
+    matched = category_for(title, FEED_B_CATEGORIES)
     if matched:
         return matched
     lowered = title.lower()
@@ -228,7 +248,7 @@ def lintons_category(title: str) -> str | None:
     )
     if any(blocker in lowered for blocker in makeup_blockers):
         return None
-    if any(hint in lowered for hint in LINTONS_FRAGRANCE_HINTS):
+    if any(hint in lowered for hint in FEED_B_FRAGRANCE_HINTS):
         return "Perfumes"
     if re.search(r"\b\d+\s*ml\b", lowered) and "spf" not in lowered:
         return "Perfumes"
@@ -243,7 +263,7 @@ def image_filename(url: str, prefix: str) -> str:
     return f"{slugify(prefix)[:60]}-{digest}{suffix}"
 
 
-def parse_lintons_cards(raw_html: str) -> list[dict]:
+def parse_feed_b_cards(raw_html: str) -> list[dict]:
     marker = re.compile(r'<div[^>]+data-hook="product-item-root"[^>]*>', re.I)
     matches = list(marker.finditer(raw_html))
     cards = []
@@ -253,7 +273,6 @@ def parse_lintons_cards(raw_html: str) -> list[dict]:
         name_match = re.search(r'aria-label="([^"]+?) gallery"', opening, re.I)
         slug_match = re.search(r'data-slug="([^"]+)"', opening, re.I)
         image_match = re.search(r'data-image-info="([^"]+)"', chunk, re.I)
-        href_match = re.search(r'href="(https://www\.lintonsbeauty\.com/product-page/[^"]+)"', chunk, re.I)
         text = clean_text(re.sub(r"<[^>]+>", " ", chunk[:20000]))
         price_match = re.search(r"Ksh\D*([\d,]+\.\d{2})", text, re.I)
         if not (name_match and slug_match and image_match and price_match):
@@ -265,11 +284,12 @@ def parse_lintons_cards(raw_html: str) -> list[dict]:
             image_uri = ""
         if not image_uri:
             continue
+        slug = slug_match.group(1)
         cards.append(
             {
                 "name": clean_text(name_match.group(1)),
-                "slug": slug_match.group(1),
-                "url": href_match.group(1) if href_match else f"https://www.lintonsbeauty.com/product-page/{slug_match.group(1)}",
+                "slug": slug,
+                "url": source_url_for("feed-b", f"product-page/{slug}"),
                 "price": Decimal(price_match.group(1).replace(",", "")),
                 "image_urls": [f"https://static.wixstatic.com/media/{image_uri}"],
                 "available": "Sold Out" not in text,
@@ -278,10 +298,11 @@ def parse_lintons_cards(raw_html: str) -> list[dict]:
     return cards
 
 
-def fetch_lip_tribe_products() -> list[dict]:
+def fetch_feed_a_products(feed_a_url: str) -> list[dict]:
     products: list[dict] = []
+    page_url = feed_a_url if "?" in feed_a_url else f"{feed_a_url}?limit=250"
     for page in range(1, 6):
-        payload = json.loads(fetch(f"{LIP_TRIBE_FEED}&page={page}").decode("utf-8"))
+        payload = json.loads(fetch(f"{page_url}&page={page}").decode("utf-8"))
         batch = payload.get("products") or []
         if not batch:
             break
@@ -313,24 +334,28 @@ class Command(BaseCommand):
         limit = None if full_import else max(1, min(options["limit_per_category"], 100))
         refresh = options["refresh"]
         try:
-            lip_products = fetch_lip_tribe_products()
-            lintons_cards = parse_lintons_cards(fetch(LINTONS_SHOP).decode("utf-8", errors="replace"))
+            feed_a_url, feed_b_url = catalog_feed_urls()
+            feed_a_products = fetch_feed_a_products(feed_a_url)
+            feed_b_cards = parse_feed_b_cards(fetch(feed_b_url).decode("utf-8", errors="replace"))
+        except CommandError:
+            raise
         except Exception as exc:
             raise CommandError(f"Could not retrieve authorized product sources: {exc}") from exc
 
         candidates: dict[str, list[dict]] = defaultdict(list)
-        for raw in lip_products:
-            category = category_for(raw.get("title", ""), LIP_TRIBE_CATEGORIES)
+        for raw in feed_a_products:
+            category = category_for(raw.get("title", ""), FEED_A_CATEGORIES)
             if not category:
                 continue
             variants = raw.get("variants", [])
             prices = [Decimal(v["price"]) for v in variants if v.get("price")]
             if not prices:
                 continue
+            handle = raw["handle"]
             candidates[category].append(
                 {
                     "name": clean_text(raw["title"]),
-                    "url": f"https://theliptribe.co.ke/products/{raw['handle']}",
+                    "url": source_url_for("feed-a", f"products/{handle}"),
                     "price": min(prices),
                     "compare_at_price": max(
                         [Decimal(v["compare_at_price"]) for v in variants if v.get("compare_at_price")] or [Decimal("0")]
@@ -338,17 +363,16 @@ class Command(BaseCommand):
                     or None,
                     "image_urls": [img["src"] for img in raw.get("images", [])[:3] if img.get("src")],
                     "variants": variants,
-                    "vendor": clean_text(raw.get("vendor", "")) or "The Lip Tribe Edit",
-                    "source": "The Lip Tribe",
+                    "source": SOURCE_ATELIER,
                     "available": any(v.get("available", True) for v in variants),
                 }
             )
 
-        for raw in lintons_cards:
-            category = lintons_category(raw["name"])
+        for raw in feed_b_cards:
+            category = feed_b_category(raw["name"])
             if not category:
                 continue
-            raw.update({"variants": [], "vendor": raw["name"].split()[0], "source": "Lintons Beauty"})
+            raw.update({"variants": [], "source": SOURCE_HARBOUR})
             candidates[category].append(raw)
 
         imported = defaultdict(int)
@@ -410,7 +434,7 @@ class Command(BaseCommand):
     @transaction.atomic
     def import_product(self, data: dict, category: Category, index: int, refresh: bool):
         description, benefits, directions = COPY.get(category.name, DEFAULT_COPY)
-        brand, _ = Brand.objects.get_or_create(name=data["vendor"][:120])
+        brand, _ = Brand.objects.get_or_create(name=BRAND_NAME)
         source_url = data["url"][:500]
         product = Product.objects.filter(source_url=source_url).first()
         if not product:

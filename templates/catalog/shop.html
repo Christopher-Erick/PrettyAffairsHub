@@ -93,6 +93,48 @@
   </div>
 
   <div class="shop-results">
+    <form method="get" class="shop-search" role="search" data-shop-search data-clear-url="{% url 'catalog:shop' %}">
+      <input type="hidden" name="category" value="{{ current_filters.category }}">
+      <input type="hidden" name="collection" value="{{ current_filters.collection }}">
+      <input type="hidden" name="flag" value="{{ current_filters.flag }}">
+      <input type="hidden" name="sort" value="{{ current_filters.sort }}">
+      <input type="hidden" name="min_price" value="{{ current_filters.min_price }}">
+      <input type="hidden" name="max_price" value="{{ current_filters.max_price }}">
+      <div class="shop-search__intro">
+        <span class="shop-search__spark" aria-hidden="true">✦</span>
+        <div>
+          <p class="shop-search__eyebrow">Discover your next favourite</p>
+          <p class="shop-search__hint">Search by product, shade, texture, or mood</p>
+        </div>
+      </div>
+      <div class="shop-search__bar">
+        <svg class="shop-search__icon" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6">
+          <circle cx="10.8" cy="10.8" r="6.8"/>
+          <path d="m16 16 4.3 4.3"/>
+        </svg>
+        <label class="visually-hidden" for="q">Search products</label>
+        <input
+          class="shop-search__input"
+          id="q"
+          type="search"
+          name="q"
+          value="{{ current_filters.q }}"
+          placeholder="Try “gloss”, “nude” or “perfume”…"
+          autocomplete="off"
+          data-shop-search-input
+        >
+        <button class="shop-search__clear" type="button" aria-label="Clear search" data-shop-search-clear {% if not current_filters.q %}hidden{% endif %}>×</button>
+        <button class="btn btn--primary shop-search__btn" type="submit">Search</button>
+      </div>
+      <div class="shop-search__quick" aria-label="Popular searches">
+        <span>Try:</span>
+        <button type="button" data-search-term="Lip oil">Lip oil</button>
+        <button type="button" data-search-term="Gloss">Gloss</button>
+        <button type="button" data-search-term="Nude">Nude</button>
+        <button type="button" data-search-term="Perfume">Perfume</button>
+      </div>
+    </form>
+
     {% if discovery_categories %}
     <section class="shop-mood-rail" aria-labelledby="mood-rail-heading">
       <div class="shop-mood-rail__head">
@@ -166,48 +208,6 @@
       </div>
     </section>
     {% endif %}
-
-    <form method="get" class="shop-search" role="search" data-shop-search data-clear-url="{% url 'catalog:shop' %}">
-      <input type="hidden" name="category" value="{{ current_filters.category }}">
-      <input type="hidden" name="collection" value="{{ current_filters.collection }}">
-      <input type="hidden" name="flag" value="{{ current_filters.flag }}">
-      <input type="hidden" name="sort" value="{{ current_filters.sort }}">
-      <input type="hidden" name="min_price" value="{{ current_filters.min_price }}">
-      <input type="hidden" name="max_price" value="{{ current_filters.max_price }}">
-      <div class="shop-search__intro">
-        <span class="shop-search__spark" aria-hidden="true">✦</span>
-        <div>
-          <p class="shop-search__eyebrow">Discover your next favourite</p>
-          <p class="shop-search__hint">Search by product, shade, texture, or mood</p>
-        </div>
-      </div>
-      <div class="shop-search__bar">
-        <svg class="shop-search__icon" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6">
-          <circle cx="10.8" cy="10.8" r="6.8"/>
-          <path d="m16 16 4.3 4.3"/>
-        </svg>
-        <label class="visually-hidden" for="q">Search products</label>
-        <input
-          class="shop-search__input"
-          id="q"
-          type="search"
-          name="q"
-          value="{{ current_filters.q }}"
-          placeholder="Try “gloss”, “nude” or “perfume”…"
-          autocomplete="off"
-          data-shop-search-input
-        >
-        <button class="shop-search__clear" type="button" aria-label="Clear search" data-shop-search-clear {% if not current_filters.q %}hidden{% endif %}>×</button>
-        <button class="btn btn--primary shop-search__btn" type="submit">Search</button>
-      </div>
-      <div class="shop-search__quick" aria-label="Popular searches">
-        <span>Try:</span>
-        <button type="button" data-search-term="Lip oil">Lip oil</button>
-        <button type="button" data-search-term="Gloss">Gloss</button>
-        <button type="button" data-search-term="Nude">Nude</button>
-        <button type="button" data-search-term="Perfume">Perfume</button>
-      </div>
-    </form>
 
     <div class="shop-results__meta">
       <p>

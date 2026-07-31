@@ -52,7 +52,7 @@ class InternalCatalogDataTests(TestCase):
             price="1800.00",
             stock=4,
             sku="PAH-LIPS-A1B2C3D",
-            source_name="The Lip Tribe",
+            source_name="Atelier Edit",
             source_url="https://example.com/products/velvet-lip-oil",
         )
 
@@ -77,3 +77,16 @@ class InternalCatalogDataTests(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertNotContains(response, "authorized")
+
+    def test_shop_search_appears_before_category_rails(self):
+        response = self.client.get(reverse("catalog:shop"))
+
+        self.assertEqual(response.status_code, 200)
+        content = response.content.decode()
+        search_index = content.index('role="search"')
+        for marker in ("shop-mood-rail", "shade-studio"):
+            if marker in content:
+                self.assertLess(search_index, content.index(marker))
+                break
+        else:
+            self.assertIn('class="shop-search"', content)
