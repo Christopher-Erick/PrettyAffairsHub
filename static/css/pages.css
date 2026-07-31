@@ -720,14 +720,16 @@
   overflow: hidden;
   background: var(--bg-media);
   aspect-ratio: 4 / 5;
+  padding: clamp(0.75rem, 2vw, 1.5rem);
+  box-shadow: inset 0 0 0 1px var(--hairline);
 }
 
 .pdp__main-image img {
+  display: block;
   width: 100%;
   height: 100%;
-  object-fit: cover;
-  transition: transform 0.2s ease;
-  cursor: zoom-in;
+  object-fit: contain;
+  object-position: center;
 }
 
 .pdp__placeholder {
@@ -768,6 +770,38 @@
 .pdp__price {
   font-size: var(--fs-md);
   margin-bottom: var(--space-4);
+}
+
+.pdp__intro {
+  color: var(--text-secondary);
+}
+
+.pdp__details {
+  display: grid;
+  gap: var(--space-5);
+  margin: var(--space-6) 0;
+  padding: var(--space-5) 0;
+  border-block: 1px solid var(--hairline);
+}
+
+.pdp__detail h2 {
+  margin-bottom: var(--space-2);
+  font-family: var(--font-sans);
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.pdp__detail p:last-child,
+.pdp__detail ul {
+  margin-bottom: 0;
+}
+
+.pdp__detail ul {
+  display: grid;
+  gap: var(--space-1);
+  padding-left: 1.2rem;
 }
 
 .pdp__buttons,
