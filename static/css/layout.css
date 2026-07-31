@@ -447,7 +447,7 @@
 .product-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: clamp(1.1rem, 2.2vw, 2rem) clamp(0.7rem, 1.6vw, 1.35rem);
+  gap: clamp(1.25rem, 2.5vw, 2.25rem) clamp(0.85rem, 1.8vw, 1.5rem);
 }
 
 @media (min-width: 640px) {
@@ -462,15 +462,10 @@
   }
 }
 
+/* Cap at five — six reads overcrowded on wide shop layouts */
 @media (min-width: 1200px) {
   .product-grid {
     grid-template-columns: repeat(5, minmax(0, 1fr));
-  }
-}
-
-@media (min-width: 1600px) {
-  .product-grid {
-    grid-template-columns: repeat(6, minmax(0, 1fr));
   }
 }
 

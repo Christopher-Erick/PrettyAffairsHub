@@ -23,14 +23,14 @@
 
 @media (min-width: 900px) {
   .shop-layout {
-    grid-template-columns: minmax(12.5rem, 14.5rem) minmax(0, 1fr);
-    gap: clamp(1.25rem, 2vw, 2.25rem);
+    grid-template-columns: minmax(15.5rem, 18.5rem) minmax(0, 1fr);
+    gap: clamp(1.5rem, 2.5vw, 2.75rem);
     align-items: start;
   }
 }
 
 .shop-filters {
-  padding: clamp(1rem, 1.5vw, 1.35rem);
+  padding: clamp(1.15rem, 1.8vw, 1.6rem);
   background: linear-gradient(
     165deg,
     rgba(255, 252, 250, 0.55),
