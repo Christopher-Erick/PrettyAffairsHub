@@ -6,7 +6,8 @@
     <h1 class="section__title">Your account</h1>
     <p class="section__text">
       {% if is_store_admin %}
-        Signed in as store admin. Manage your profile below, or open catalogue tools when you need them.
+        Signed in as <strong>store staff</strong>. Customers shopping the site never see Store admin.
+        Use a separate client account when you want to test checkout as a buyer.
       {% else %}
         Orders, wishlist, and profile details — all in one place.
       {% endif %}
@@ -25,7 +26,7 @@
   {% if is_store_admin %}
   <aside class="account-admin" aria-labelledby="store-admin-heading">
     <h2 class="account-admin__title" id="store-admin-heading">Store admin</h2>
-    <p class="account-admin__text">Catalogue, orders, discounts, and site content live in Django Admin.</p>
+    <p class="account-admin__text">Catalogue, orders, discounts, and site content live in the store admin.</p>
     <a class="btn btn--primary" href="{% url 'admin:index' %}">Open store admin</a>
   </aside>
   {% endif %}

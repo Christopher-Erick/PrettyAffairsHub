@@ -7,6 +7,17 @@
     <h1 class="section__title">Delivery details</h1>
     <p class="section__text">We’ll confirm payment and dispatch from Kenya. M-Pesa phone numbers help us verify faster.</p>
 
+    {% if staff_shopping %}
+    <aside class="account-admin" role="status">
+      <h2 class="account-admin__title">You’re signed in as store staff</h2>
+      <p class="account-admin__text">
+        Checkout is pre-filling <em>this staff account’s</em> email — customers never see “admin” unless they log in as this user.
+        To test the shop as a normal buyer, <a href="{% url 'accounts:logout' %}">sign out</a> and
+        <a href="{% url 'accounts:register' %}">create a client account</a>.
+      </p>
+    </aside>
+    {% endif %}
+
     <form method="post" class="stack-form" data-checkout-form>
       {% csrf_token %}
       {% for field in form %}

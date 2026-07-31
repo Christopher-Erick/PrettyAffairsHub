@@ -4,11 +4,25 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import get_object_or_404, redirect, render
 
+from apps.accounts.roles import is_store_admin
 from apps.cart.services import cart_totals, get_or_create_cart
 from apps.discounts.models import Coupon
 from apps.orders.forms import CheckoutForm, KENYA_CITIES
 from apps.orders.models import Order
 from apps.orders.services import DEFAULT_SHIPPING, FREE_SHIPPING_THRESHOLD, create_order_from_cart
+
+
+def _checkout_shipping_name(user):
+    """Customer-facing delivery name — never leak staff usernames like 'admin'."""
+    full_name = (user.get_full_name() or "").strip()
+    if full_name:
+        return full_name
+    if is_store_admin(user):
+        return ""
+    username = (user.username or "").strip()
+    if username.lower() in {"admin", "administrator", "root", "staff", "superuser"}:
+        return ""
+    return username
 
 
 def checkout(request):
@@ -19,9 +33,13 @@ def checkout(request):
         return redirect("cart:detail")
 
     initial = {"shipping_city": "Nairobi"}
+    staff_shopping = False
     if request.user.is_authenticated:
-        initial["email"] = request.user.email
-        initial["shipping_name"] = request.user.get_full_name() or request.user.username
+        staff_shopping = is_store_admin(request.user)
+        # Staff accounts keep store emails private from the delivery form autofill.
+        if not staff_shopping:
+            initial["email"] = request.user.email
+        initial["shipping_name"] = _checkout_shipping_name(request.user)
         default_address = request.user.addresses.filter(is_default=True).first()
         if default_address:
             known_cities = {c[0] for c in KENYA_CITIES}
@@ -70,6 +88,7 @@ def checkout(request):
             "items": items.prefetch_related("product__images"),
             "totals": totals,
             "free_shipping_remaining": remaining,
+            "staff_shopping": staff_shopping,
         },
     )
 
