@@ -9,6 +9,7 @@ from django.views.generic import CreateView
 
 from apps.accounts.forms import AddressForm, ProfileForm, RegisterForm
 from apps.accounts.models import Address, CustomerProfile
+from apps.accounts.roles import is_store_admin
 from apps.accounts.services import get_or_create_wishlist, toggle_wishlist
 from apps.catalog.models import Product
 from apps.orders.models import Order
@@ -30,6 +31,19 @@ class RegisterView(CreateView):
 class UserLoginView(LoginView):
     template_name = "accounts/login.html"
     redirect_authenticated_user = True
+
+    def form_valid(self, form):
+        response = super().form_valid(form)
+        if is_store_admin(self.request.user):
+            messages.info(
+                self.request,
+                "Welcome back. Store admin tools are available from your account.",
+            )
+        return response
+
+    def get_success_url(self):
+        # Clients and admins both land on Account; admins see the Store admin CTA there.
+        return self.get_redirect_url() or reverse_lazy("accounts:profile")
 
 
 class UserLogoutView(LogoutView):
@@ -62,7 +76,12 @@ def profile(request):
     return render(
         request,
         "accounts/profile.html",
-        {"form": form, "orders": orders, "addresses": request.user.addresses.all()},
+        {
+            "form": form,
+            "orders": orders,
+            "addresses": request.user.addresses.all(),
+            "is_store_admin": is_store_admin(request.user),
+        },
     )
 
 

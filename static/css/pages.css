@@ -1605,6 +1605,59 @@ article.narrow {
   margin-top: var(--space-4);
 }
 
+/* Account */
+.account-page {
+  display: grid;
+  gap: var(--space-6);
+}
+
+.account-page__intro .section__title {
+  margin-bottom: var(--space-2);
+}
+
+.account-page__intro .section__text {
+  margin: 0 0 var(--space-4);
+  max-width: 36rem;
+  color: var(--text-secondary);
+}
+
+.account-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem 1.15rem;
+  font-size: var(--fs-sm);
+  letter-spacing: 0.04em;
+}
+
+.account-nav a {
+  text-decoration: none;
+  color: var(--text-primary);
+  border-bottom: 1px solid transparent;
+}
+
+.account-nav a:hover {
+  border-bottom-color: currentColor;
+}
+
+.account-admin {
+  width: min(36rem, 100%);
+  padding: var(--space-5);
+  background:
+    linear-gradient(145deg, color-mix(in srgb, var(--bg-panel) 88%, var(--color-glow) 12%), var(--bg-panel));
+  box-shadow: inset 0 0 0 1px var(--hairline);
+}
+
+.account-admin__title {
+  margin: 0 0 var(--space-2);
+  font-size: var(--fs-lg);
+}
+
+.account-admin__text {
+  margin: 0 0 var(--space-4);
+  color: var(--text-secondary);
+  max-width: 28rem;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .badge--pulse {
     animation: none;
