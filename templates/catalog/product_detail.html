@@ -11,7 +11,7 @@
     <div class="pdp__main-image">
       {% with img=product.primary_image %}
         {% if img and img.image %}
-          <img id="pdp-zoom" src="{{ img.image.url }}" alt="{{ img.alt_text|default:product.name }}" data-zoom>
+          <img src="{{ img.image.url }}" alt="{{ img.alt_text|default:product.name }}" data-pdp-main-image>
         {% else %}
           <div class="product-card__placeholder pdp__placeholder" role="img" aria-label="{{ product.name }}"></div>
         {% endif %}
@@ -44,7 +44,30 @@
     {% if product.review_count %}
     <p class="product-card__rating">★ {{ product.average_rating }} · {{ product.review_count }} reviews</p>
     {% endif %}
-    <p>{{ product.short_description|default:product.description|truncatewords:40 }}</p>
+    {% if product.short_description %}<p class="pdp__intro">{{ product.short_description }}</p>{% endif %}
+
+    {% if product.description or product.benefit_list or product.directions %}
+    <div class="pdp__details">
+      {% if product.description %}
+      <section class="pdp__detail">
+        <h2>Description</h2>
+        {{ product.description|linebreaks }}
+      </section>
+      {% endif %}
+      {% if product.benefit_list %}
+      <section class="pdp__detail">
+        <h2>Benefits</h2>
+        <ul>{% for benefit in product.benefit_list %}<li>{{ benefit }}</li>{% endfor %}</ul>
+      </section>
+      {% endif %}
+      {% if product.directions %}
+      <section class="pdp__detail">
+        <h2>Directions</h2>
+        {{ product.directions|linebreaks }}
+      </section>
+      {% endif %}
+    </div>
+    {% endif %}
 
     <form class="pdp__actions" action="{% url 'cart:add' %}" method="post">
       {% csrf_token %}
@@ -105,23 +128,14 @@
   </div>
 </article>
 
-<section class="section">
+{% if product.ingredients or product.specifications %}
+<section class="section section--tight">
   <div class="tabs">
-    <div>
-      <h2 class="section__title">Description</h2>
-      <p>{{ product.description|linebreaks }}</p>
-    </div>
-    {% if product.benefit_list %}
-    <div>
-      <h2 class="section__title">Benefits</h2>
-      <ul>{% for b in product.benefit_list %}<li>{{ b }}</li>{% endfor %}</ul>
-    </div>
-    {% endif %}
     {% if product.ingredients %}<div><h2 class="section__title">Ingredients</h2><p>{{ product.ingredients|linebreaks }}</p></div>{% endif %}
-    {% if product.directions %}<div><h2 class="section__title">Directions</h2><p>{{ product.directions|linebreaks }}</p></div>{% endif %}
     {% if product.specifications %}<div><h2 class="section__title">Specifications</h2><p>{{ product.specifications|linebreaks }}</p></div>{% endif %}
   </div>
 </section>
+{% endif %}
 
 {% if fbt %}
 <section class="section section--tight">
@@ -168,24 +182,11 @@
 {% block extra_js %}
 <script>
   (() => {
-    const main = document.querySelector("[data-zoom]");
+    const main = document.querySelector("[data-pdp-main-image]");
     const thumbs = document.querySelectorAll("[data-thumb]");
     thumbs.forEach((btn) => btn.addEventListener("click", () => {
       if (main) main.src = btn.dataset.thumb;
     }));
-    if (main) {
-      main.addEventListener("mousemove", (e) => {
-        const r = main.getBoundingClientRect();
-        const x = ((e.clientX - r.left) / r.width) * 100;
-        const y = ((e.clientY - r.top) / r.height) * 100;
-        main.style.transformOrigin = `${x}% ${y}%`;
-        main.style.transform = "scale(1.6)";
-      });
-      main.addEventListener("mouseleave", () => {
-        main.style.transform = "scale(1)";
-      });
-    }
-
     const city = document.querySelector("[data-eta-city]");
     const eta = document.querySelector("[data-eta-copy]");
     const map = {
