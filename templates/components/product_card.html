@@ -8,7 +8,7 @@
     {% elif product.is_limited_offer %}<span class="badge">Offer</span>
     {% endif %}
     {% if product.primary_image and product.primary_image.image %}
-      <img src="{{ product.primary_image.image.url }}" alt="{{ product.primary_image.alt_text|default:product.name }}" loading="lazy" width="480" height="600" data-card-image>
+      <img src="{{ product.primary_image.image.url }}" alt="{{ product.primary_image.alt_text|default:product.name }}" loading="lazy" decoding="async" width="480" height="600" sizes="(max-width: 640px) 50vw, (max-width: 1100px) 33vw, 240px" data-card-image>
     {% else %}
       <div class="product-card__placeholder" role="img" aria-label="{{ product.name }}"></div>
     {% endif %}

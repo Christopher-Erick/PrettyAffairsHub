@@ -1,18 +1,27 @@
+import time
 from pathlib import Path
 
 from django.conf import settings
+
+_ASSET_VERSION_CACHE = {"value": "1", "expires": 0.0}
 
 
 def _asset_version():
     """Cache-busting stamp: newest asset mtime in DEBUG, release stamp otherwise."""
     if not settings.DEBUG:
         return getattr(settings, "ASSET_VERSION", "1")
+    now = time.monotonic()
+    if now < _ASSET_VERSION_CACHE["expires"]:
+        return _ASSET_VERSION_CACHE["value"]
     newest = 0
     for directory in settings.STATICFILES_DIRS:
         for path in Path(directory).rglob("*"):
             if path.suffix in {".css", ".js"}:
                 newest = max(newest, int(path.stat().st_mtime))
-    return str(newest or "1")
+    value = str(newest or "1")
+    _ASSET_VERSION_CACHE["value"] = value
+    _ASSET_VERSION_CACHE["expires"] = now + 5.0
+    return value
 
 
 def site_settings(request):

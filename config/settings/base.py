@@ -127,6 +127,21 @@ MEDIA_ROOT = BASE_DIR / "media"
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
+CACHES = {
+    "default": {
+        "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+        "LOCATION": "pretty-affairs-hub",
+        "TIMEOUT": 120,
+    }
+}
+
+# Optional Firebase / Cloudflare scaffolding (unused until credentials are set)
+FIREBASE_PROJECT_ID = env("FIREBASE_PROJECT_ID", default="")
+FIREBASE_STORAGE_BUCKET = env("FIREBASE_STORAGE_BUCKET", default="")
+FIREBASE_CREDENTIALS = env("FIREBASE_CREDENTIALS", default="")
+CLOUDFLARE_ACCOUNT_ID = env("CLOUDFLARE_ACCOUNT_ID", default="")
+CLOUDFLARE_R2_BUCKET = env("CLOUDFLARE_R2_BUCKET", default="")
+
 SESSION_COOKIE_HTTPONLY = True
 CSRF_COOKIE_HTTPONLY = True
 SECURE_CONTENT_TYPE_NOSNIFF = True

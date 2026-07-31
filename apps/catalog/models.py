@@ -174,29 +174,37 @@ class Product(TimeStampedModel):
     def get_absolute_url(self):
         return reverse("catalog:product_detail", kwargs={"slug": self.slug})
 
+    def _variant_list(self):
+        """Prefer prefetched variants to avoid N+1 on product cards."""
+        return list(self.variants.all())
+
     @property
     def in_stock(self):
-        if self.variants.exists():
-            return self.variants.filter(is_active=True, stock__gt=0).exists()
+        variants = self._variant_list()
+        if variants:
+            return any(v.is_active and v.stock > 0 for v in variants)
         return self.stock > 0
 
     @property
     def available_stock(self):
-        if self.variants.filter(is_active=True).exists():
-            from django.db.models import Sum
-
-            return self.variants.filter(is_active=True).aggregate(total=Sum("stock"))["total"] or 0
+        variants = [v for v in self._variant_list() if v.is_active]
+        if variants:
+            return sum(v.stock for v in variants)
         return self.stock
 
     @property
     def is_low_stock(self):
-        if not self.in_stock:
+        stock = self.available_stock
+        if stock < 1:
             return False
-        return 0 < self.available_stock <= 8
+        return stock <= 8
 
     @property
     def default_variant(self):
-        return self.variants.filter(is_active=True, stock__gt=0).first()
+        for variant in self._variant_list():
+            if variant.is_active and variant.stock > 0:
+                return variant
+        return None
 
     @property
     def effective_price(self):
@@ -208,7 +216,10 @@ class Product(TimeStampedModel):
 
     @property
     def primary_image(self):
-        return self.images.order_by("sort_order", "id").first()
+        # Iterate prefetched images (Meta ordering) instead of a fresh ORDER BY query.
+        for image in self.images.all():
+            return image
+        return None
 
     def benefit_list(self):
         return [line.strip() for line in self.benefits.splitlines() if line.strip()]
