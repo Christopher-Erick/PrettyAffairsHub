@@ -16,21 +16,21 @@
   width: var(--container);
   max-width: 100%;
   margin: 0 auto;
-  padding: var(--space-7) 0 var(--space-9);
+  padding: var(--space-6) 0 var(--space-9);
   display: grid;
-  gap: var(--space-6);
+  gap: var(--space-5);
 }
 
 @media (min-width: 900px) {
   .shop-layout {
-    grid-template-columns: minmax(13rem, 15.5rem) minmax(0, 1fr);
-    gap: clamp(1.5rem, 3vw, 3rem);
+    grid-template-columns: minmax(12.5rem, 14.5rem) minmax(0, 1fr);
+    gap: clamp(1.25rem, 2vw, 2.25rem);
     align-items: start;
   }
 }
 
 .shop-filters {
-  padding: var(--space-5);
+  padding: clamp(1rem, 1.5vw, 1.35rem);
   background: linear-gradient(
     165deg,
     rgba(255, 252, 250, 0.55),
