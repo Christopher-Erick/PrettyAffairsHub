@@ -6,6 +6,7 @@
 
 html {
   scroll-behavior: smooth;
+  overflow-x: clip;
 }
 
 body {
@@ -25,12 +26,22 @@ body {
   padding-right: env(safe-area-inset-right);
   padding-bottom: env(safe-area-inset-bottom);
   transition: color var(--duration-fast) var(--ease-out), background-color var(--duration-med) var(--ease-out);
+  --whatsapp-fab-space: calc(3.75rem + env(safe-area-inset-bottom, 0px));
 }
 
-@media (max-width: 480px) {
+@media (max-width: 899px) {
   body {
     background-attachment: scroll;
   }
+}
+
+#main,
+[id] {
+  scroll-margin-top: calc(var(--header-h) + 0.75rem);
+}
+
+main {
+  padding-bottom: var(--whatsapp-fab-space);
 }
 
 img {

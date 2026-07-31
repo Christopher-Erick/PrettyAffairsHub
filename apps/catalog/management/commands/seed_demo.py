@@ -145,17 +145,41 @@ class Command(BaseCommand):
         )
         sale.products.set(products[:3])
 
-        Review.objects.get_or_create(
-            product=products[0],
-            author_name="Amina",
-            defaults={
-                "rating": 5,
-                "title": "Instant favourite",
-                "body": "Beautiful colour payoff and so comfortable.",
-                "is_approved": True,
-            },
-        )
-        Review.refresh_product_stats(products[0])
+        demo_reviews = [
+            ("Amina", 5, "Instant favourite", "Beautiful colour payoff and so comfortable."),
+            ("Wanjiku", 5, "Everyday essential", "Soft finish and wears beautifully all day."),
+            ("Brian", 4, "Gift-worthy", "Looked premium and arrived quickly."),
+            ("Faith", 5, "True shade", "Exactly as expected — elegant and buildable."),
+            ("Nelly", 4, "Lovely texture", "Smooth application with a flattering glow."),
+            ("Otieno", 5, "Bought again", "My go-to for polished looks."),
+            ("Grace", 4, "Great value", "Feels luxurious and lasts well."),
+            ("Halima", 5, "Soft and chic", "Perfect for both day and evening."),
+        ]
+        for index, product in enumerate(products):
+            author, rating, title, body = demo_reviews[index % len(demo_reviews)]
+            Review.objects.get_or_create(
+                product=product,
+                author_name=author,
+                defaults={
+                    "rating": rating,
+                    "title": title,
+                    "body": body,
+                    "is_approved": True,
+                },
+            )
+            # Second review for variety on featured pieces
+            if index % 2 == 0:
+                Review.objects.get_or_create(
+                    product=product,
+                    author_name=f"{author} K.",
+                    defaults={
+                        "rating": 5 if rating == 4 else 4,
+                        "title": "Would recommend",
+                        "body": "Reliable quality and a beautiful finish.",
+                        "is_approved": True,
+                    },
+                )
+            Review.refresh_product_stats(product)
 
         SitePage.objects.get_or_create(
             slug="about",

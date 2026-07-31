@@ -4,58 +4,82 @@
 
 {% block content %}
 <section class="shop-layout">
-  <form method="get" class="shop-filters" aria-label="Filters">
-    <h1 class="page-hero__title">{{ page_title|default:"The collection" }}</h1>
-    <input type="hidden" name="q" value="{{ current_filters.q }}">
-    <div class="filter-form">
-      <label class="field-label" for="category">Category</label>
-      <select class="field" id="category" name="category">
-        <option value="">All</option>
-        {% for cat in categories %}
-        <option value="{{ cat.slug }}" {% if current_filters.category == cat.slug %}selected{% endif %}>{{ cat.name }}</option>
-        {% endfor %}
-      </select>
+  <div class="shop-sidebar">
+    <form method="get" class="shop-filters" aria-label="Filters">
+      <h1 class="page-hero__title">{{ page_title|default:"The collection" }}</h1>
+      <input type="hidden" name="q" value="{{ current_filters.q }}">
+      <details class="shop-filters__panel" open data-shop-filters>
+        <summary class="shop-filters__summary">Filters &amp; sort</summary>
+        <div class="filter-form">
+        <label class="field-label" for="category">Category</label>
+        <select class="field" id="category" name="category">
+          <option value="">All</option>
+          {% for cat in categories %}
+          <option value="{{ cat.slug }}" {% if current_filters.category == cat.slug %}selected{% endif %}>{{ cat.name }}</option>
+          {% endfor %}
+        </select>
 
-      <label class="field-label" for="collection">Collection</label>
-      <select class="field" id="collection" name="collection">
-        <option value="">All</option>
-        {% for col in collections %}
-        <option value="{{ col.slug }}" {% if current_filters.collection == col.slug %}selected{% endif %}>{{ col.name }}</option>
-        {% endfor %}
-      </select>
+        <label class="field-label" for="collection">Collection</label>
+        <select class="field" id="collection" name="collection">
+          <option value="">All</option>
+          {% for col in collections %}
+          <option value="{{ col.slug }}" {% if current_filters.collection == col.slug %}selected{% endif %}>{{ col.name }}</option>
+          {% endfor %}
+        </select>
 
-      <label class="field-label" for="flag">Highlight</label>
-      <select class="field" id="flag" name="flag">
-        <option value="">All</option>
-        <option value="new" {% if current_filters.flag == "new" %}selected{% endif %}>New arrivals</option>
-        <option value="bestsellers" {% if current_filters.flag == "bestsellers" %}selected{% endif %}>Best sellers</option>
-        <option value="trending" {% if current_filters.flag == "trending" %}selected{% endif %}>Trending</option>
-        <option value="featured" {% if current_filters.flag == "featured" %}selected{% endif %}>Featured</option>
-        <option value="offers" {% if current_filters.flag == "offers" %}selected{% endif %}>Limited offers</option>
-      </select>
+        <label class="field-label" for="flag">Highlight</label>
+        <select class="field" id="flag" name="flag">
+          <option value="">All</option>
+          <option value="new" {% if current_filters.flag == "new" %}selected{% endif %}>New arrivals</option>
+          <option value="bestsellers" {% if current_filters.flag == "bestsellers" %}selected{% endif %}>Best sellers</option>
+          <option value="trending" {% if current_filters.flag == "trending" %}selected{% endif %}>Trending</option>
+          <option value="featured" {% if current_filters.flag == "featured" %}selected{% endif %}>Featured</option>
+          <option value="offers" {% if current_filters.flag == "offers" %}selected{% endif %}>Limited offers</option>
+        </select>
 
-      <label class="field-label" for="sort">Sort</label>
-      <select class="field" id="sort" name="sort">
-        <option value="newest" {% if current_filters.sort == "newest" %}selected{% endif %}>Newest</option>
-        <option value="price_asc" {% if current_filters.sort == "price_asc" %}selected{% endif %}>Price: low to high</option>
-        <option value="price_desc" {% if current_filters.sort == "price_desc" %}selected{% endif %}>Price: high to low</option>
-        <option value="rating" {% if current_filters.sort == "rating" %}selected{% endif %}>Top rated</option>
-        <option value="name" {% if current_filters.sort == "name" %}selected{% endif %}>Name</option>
-      </select>
+        <label class="field-label" for="sort">Sort</label>
+        <select class="field" id="sort" name="sort">
+          <option value="newest" {% if current_filters.sort == "newest" %}selected{% endif %}>Newest</option>
+          <option value="price_asc" {% if current_filters.sort == "price_asc" %}selected{% endif %}>Price: low to high</option>
+          <option value="price_desc" {% if current_filters.sort == "price_desc" %}selected{% endif %}>Price: high to low</option>
+          <option value="rating" {% if current_filters.sort == "rating" %}selected{% endif %}>Top rated</option>
+          <option value="name" {% if current_filters.sort == "name" %}selected{% endif %}>Name</option>
+        </select>
 
-      <div class="filter-row">
-        <div>
-          <label class="field-label" for="min_price">Min</label>
-          <input class="field" id="min_price" type="number" name="min_price" value="{{ current_filters.min_price }}">
+        <div class="filter-row">
+          <div>
+            <label class="field-label" for="min_price">Min</label>
+            <input class="field" id="min_price" type="number" name="min_price" value="{{ current_filters.min_price }}">
+          </div>
+          <div>
+            <label class="field-label" for="max_price">Max</label>
+            <input class="field" id="max_price" type="number" name="max_price" value="{{ current_filters.max_price }}">
+          </div>
         </div>
-        <div>
-          <label class="field-label" for="max_price">Max</label>
-          <input class="field" id="max_price" type="number" name="max_price" value="{{ current_filters.max_price }}">
+          <button class="btn btn--primary btn--full" type="submit">Apply</button>
         </div>
-      </div>
-      <button class="btn btn--primary btn--full" type="submit">Apply</button>
-    </div>
-  </form>
+      </details>
+    </form>
+
+    {% if top_seller %}
+    <aside class="shop-top-seller" aria-labelledby="top-seller-heading">
+      <p class="eyebrow">Most loved</p>
+      <h2 id="top-seller-heading" class="shop-top-seller__heading">Top seller</h2>
+      <a class="shop-top-seller__media" href="{{ top_seller.get_absolute_url }}">
+        {% if top_seller.primary_image and top_seller.primary_image.image %}
+          <img src="{{ top_seller.primary_image.image.url }}" alt="{{ top_seller.primary_image.alt_text|default:top_seller.name }}" loading="lazy">
+        {% else %}
+          <span class="product-card__placeholder" role="img" aria-label="{{ top_seller.name }}"></span>
+        {% endif %}
+        <span class="shop-top-seller__badge">Customer favourite</span>
+      </a>
+      <h3 class="shop-top-seller__name"><a href="{{ top_seller.get_absolute_url }}">{{ top_seller.name }}</a></h3>
+      <p class="shop-top-seller__rating">★ {{ top_seller.average_rating|floatformat:1 }} <span>({{ top_seller.review_count }})</span></p>
+      <p class="shop-top-seller__price">{{ SITE_CURRENCY_SYMBOL }} {{ top_seller.price|floatformat:0 }}</p>
+      <a class="btn btn--ghost btn--full" href="{{ top_seller.get_absolute_url }}">See why it’s loved</a>
+    </aside>
+    {% endif %}
+  </div>
 
   <div class="shop-results">
     <form method="get" class="shop-search" role="search" data-shop-search data-clear-url="{% url 'catalog:shop' %}">

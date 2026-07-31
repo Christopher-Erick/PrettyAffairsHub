@@ -9,10 +9,12 @@
 .announcement__text {
   margin: 0;
   font-size: var(--fs-xs);
-  letter-spacing: 0.14em;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
   font-weight: 400;
   color: rgba(250, 246, 243, 0.92);
+  text-wrap: balance;
+  overflow-wrap: anywhere;
 }
 
 /* Logo left — natural reading start, always visible */
@@ -22,6 +24,7 @@
   z-index: 50;
   backdrop-filter: blur(20px) saturate(1.2);
   background: var(--bg-nav);
+  padding-top: env(safe-area-inset-top, 0px);
   transition: box-shadow var(--duration-fast) var(--ease-out), background var(--duration-fast) var(--ease-out);
 }
 
@@ -129,19 +132,14 @@
   padding: 0;
   display: flex;
   justify-content: center;
-  flex-wrap: nowrap;
-  gap: clamp(0.55rem, 1.2vw, 1.15rem);
-  overflow-x: auto;
-  scrollbar-width: none;
-}
-
-.site-nav__list::-webkit-scrollbar {
-  display: none;
+  flex-wrap: wrap;
+  gap: clamp(0.4rem, 1vw, 0.95rem);
+  row-gap: 0.2rem;
 }
 
 .site-nav__link {
   font-size: var(--fs-xs);
-  letter-spacing: 0.14em;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
   text-decoration: none;
   font-weight: 500;
@@ -176,8 +174,11 @@
 }
 
 .mobile-nav__list a {
+  display: flex;
+  align-items: center;
+  min-height: 2.75rem;
   font-size: var(--fs-sm);
-  letter-spacing: 0.14em;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
   text-decoration: none;
   font-weight: 500;
@@ -200,17 +201,35 @@
   .site-header__logo {
     width: clamp(4.75rem, 22vw, 6.5rem);
   }
+
+  .text-link {
+    letter-spacing: 0.08em;
+  }
 }
 
 @media (max-width: 480px) {
   .site-header__utils .text-link {
-    letter-spacing: 0.08em;
+    letter-spacing: 0.06em;
+  }
+
+  .site-header__utils [href*="accounts"] {
+    display: none;
+  }
+
+  .hero__brand {
+    font-size: clamp(1.85rem, 8vw, 2.35rem);
+    letter-spacing: 0.04em;
+  }
+
+  .hero__actions .btn {
+    flex: 1 1 11rem;
   }
 
   .whatsapp-float {
-    right: var(--space-3);
-    bottom: var(--space-3);
+    right: max(var(--space-3), env(safe-area-inset-right));
+    bottom: max(var(--space-3), env(safe-area-inset-bottom));
     padding: 0.65rem 0.85rem;
+    min-height: 2.75rem;
   }
 }
 
@@ -221,6 +240,17 @@
 
   .mobile-nav {
     display: none !important;
+  }
+}
+
+@media (min-width: 900px) and (max-width: 1100px) {
+  .site-nav__link {
+    letter-spacing: 0.05em;
+    font-size: 0.68rem;
+  }
+
+  .site-header__util-hide-sm {
+    display: none;
   }
 }
 
@@ -473,6 +503,12 @@
   gap: clamp(1.25rem, 2.5vw, 2.25rem) clamp(0.85rem, 1.8vw, 1.5rem);
 }
 
+@media (max-width: 379px) {
+  .product-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
 @media (min-width: 640px) {
   .product-grid {
     grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -485,10 +521,33 @@
   }
 }
 
-/* Cap at five — six reads overcrowded on wide shop layouts */
+/* Cap at five on full-bleed home/section grids */
 @media (min-width: 1200px) {
   .product-grid {
     grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
+}
+
+/* Shop sidebar layout needs roomier cards */
+.shop-results .product-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+@media (min-width: 640px) {
+  .shop-results .product-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1100px) {
+  .shop-results .product-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1400px) {
+  .shop-results .product-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
   }
 }
 
@@ -568,7 +627,7 @@
 .site-footer {
   border-top: 0;
   background: var(--bg-footer);
-  padding: var(--space-8) var(--page-gutter) calc(var(--space-5) + env(safe-area-inset-bottom));
+  padding: var(--space-8) var(--page-gutter) calc(var(--space-5) + var(--whatsapp-fab-space));
 }
 
 .site-footer__grid {
@@ -579,7 +638,7 @@
   gap: var(--space-6);
 }
 
-@media (min-width: 800px) {
+@media (min-width: 900px) {
   .site-footer__grid {
     grid-template-columns: 1.35fr 1fr 1fr 1.35fr;
   }
@@ -617,6 +676,9 @@
 }
 
 .site-footer__links a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.5rem;
   text-decoration: none;
   color: var(--text-secondary);
   font-size: var(--fs-sm);

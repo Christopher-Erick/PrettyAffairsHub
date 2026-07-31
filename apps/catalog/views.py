@@ -66,6 +66,17 @@ class ProductListView(ListView):
         context["categories"] = Category.objects.filter(is_active=True)
         context["collections"] = Collection.objects.filter(is_active=True)
         context["current_filters"] = self.request.GET
+        context["top_seller"] = (
+            Product.objects.published()
+            .filter(is_bestseller=True)
+            .prefetch_related("images")
+            .order_by("-average_rating", "-review_count")
+            .first()
+            or Product.objects.published()
+            .prefetch_related("images")
+            .order_by("-average_rating", "-review_count")
+            .first()
+        )
         return context
 
 

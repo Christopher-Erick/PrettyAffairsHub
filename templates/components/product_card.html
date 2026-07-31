@@ -19,10 +19,11 @@
       {{ SITE_CURRENCY_SYMBOL }} {{ product.price|floatformat:0 }}
       {% if product.on_sale %}<span class="price-compare">{{ SITE_CURRENCY_SYMBOL }} {{ product.compare_at_price|floatformat:0 }}</span>{% endif %}
     </p>
-    {% if product.review_count %}
-    <p class="product-card__rating" aria-label="Rated {{ product.average_rating }} out of 5">★ {{ product.average_rating }} ({{ product.review_count }})</p>
-    {% endif %}
-    <form action="{% url 'cart:add' %}" method="post">
+    <p class="product-card__rating" aria-label="Rated {{ product.average_rating|default:0 }} out of 5 from {{ product.review_count }} reviews">
+      ★ {{ product.average_rating|floatformat:1 }}
+      <span class="product-card__rating-count">({{ product.review_count }})</span>
+    </p>
+    <form class="product-card__actions" action="{% url 'cart:add' %}" method="post">
       {% csrf_token %}
       <input type="hidden" name="product_id" value="{{ product.id }}">
       <input type="hidden" name="next" value="{{ request.path }}">

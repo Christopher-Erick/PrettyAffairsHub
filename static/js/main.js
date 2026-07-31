@@ -101,6 +101,16 @@
     });
   }
 
+  const shopFilters = document.querySelector("[data-shop-filters]");
+  if (shopFilters) {
+    const desktopShop = window.matchMedia("(min-width: 900px)");
+    const syncShopFilters = (event) => {
+      shopFilters.open = event.matches;
+    };
+    syncShopFilters(desktopShop);
+    desktopShop.addEventListener("change", syncShopFilters);
+  }
+
   const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   if (!reduceMotion && "IntersectionObserver" in window) {
     document
