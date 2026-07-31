@@ -111,6 +111,188 @@
     desktopShop.addEventListener("change", syncShopFilters);
   }
 
+  document.querySelectorAll("[data-fancy-select]").forEach((wrap) => {
+    const select = wrap.querySelector("select");
+    if (!select || wrap.dataset.enhanced === "true") return;
+
+    const label = wrap.closest(".filter-control")?.querySelector(".field-label");
+    const trigger = document.createElement("button");
+    const valueEl = document.createElement("span");
+    const menu = document.createElement("div");
+    let optionButtons = [];
+
+    wrap.dataset.enhanced = "true";
+    wrap.classList.add("is-enhanced");
+    select.tabIndex = -1;
+    trigger.type = "button";
+    trigger.className = "filter-select__trigger";
+    trigger.setAttribute("aria-haspopup", "listbox");
+    trigger.setAttribute("aria-expanded", "false");
+    if (label) trigger.setAttribute("aria-labelledby", label.id || (label.id = `${select.id}-label`));
+    valueEl.className = "filter-select__value";
+    menu.className = "filter-select__menu";
+    menu.setAttribute("role", "listbox");
+    menu.hidden = true;
+
+    const syncValue = () => {
+      const selected = select.options[select.selectedIndex];
+      valueEl.textContent = selected ? selected.textContent.trim() : "";
+      optionButtons.forEach((button) => {
+        const active = button.dataset.value === select.value;
+        button.classList.toggle("is-selected", active);
+        button.setAttribute("aria-selected", String(active));
+      });
+    };
+
+    const closeMenu = () => {
+      wrap.classList.remove("is-open");
+      menu.hidden = true;
+      trigger.setAttribute("aria-expanded", "false");
+    };
+
+    const openMenu = () => {
+      document.querySelectorAll("[data-fancy-select].is-open").forEach((other) => {
+        if (other !== wrap) other.querySelector("[data-fancy-close]")?.click();
+      });
+      wrap.classList.add("is-open");
+      menu.hidden = false;
+      trigger.setAttribute("aria-expanded", "true");
+      const selected = optionButtons.find((button) => button.classList.contains("is-selected"));
+      (selected || optionButtons[0])?.focus();
+    };
+
+    const choose = (value) => {
+      select.value = value;
+      select.dispatchEvent(new Event("change", { bubbles: true }));
+      syncValue();
+      closeMenu();
+      trigger.focus();
+    };
+
+    const buildMenu = () => {
+      menu.innerHTML = "";
+      optionButtons = [];
+      [...select.children].forEach((node) => {
+        if (node.tagName === "OPTGROUP") {
+          const group = document.createElement("div");
+          group.className = "filter-select__group";
+          const groupLabel = document.createElement("span");
+          groupLabel.className = "filter-select__group-label";
+          groupLabel.textContent = node.label;
+          group.appendChild(groupLabel);
+          [...node.children].forEach((option) => {
+            const button = document.createElement("button");
+            button.type = "button";
+            button.className = "filter-select__option is-child";
+            button.setAttribute("role", "option");
+            button.dataset.value = option.value;
+            button.textContent = option.textContent.trim();
+            button.addEventListener("click", () => choose(option.value));
+            group.appendChild(button);
+            optionButtons.push(button);
+          });
+          menu.appendChild(group);
+          return;
+        }
+        if (node.tagName !== "OPTION") return;
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "filter-select__option";
+        button.setAttribute("role", "option");
+        button.dataset.value = node.value;
+        button.textContent = node.textContent.trim();
+        button.addEventListener("click", () => choose(node.value));
+        menu.appendChild(button);
+        optionButtons.push(button);
+      });
+    };
+
+    const closeProxy = document.createElement("button");
+    closeProxy.type = "button";
+    closeProxy.hidden = true;
+    closeProxy.setAttribute("data-fancy-close", "");
+    closeProxy.addEventListener("click", closeMenu);
+
+    trigger.appendChild(valueEl);
+    wrap.appendChild(trigger);
+    wrap.appendChild(menu);
+    wrap.appendChild(closeProxy);
+    buildMenu();
+    syncValue();
+
+    trigger.addEventListener("click", () => {
+      if (wrap.classList.contains("is-open")) closeMenu();
+      else openMenu();
+    });
+
+    trigger.addEventListener("keydown", (event) => {
+      if (event.key === "ArrowDown" || event.key === "Enter" || event.key === " ") {
+        event.preventDefault();
+        openMenu();
+      }
+    });
+
+    menu.addEventListener("keydown", (event) => {
+      const index = optionButtons.indexOf(document.activeElement);
+      if (event.key === "Escape") {
+        event.preventDefault();
+        closeMenu();
+        trigger.focus();
+        return;
+      }
+      if (event.key === "ArrowDown") {
+        event.preventDefault();
+        optionButtons[Math.min(index + 1, optionButtons.length - 1)]?.focus();
+      }
+      if (event.key === "ArrowUp") {
+        event.preventDefault();
+        optionButtons[Math.max(index - 1, 0)]?.focus();
+      }
+      if (event.key === "Home") {
+        event.preventDefault();
+        optionButtons[0]?.focus();
+      }
+      if (event.key === "End") {
+        event.preventDefault();
+        optionButtons[optionButtons.length - 1]?.focus();
+      }
+      if (event.key === "Enter" || event.key === " ") {
+        event.preventDefault();
+        document.activeElement?.click();
+      }
+    });
+
+    document.addEventListener("click", (event) => {
+      if (!wrap.contains(event.target)) closeMenu();
+    });
+  });
+
+  document.querySelectorAll("[data-scroll-rail]").forEach((rail) => {
+    const track = rail.querySelector("[data-scroll-track]");
+    const previous = rail.querySelector("[data-scroll-prev]");
+    const next = rail.querySelector("[data-scroll-next]");
+    if (!track || !previous || !next) return;
+
+    const syncArrows = () => {
+      const maxScroll = track.scrollWidth - track.clientWidth;
+      previous.disabled = track.scrollLeft <= 2;
+      next.disabled = track.scrollLeft >= maxScroll - 2;
+    };
+
+    const move = (direction) => {
+      track.scrollBy({
+        left: direction * Math.max(track.clientWidth * 0.8, 240),
+        behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth",
+      });
+    };
+
+    previous.addEventListener("click", () => move(-1));
+    next.addEventListener("click", () => move(1));
+    track.addEventListener("scroll", syncArrows, { passive: true });
+    window.addEventListener("resize", syncArrows);
+    syncArrows();
+  });
+
   document.querySelectorAll("[data-product-card]").forEach((card) => {
     const image = card.querySelector("[data-card-image]");
     const variantInput = card.querySelector("[data-card-variant]");

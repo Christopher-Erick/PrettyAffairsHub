@@ -11,51 +11,67 @@
       <details class="shop-filters__panel" open data-shop-filters>
         <summary class="shop-filters__summary">Filters &amp; sort</summary>
         <div class="filter-form">
-        <label class="field-label" for="category">Category</label>
-        <select class="field" id="category" name="category">
-          <option value="">All</option>
-          {% for parent in category_tree %}
-            {% if parent.children.all %}
-            <optgroup label="{{ parent.name }}">
-              <option value="{{ parent.slug }}" {% if current_filters.category == parent.slug %}selected{% endif %}>All {{ parent.name }}</option>
-              {% for child in parent.children.all %}
-                {% if child.is_active %}
-                <option value="{{ child.slug }}" {% if current_filters.category == child.slug %}selected{% endif %}>{{ child.name }}</option>
+        <div class="filter-control">
+          <label class="field-label" for="category">Category</label>
+          <div class="filter-select" data-fancy-select>
+            <select class="field" id="category" name="category">
+              <option value="">All categories</option>
+              {% for parent in category_tree %}
+                {% if parent.children.all %}
+                <optgroup label="{{ parent.name }}">
+                  <option value="{{ parent.slug }}" {% if current_filters.category == parent.slug %}selected{% endif %}>All {{ parent.name }}</option>
+                  {% for child in parent.children.all %}
+                    {% if child.is_active %}
+                    <option value="{{ child.slug }}" {% if current_filters.category == child.slug %}selected{% endif %}>{{ child.name }}</option>
+                    {% endif %}
+                  {% endfor %}
+                </optgroup>
+                {% else %}
+                <option value="{{ parent.slug }}" {% if current_filters.category == parent.slug %}selected{% endif %}>{{ parent.name }}</option>
                 {% endif %}
               {% endfor %}
-            </optgroup>
-            {% else %}
-            <option value="{{ parent.slug }}" {% if current_filters.category == parent.slug %}selected{% endif %}>{{ parent.name }}</option>
-            {% endif %}
-          {% endfor %}
-        </select>
+            </select>
+          </div>
+        </div>
 
-        <label class="field-label" for="collection">Collection</label>
-        <select class="field" id="collection" name="collection">
-          <option value="">All</option>
-          {% for col in collections %}
-          <option value="{{ col.slug }}" {% if current_filters.collection == col.slug %}selected{% endif %}>{{ col.name }}</option>
-          {% endfor %}
-        </select>
+        <div class="filter-control">
+          <label class="field-label" for="collection">Collection</label>
+          <div class="filter-select" data-fancy-select>
+            <select class="field" id="collection" name="collection">
+              <option value="">All collections</option>
+              {% for col in collections %}
+              <option value="{{ col.slug }}" {% if current_filters.collection == col.slug %}selected{% endif %}>{{ col.name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
 
-        <label class="field-label" for="flag">Highlight</label>
-        <select class="field" id="flag" name="flag">
-          <option value="">All</option>
-          <option value="new" {% if current_filters.flag == "new" %}selected{% endif %}>New arrivals</option>
-          <option value="bestsellers" {% if current_filters.flag == "bestsellers" %}selected{% endif %}>Best sellers</option>
-          <option value="trending" {% if current_filters.flag == "trending" %}selected{% endif %}>Trending</option>
-          <option value="featured" {% if current_filters.flag == "featured" %}selected{% endif %}>Featured</option>
-          <option value="offers" {% if current_filters.flag == "offers" %}selected{% endif %}>Limited offers</option>
-        </select>
+        <div class="filter-control">
+          <label class="field-label" for="flag">Highlight</label>
+          <div class="filter-select" data-fancy-select>
+            <select class="field" id="flag" name="flag">
+              <option value="">All highlights</option>
+              <option value="new" {% if current_filters.flag == "new" %}selected{% endif %}>New arrivals</option>
+              <option value="bestsellers" {% if current_filters.flag == "bestsellers" %}selected{% endif %}>Best sellers</option>
+              <option value="trending" {% if current_filters.flag == "trending" %}selected{% endif %}>Trending</option>
+              <option value="featured" {% if current_filters.flag == "featured" %}selected{% endif %}>Featured</option>
+              <option value="offers" {% if current_filters.flag == "offers" %}selected{% endif %}>Limited offers</option>
+            </select>
+          </div>
+        </div>
 
-        <label class="field-label" for="sort">Sort</label>
-        <select class="field" id="sort" name="sort">
-          <option value="newest" {% if current_filters.sort == "newest" %}selected{% endif %}>Newest</option>
-          <option value="price_asc" {% if current_filters.sort == "price_asc" %}selected{% endif %}>Price: low to high</option>
-          <option value="price_desc" {% if current_filters.sort == "price_desc" %}selected{% endif %}>Price: high to low</option>
-          <option value="rating" {% if current_filters.sort == "rating" %}selected{% endif %}>Top rated</option>
-          <option value="name" {% if current_filters.sort == "name" %}selected{% endif %}>Name</option>
-        </select>
+        <div class="filter-control">
+          <label class="field-label" for="sort">Sort</label>
+          <div class="filter-select" data-fancy-select>
+            <select class="field" id="sort" name="sort">
+              <option value="newest" {% if current_filters.sort == "newest" %}selected{% endif %}>Newest first</option>
+              <option value="price_asc" {% if current_filters.sort == "price_asc" %}selected{% endif %}>Price: low to high</option>
+              <option value="price_desc" {% if current_filters.sort == "price_desc" %}selected{% endif %}>Price: high to low</option>
+              <option value="rating" {% if current_filters.sort == "rating" %}selected{% endif %}>Top rated</option>
+              <option value="name" {% if current_filters.sort == "name" %}selected{% endif %}>Name</option>
+            </select>
+          </div>
+        </div>
 
         <div class="filter-row">
           <div>
@@ -144,30 +160,34 @@
         </div>
         <p class="shop-mood-rail__hint">Tap a category to jump straight into the edit</p>
       </div>
-      <div class="shop-mood-rail__track" role="list">
-        {% for item in discovery_categories %}
-        <a class="mood-chip{% if current_filters.category == item.category.slug %} is-active{% endif %}" href="{% url 'catalog:shop' %}?category={{ item.category.slug }}" role="listitem">
-          <span class="mood-chip__media" aria-hidden="true">
-            {% if item.sample and item.sample.primary_image and item.sample.primary_image.image %}
-              <img src="{{ item.sample.primary_image.image.url }}" alt="" loading="lazy" width="72" height="72">
-            {% else %}
-              <span class="mood-chip__fallback"></span>
+      <div class="rail-shell" data-scroll-rail>
+        <button class="rail-arrow rail-arrow--prev" type="button" aria-label="View previous categories" data-scroll-prev>‹</button>
+        <div class="shop-mood-rail__track" role="list" data-scroll-track>
+          {% for item in discovery_categories %}
+          <a class="mood-chip{% if current_filters.category == item.category.slug %} is-active{% endif %}" href="{% url 'catalog:shop' %}?category={{ item.category.slug }}" role="listitem">
+            <span class="mood-chip__media" aria-hidden="true">
+              {% if item.sample and item.sample.primary_image and item.sample.primary_image.image %}
+                <img src="{{ item.sample.primary_image.image.url }}" alt="" loading="lazy" width="72" height="72">
+              {% else %}
+                <span class="mood-chip__fallback"></span>
+              {% endif %}
+            </span>
+            <span class="mood-chip__copy">
+              <span class="mood-chip__parent">{{ item.category.parent.name }}</span>
+              <span class="mood-chip__name">{{ item.category.name }}</span>
+              <span class="mood-chip__meta">{{ item.count }} piece{{ item.count|pluralize }}</span>
+            </span>
+            {% if item.swatches %}
+            <span class="mood-chip__swatches" aria-hidden="true">
+              {% for variant in item.swatches %}
+                <i style="--swatch: {{ variant.color_hex|default:'#C9A39A' }}"></i>
+              {% endfor %}
+            </span>
             {% endif %}
-          </span>
-          <span class="mood-chip__copy">
-            <span class="mood-chip__parent">{{ item.category.parent.name }}</span>
-            <span class="mood-chip__name">{{ item.category.name }}</span>
-            <span class="mood-chip__meta">{{ item.count }} piece{{ item.count|pluralize }}</span>
-          </span>
-          {% if item.swatches %}
-          <span class="mood-chip__swatches" aria-hidden="true">
-            {% for variant in item.swatches %}
-              <i style="--swatch: {{ variant.color_hex|default:'#C9A39A' }}"></i>
-            {% endfor %}
-          </span>
-          {% endif %}
-        </a>
-        {% endfor %}
+          </a>
+          {% endfor %}
+        </div>
+        <button class="rail-arrow rail-arrow--next" type="button" aria-label="View more categories" data-scroll-next>›</button>
       </div>
     </section>
     {% endif %}
@@ -181,9 +201,11 @@
         </div>
         <p class="shade-studio__hint">Preview shades on the card — tap a swatch to switch the look</p>
       </div>
-      <div class="shade-studio__track">
-        {% for product in shade_studio %}
-        <article class="shade-story">
+      <div class="rail-shell" data-scroll-rail>
+        <button class="rail-arrow rail-arrow--prev" type="button" aria-label="View previous shade stories" data-scroll-prev>‹</button>
+        <div class="shade-studio__track" data-scroll-track>
+          {% for product in shade_studio %}
+          <article class="shade-story">
           <a class="shade-story__media" href="{{ product.get_absolute_url }}">
             {% if product.primary_image and product.primary_image.image %}
               <img src="{{ product.primary_image.image.url }}" alt="{{ product.primary_image.alt_text|default:product.name }}" loading="lazy" width="280" height="340">
@@ -203,8 +225,10 @@
             </div>
             <p class="shade-story__price">{{ SITE_CURRENCY_SYMBOL }} {{ product.price|floatformat:0 }}</p>
           </div>
-        </article>
-        {% endfor %}
+          </article>
+          {% endfor %}
+        </div>
+        <button class="rail-arrow rail-arrow--next" type="button" aria-label="View more shade stories" data-scroll-next>›</button>
       </div>
     </section>
     {% endif %}
