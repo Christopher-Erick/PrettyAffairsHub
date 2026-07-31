@@ -1,0 +1,15 @@
+<article class="product-card">
+  <a class="product-card__media" href="{% url 'catalog:shop' %}">
+    {% if product.badge %}
+    <span class="badge">{{ product.badge }}</span>
+    {% endif %}
+    <div class="product-card__placeholder" role="img" aria-label="{{ product.image_alt }}"></div>
+  </a>
+  <div class="product-card__body">
+    <h3 class="product-card__title">
+      <a href="{% url 'catalog:shop' %}">{{ product.name }}</a>
+    </h3>
+    <p class="product-card__price">{{ SITE_CURRENCY_SYMBOL }} {{ product.price }}</p>
+    <button class="btn btn--ghost btn--full" type="button">Add to cart</button>
+  </div>
+</article>

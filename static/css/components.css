@@ -1,0 +1,212 @@
+.btn {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  min-height: 2.75rem;
+  padding: 0.7rem 1.35rem;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  font-family: var(--font-sans);
+  font-size: var(--fs-xs);
+  font-weight: 500;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  text-decoration: none;
+  cursor: pointer;
+  transition:
+    background var(--duration-fast) var(--ease-out),
+    color var(--duration-fast) var(--ease-out),
+    border-color var(--duration-fast) var(--ease-out),
+    transform var(--duration-fast) var(--ease-out);
+}
+
+.btn:active {
+  transform: translateY(1px);
+}
+
+.btn--primary {
+  background: var(--color-charcoal);
+  color: var(--text-inverse);
+}
+
+.btn--primary:hover {
+  background: var(--color-burgundy-deep);
+  color: var(--text-inverse);
+}
+
+.btn--ghost {
+  background: transparent;
+  border-color: currentColor;
+  color: inherit;
+}
+
+.btn--ghost:hover {
+  background: rgba(255, 253, 251, 0.12);
+  color: inherit;
+}
+
+.section .btn--ghost,
+.page-hero .btn--ghost,
+.product-card .btn--ghost {
+  color: var(--color-charcoal);
+  border-color: var(--color-border);
+}
+
+.section .btn--ghost:hover,
+.page-hero .btn--ghost:hover,
+.product-card .btn--ghost:hover {
+  border-color: var(--color-charcoal);
+  background: transparent;
+  color: var(--color-burgundy);
+}
+
+.btn--full {
+  width: 100%;
+}
+
+.field {
+  width: 100%;
+  min-height: 2.75rem;
+  padding: 0.7rem 0.9rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--bg-elevated);
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  font-size: var(--fs-sm);
+}
+
+.field::placeholder {
+  color: var(--text-secondary);
+}
+
+.newsletter-form {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.icon-btn {
+  width: 2.5rem;
+  height: 2.5rem;
+  border: 0;
+  background: transparent;
+  padding: 0;
+  cursor: pointer;
+  display: inline-grid;
+  place-items: center;
+}
+
+.icon-btn__lines,
+.icon-btn__lines::before,
+.icon-btn__lines::after {
+  display: block;
+  width: 1.15rem;
+  height: 1.5px;
+  background: var(--color-charcoal);
+  transition: transform var(--duration-fast) var(--ease-out);
+}
+
+.icon-btn__lines {
+  position: relative;
+}
+
+.icon-btn__lines::before,
+.icon-btn__lines::after {
+  content: "";
+  position: absolute;
+  left: 0;
+}
+
+.icon-btn__lines::before {
+  top: -6px;
+}
+
+.icon-btn__lines::after {
+  top: 6px;
+}
+
+.badge {
+  position: absolute;
+  top: var(--space-3);
+  left: var(--space-3);
+  z-index: 1;
+  padding: 0.3rem 0.55rem;
+  background: var(--bg-elevated);
+  color: var(--color-burgundy);
+  font-size: 0.65rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  font-weight: 500;
+}
+
+.product-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.product-card__media {
+  position: relative;
+  display: block;
+  text-decoration: none;
+  overflow: hidden;
+  background: #e5d8d1;
+  aspect-ratio: 4 / 5;
+}
+
+.product-card__placeholder {
+  width: 100%;
+  height: 100%;
+  background:
+    radial-gradient(circle at 30% 25%, rgba(255, 253, 251, 0.55), transparent 45%),
+    linear-gradient(160deg, #c9aaa0, #8f5a55 55%, #3f2b28);
+  transition: transform var(--duration-med) var(--ease-out);
+}
+
+.product-card:hover .product-card__placeholder {
+  transform: scale(1.04);
+}
+
+.product-card__body {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.product-card__title {
+  font-size: var(--fs-md);
+  font-weight: 500;
+}
+
+.product-card__title a {
+  text-decoration: none;
+}
+
+.product-card__price {
+  margin: 0;
+  font-size: var(--fs-sm);
+  color: var(--text-secondary);
+  letter-spacing: 0.04em;
+}
+
+.whatsapp-float {
+  position: fixed;
+  right: var(--space-4);
+  bottom: var(--space-4);
+  z-index: 40;
+  padding: 0.75rem 1rem;
+  border-radius: 999px;
+  background: #1f6b4a;
+  color: white;
+  text-decoration: none;
+  font-size: var(--fs-xs);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  box-shadow: var(--shadow-soft);
+}
+
+.whatsapp-float:hover {
+  color: white;
+  filter: brightness(1.05);
+}

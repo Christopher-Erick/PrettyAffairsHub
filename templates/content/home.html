@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+
+{% block title %}{{ SITE_NAME }} — {{ SITE_TAGLINE }}{% endblock %}
+
+{% block content %}
+<section class="hero" aria-label="Welcome">
+  <div class="hero__atmosphere" aria-hidden="true"></div>
+  <div class="hero__content">
+    <p class="hero__script reveal">{{ SITE_TAGLINE }}</p>
+    <h1 class="hero__brand reveal reveal--delay-1">{{ SITE_NAME }}</h1>
+    <p class="hero__lede reveal reveal--delay-2">
+      Curated colour, skin-kind formulas, and effortless beauty rituals — designed to feel as refined as they look.
+    </p>
+    <div class="hero__actions reveal reveal--delay-3">
+      <a class="btn btn--primary" href="{% url 'catalog:shop' %}">Shop the edit</a>
+      <a class="btn btn--ghost" href="#featured">Explore featured</a>
+    </div>
+  </div>
+</section>
+
+<section class="section section--tight" id="featured" aria-labelledby="featured-heading">
+  <div class="section__intro">
+    <p class="eyebrow">Featured</p>
+    <h2 id="featured-heading" class="section__title">Beauty worth returning for</h2>
+    <p class="section__text">A focused selection of textures, tones, and rituals chosen for everyday luxury.</p>
+  </div>
+  <div class="product-grid">
+    {% for product in featured_products %}
+      {% include "components/product_card.html" with product=product %}
+    {% endfor %}
+  </div>
+  <div class="section__cta">
+    <a class="btn btn--primary" href="{% url 'catalog:shop' %}">View all products</a>
+  </div>
+</section>
+
+<section class="band" aria-labelledby="promise-heading">
+  <div class="band__inner">
+    <p class="eyebrow">The Pretty Affairs promise</p>
+    <h2 id="promise-heading" class="band__title">Elegant shopping, grounded in trust</h2>
+    <p class="band__text">
+      Clear ingredients, thoughtful packaging, and a checkout experience that stays calm from first glance to final click.
+    </p>
+  </div>
+</section>
+{% endblock %}

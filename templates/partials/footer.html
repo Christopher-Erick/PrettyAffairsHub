@@ -1,0 +1,42 @@
+<footer class="site-footer" id="about">
+  <div class="site-footer__grid">
+    <div class="site-footer__brand">
+      <p class="site-footer__name">{{ SITE_NAME }}</p>
+      <p class="site-footer__tagline">{{ SITE_TAGLINE }}</p>
+    </div>
+
+    <div>
+      <h2 class="site-footer__heading">Explore</h2>
+      <ul class="site-footer__links">
+        <li><a href="{% url 'catalog:shop' %}">Shop all</a></li>
+        <li><a href="{% url 'catalog:shop' %}#new">New arrivals</a></li>
+        <li><a href="{% url 'catalog:shop' %}#bestsellers">Best sellers</a></li>
+        <li><a href="{% url 'catalog:shop' %}#bundles">Bundles</a></li>
+      </ul>
+    </div>
+
+    <div>
+      <h2 class="site-footer__heading">Care</h2>
+      <ul class="site-footer__links">
+        <li><a href="#">Shipping</a></li>
+        <li><a href="#">Returns</a></li>
+        <li><a href="#">FAQs</a></li>
+        <li><a href="#">Contact</a></li>
+      </ul>
+    </div>
+
+    <div>
+      <h2 class="site-footer__heading">Newsletter</h2>
+      <p class="site-footer__copy">Early access to drops, tutorials, and private offers.</p>
+      <form class="newsletter-form" action="#" method="post">
+        {% csrf_token %}
+        <label class="visually-hidden" for="newsletter-email">Email address</label>
+        <input class="field" id="newsletter-email" type="email" name="email" placeholder="Your email" required autocomplete="email">
+        <button class="btn btn--primary" type="submit">Subscribe</button>
+      </form>
+    </div>
+  </div>
+  <div class="site-footer__bottom">
+    <p>&copy; {% now "Y" %} {{ SITE_NAME }}. All rights reserved.</p>
+  </div>
+</footer>

@@ -1,0 +1,64 @@
+/* Pretty Affairs Hub — design tokens */
+:root {
+  /* Brand */
+  --color-charcoal: #1f1a18;
+  --color-ink: #2c2623;
+  --color-burgundy: #7a3a3a;
+  --color-burgundy-deep: #5e2c2c;
+  --color-blush: #d9c4bd;
+  --color-mist: #efe8e3;
+  --color-ivory: #f8f4f0;
+  --color-white: #fffdfb;
+  --color-muted: #6f6661;
+  --color-border: rgba(31, 26, 24, 0.12);
+  --color-focus: #7a3a3a;
+
+  /* Surfaces */
+  --bg-page: var(--color-ivory);
+  --bg-elevated: var(--color-white);
+  --bg-nav: rgba(248, 244, 240, 0.92);
+  --bg-announcement: var(--color-charcoal);
+  --text-primary: var(--color-charcoal);
+  --text-secondary: var(--color-muted);
+  --text-inverse: var(--color-ivory);
+
+  /* Typography */
+  --font-display: "Cormorant Garamond", Georgia, serif;
+  --font-script: "Pinyon Script", cursive;
+  --font-sans: "Outfit", "Segoe UI", sans-serif;
+
+  --fs-xs: clamp(0.72rem, 0.7rem + 0.1vw, 0.78rem);
+  --fs-sm: clamp(0.85rem, 0.8rem + 0.2vw, 0.95rem);
+  --fs-base: clamp(1rem, 0.95rem + 0.25vw, 1.05rem);
+  --fs-md: clamp(1.1rem, 1rem + 0.4vw, 1.25rem);
+  --fs-lg: clamp(1.5rem, 1.2rem + 1.2vw, 2.25rem);
+  --fs-xl: clamp(2.4rem, 1.6rem + 3vw, 4.5rem);
+  --fs-script: clamp(1.4rem, 1.1rem + 1.4vw, 2.2rem);
+
+  --lh-tight: 1.1;
+  --lh-snug: 1.35;
+  --lh-body: 1.65;
+
+  /* Spacing scale */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.5rem;
+  --space-6: 2rem;
+  --space-7: 3rem;
+  --space-8: 4.5rem;
+  --space-9: 7rem;
+
+  /* Layout */
+  --container: 72rem;
+  --header-offset: 0px;
+  --radius-sm: 2px;
+  --radius-md: 6px;
+  --shadow-soft: 0 18px 40px rgba(31, 26, 24, 0.08);
+
+  /* Motion */
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --duration-fast: 180ms;
+  --duration-med: 420ms;
+}
