@@ -111,10 +111,54 @@
     desktopShop.addEventListener("change", syncShopFilters);
   }
 
+  document.querySelectorAll("[data-product-card]").forEach((card) => {
+    const image = card.querySelector("[data-card-image]");
+    const variantInput = card.querySelector("[data-card-variant]");
+    const swatches = [...card.querySelectorAll("[data-card-swatch]:not(:disabled)")];
+
+    const chooseShade = (swatch) => {
+      swatches.forEach((item) => item.classList.toggle("is-selected", item === swatch));
+      if (variantInput) variantInput.value = swatch.dataset.variantId || "";
+      if (image && swatch.dataset.image) {
+        image.classList.add("is-changing");
+        image.src = swatch.dataset.image;
+        window.setTimeout(() => image.classList.remove("is-changing"), 180);
+      }
+    };
+
+    swatches.forEach((swatch) => {
+      swatch.addEventListener("click", () => chooseShade(swatch));
+    });
+    if (swatches.length) chooseShade(swatches[0]);
+  });
+
+  const variantSelect = document.querySelector("[data-variant-select]");
+  const pdpSwatches = [...document.querySelectorAll("[data-pdp-swatch]:not(:disabled)")];
+  if (variantSelect && pdpSwatches.length) {
+    const pdpImage = document.querySelector("[data-zoom]");
+    const shadeName = document.querySelector("[data-shade-name]");
+    const choosePdpShade = (swatch) => {
+      pdpSwatches.forEach((item) => item.classList.toggle("is-selected", item === swatch));
+      variantSelect.value = swatch.dataset.variantId || "";
+      const selected = variantSelect.options[variantSelect.selectedIndex];
+      if (shadeName && selected) shadeName.textContent = selected.textContent.replace("(sold out)", "").trim();
+      if (pdpImage && swatch.dataset.image) pdpImage.src = swatch.dataset.image;
+    };
+    pdpSwatches.forEach((swatch) => {
+      swatch.addEventListener("click", () => choosePdpShade(swatch));
+    });
+    variantSelect.addEventListener("change", () => {
+      const match = pdpSwatches.find((item) => item.dataset.variantId === variantSelect.value);
+      if (match) choosePdpShade(match);
+    });
+    const selected = pdpSwatches.find((item) => item.dataset.variantId === variantSelect.value);
+    choosePdpShade(selected || pdpSwatches[0]);
+  }
+
   const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   if (!reduceMotion && "IntersectionObserver" in window) {
     document
-      .querySelectorAll(".section, .band, .story-grid, .product-card")
+      .querySelectorAll(".section, .band, .story-grid, .product-card, .shop-mood-rail, .shade-studio, .mood-chip, .shade-story")
       .forEach((el) => el.classList.add("reveal-on-scroll"));
 
     const observer = new IntersectionObserver(

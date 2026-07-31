@@ -1,4 +1,4 @@
-<article class="product-card{% if product.is_low_stock %} product-card--low-stock{% endif %}">
+<article class="product-card{% if product.is_low_stock %} product-card--low-stock{% endif %}" data-product-card>
   <a class="product-card__media" href="{{ product.get_absolute_url }}">
     {% if product.is_low_stock and product.in_stock %}
       <span class="badge badge--pulse">Only {{ product.available_stock }} left</span>
@@ -8,17 +8,42 @@
     {% elif product.is_limited_offer %}<span class="badge">Offer</span>
     {% endif %}
     {% if product.primary_image and product.primary_image.image %}
-      <img src="{{ product.primary_image.image.url }}" alt="{{ product.primary_image.alt_text|default:product.name }}" loading="lazy" width="480" height="600">
+      <img src="{{ product.primary_image.image.url }}" alt="{{ product.primary_image.alt_text|default:product.name }}" loading="lazy" width="480" height="600" data-card-image>
     {% else %}
       <div class="product-card__placeholder" role="img" aria-label="{{ product.name }}"></div>
     {% endif %}
   </a>
   <div class="product-card__body">
+    {% if product.card_tagline %}
+    <p class="product-card__tagline">{{ product.card_tagline }}</p>
+    {% endif %}
     <h3 class="product-card__title"><a href="{{ product.get_absolute_url }}">{{ product.name }}</a></h3>
     <p class="product-card__price">
       {{ SITE_CURRENCY_SYMBOL }} {{ product.price|floatformat:0 }}
       {% if product.on_sale %}<span class="price-compare">{{ SITE_CURRENCY_SYMBOL }} {{ product.compare_at_price|floatformat:0 }}</span>{% endif %}
     </p>
+    {% with variants=product.variants.all %}
+      {% if variants %}
+      <div class="product-card__swatches" aria-label="Available shades">
+        {% for variant in variants|slice:":6" %}
+          {% if variant.is_active %}
+          <button
+            class="shade-swatch{% if forloop.first %} is-selected{% endif %}"
+            type="button"
+            style="--swatch: {{ variant.color_hex|default:'#C9A39A' }}"
+            aria-label="{{ variant.name }}{% if variant.stock < 1 %}, sold out{% endif %}"
+            title="{{ variant.name }}"
+            data-card-swatch
+            data-variant-id="{{ variant.id }}"
+            data-image="{% if variant.image %}{{ variant.image.url }}{% endif %}"
+            {% if variant.stock < 1 %}disabled{% endif %}
+          ></button>
+          {% endif %}
+        {% endfor %}
+        {% if variants|length > 6 %}<span class="product-card__swatch-more">+{{ variants|length|add:"-6" }}</span>{% endif %}
+      </div>
+      {% endif %}
+    {% endwith %}
     <p class="product-card__rating" aria-label="Rated {{ product.average_rating|default:0 }} out of 5 from {{ product.review_count }} reviews">
       ★ {{ product.average_rating|floatformat:1 }}
       <span class="product-card__rating-count">({{ product.review_count }})</span>
@@ -26,9 +51,20 @@
     <form class="product-card__actions" action="{% url 'cart:add' %}" method="post">
       {% csrf_token %}
       <input type="hidden" name="product_id" value="{{ product.id }}">
+      {% if product.default_variant %}
+      <input type="hidden" name="variant_id" value="{{ product.default_variant.id }}" data-card-variant>
+      {% endif %}
       <input type="hidden" name="next" value="{{ request.path }}">
-      <button class="btn btn--ghost btn--full" type="submit" {% if not product.in_stock %}disabled{% endif %}>
-        {% if product.in_stock %}Add to cart{% else %}Sold out{% endif %}
+      <button class="btn btn--ghost btn--full product-card__cart" type="submit" {% if not product.in_stock %}disabled{% endif %}>
+        {% if product.in_stock %}
+          <svg class="product-card__cart-icon" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6">
+            <path d="M6.5 8.5h11l-1 10.2a1.5 1.5 0 0 1-1.5 1.3H9a1.5 1.5 0 0 1-1.5-1.3L6.5 8.5Z"/>
+            <path d="M9 8.5V7a3 3 0 0 1 6 0v1.5"/>
+          </svg>
+          Add to cart
+        {% else %}
+          Sold out
+        {% endif %}
       </button>
     </form>
   </div>

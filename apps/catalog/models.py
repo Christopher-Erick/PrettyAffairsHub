@@ -57,6 +57,32 @@ class Category(TimeStampedModel):
     def get_absolute_url(self):
         return reverse("catalog:category", kwargs={"slug": self.slug})
 
+    def descendant_ids(self):
+        """Return this category id plus all nested child ids."""
+        ids = [self.id]
+        children = list(self.children.filter(is_active=True))
+        while children:
+            next_level = []
+            for child in children:
+                ids.append(child.id)
+                next_level.extend(list(child.children.filter(is_active=True)))
+            children = next_level
+        return ids
+
+    @classmethod
+    def tree_for_filters(cls):
+        parents = (
+            cls.objects.filter(is_active=True, parent__isnull=True)
+            .prefetch_related(
+                models.Prefetch(
+                    "children",
+                    queryset=cls.objects.filter(is_active=True).order_by("sort_order", "name"),
+                )
+            )
+            .order_by("sort_order", "name")
+        )
+        return parents
+
 
 class Collection(TimeStampedModel):
     name = models.CharField(max_length=120)
@@ -114,6 +140,8 @@ class Product(TimeStampedModel):
     price = models.DecimalField(max_digits=10, decimal_places=2)
     compare_at_price = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     sku = models.CharField(max_length=64, blank=True)
+    source_name = models.CharField(max_length=120, blank=True)
+    source_url = models.URLField(max_length=500, blank=True)
     stock = models.PositiveIntegerField(default=0)
     is_active = models.BooleanField(default=True)
     is_featured = models.BooleanField(default=False)
@@ -167,6 +195,10 @@ class Product(TimeStampedModel):
         return 0 < self.available_stock <= 8
 
     @property
+    def default_variant(self):
+        return self.variants.filter(is_active=True, stock__gt=0).first()
+
+    @property
     def effective_price(self):
         return self.price
 
@@ -180,6 +212,13 @@ class Product(TimeStampedModel):
 
     def benefit_list(self):
         return [line.strip() for line in self.benefits.splitlines() if line.strip()]
+
+    @property
+    def card_tagline(self):
+        benefits = self.benefit_list()
+        if benefits:
+            return " • ".join(benefits[:3])
+        return self.short_description
 
 
 class ProductImage(TimeStampedModel):
@@ -199,6 +238,12 @@ class ProductVariant(TimeStampedModel):
     product = models.ForeignKey(Product, related_name="variants", on_delete=models.CASCADE)
     name = models.CharField(max_length=120)
     sku = models.CharField(max_length=64, blank=True)
+    color_hex = models.CharField(
+        max_length=7,
+        blank=True,
+        help_text="Shade swatch as a hex colour, e.g. #A94F5C",
+    )
+    image = models.ImageField(upload_to="products/variants/%Y/%m/", blank=True)
     price_override = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     stock = models.PositiveIntegerField(default=0)
     is_active = models.BooleanField(default=True)

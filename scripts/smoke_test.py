@@ -1,6 +1,12 @@
 import os
+import sys
+from pathlib import Path
 
-os.environ.setdefault("DJANGO_SETTINGS_MODULE", "config.settings")
+ROOT = Path(__file__).resolve().parents[1]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "config.settings.local")
 
 import django
 
@@ -27,7 +33,7 @@ urls = [
     "/robots.txt",
     "/sitemap.xml",
 ]
-product = Product.objects.first()
+product = Product.objects.filter(is_active=True).first()
 if product:
     urls.append(product.get_absolute_url())
 

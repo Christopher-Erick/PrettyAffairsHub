@@ -207,6 +207,15 @@
   padding: 0 var(--space-1);
 }
 
+.product-card__tagline {
+  margin: 0;
+  min-height: 2.2em;
+  font-size: var(--fs-xs);
+  line-height: 1.35;
+  color: var(--text-secondary);
+  letter-spacing: 0.02em;
+}
+
 .product-card__title {
   font-size: var(--fs-md);
   font-weight: 500;
@@ -214,13 +223,89 @@
 
 .product-card__title a {
   text-decoration: none;
+  color: var(--color-burgundy);
 }
 
 .product-card__price {
   margin: 0;
   font-size: var(--fs-sm);
-  color: var(--text-secondary);
+  color: var(--text-primary);
   letter-spacing: 0.04em;
+}
+
+.product-card__swatches,
+.pdp__swatches {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.product-card__swatches {
+  justify-content: center;
+  min-height: 1.75rem;
+}
+
+.shade-swatch {
+  position: relative;
+  width: 1.15rem;
+  height: 1.15rem;
+  flex: 0 0 auto;
+  padding: 0;
+  border: 2px solid var(--bg-page);
+  border-radius: 50%;
+  background: var(--swatch, var(--color-rose));
+  box-shadow: 0 0 0 1px var(--hairline-strong);
+  cursor: pointer;
+  transition:
+    transform var(--duration-fast) var(--ease-out),
+    box-shadow var(--duration-fast) var(--ease-out);
+}
+
+.shade-swatch:hover,
+.shade-swatch.is-selected {
+  transform: translateY(-1px) scale(1.12);
+  box-shadow:
+    0 0 0 1px var(--color-burgundy),
+    0 0 0 4px var(--color-glow);
+}
+
+.shade-swatch:disabled {
+  cursor: not-allowed;
+  opacity: 0.38;
+}
+
+.shade-swatch:disabled::after {
+  content: "";
+  position: absolute;
+  inset: 50% -2px auto;
+  height: 1px;
+  background: var(--color-ink);
+  transform: rotate(-45deg);
+}
+
+.shade-swatch--lg {
+  width: 1.7rem;
+  height: 1.7rem;
+}
+
+.product-card__swatch-more {
+  font-size: var(--fs-xs);
+  color: var(--text-secondary);
+}
+
+.pdp__swatches {
+  margin-bottom: var(--space-2);
+}
+
+.pdp__shade-name {
+  margin-left: var(--space-1);
+  font-size: var(--fs-sm);
+  color: var(--text-secondary);
+}
+
+.product-card__media img.is-changing {
+  opacity: 0.55;
 }
 
 .product-card__rating {
@@ -237,6 +322,19 @@
 .product-card__actions {
   margin-top: auto;
   padding-top: var(--space-2);
+}
+
+.product-card__cart {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+}
+
+.product-card__cart-icon {
+  width: 1rem;
+  height: 1rem;
+  flex: 0 0 auto;
 }
 
 .product-card .btn--ghost {

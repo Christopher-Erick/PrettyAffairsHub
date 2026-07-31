@@ -3,6 +3,7 @@ from decimal import Decimal
 
 from django.core.management.base import BaseCommand
 from django.utils import timezone
+from django.utils.text import slugify
 
 from apps.catalog.models import (
     Brand,
@@ -23,27 +24,141 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         brand, _ = Brand.objects.get_or_create(name="Pretty Affairs")
-        lips, _ = Category.objects.get_or_create(name="Lipstick", defaults={"sort_order": 1})
-        gloss, _ = Category.objects.get_or_create(name="Lip Gloss", defaults={"sort_order": 2})
-        oils, _ = Category.objects.get_or_create(name="Lip Oils", defaults={"sort_order": 3})
-        eyes, _ = Category.objects.get_or_create(name="Eye shadow", defaults={"sort_order": 4})
 
-        bold, _ = Collection.objects.get_or_create(
-            name="Bold Reds", defaults={"is_featured": True, "description": "Statement colour."}
+        taxonomy = [
+            (
+                "Lips",
+                1,
+                [
+                    ("Lip Oil", 1),
+                    ("Lip Gloss", 2),
+                    ("Lipstick", 3),
+                ],
+            ),
+            (
+                "Eyes & Lashes",
+                2,
+                [
+                    ("Lashes", 1),
+                ],
+            ),
+            (
+                "Face Care",
+                3,
+                [
+                    ("Face Masks", 1),
+                    ("Cleansing Brushes", 2),
+                ],
+            ),
+            (
+                "Fragrance",
+                4,
+                [
+                    ("Perfumes", 1),
+                    ("Body Splash", 2),
+                    ("Cologne", 3),
+                ],
+            ),
+            (
+                "Accessories",
+                5,
+                [
+                    ("Pocket Mirrors", 1),
+                    ("Sunglasses", 2),
+                ],
+            ),
+            (
+                "Jewellery & Gifting",
+                6,
+                [
+                    ("Jewellery Boxes", 1),
+                    ("Acrylic Bangles", 2),
+                ],
+            ),
+            (
+                "Body Essentials",
+                7,
+                [
+                    ("Boob Tape", 1),
+                ],
+            ),
+        ]
+
+        leaf_categories = {}
+        parent_categories = {}
+        keep_slugs = set()
+
+        for parent_name, parent_order, children in taxonomy:
+            parent, _ = Category.objects.update_or_create(
+                slug=slugify(parent_name),
+                defaults={
+                    "name": parent_name,
+                    "parent": None,
+                    "is_active": True,
+                    "sort_order": parent_order,
+                    "description": f"Shop {parent_name.lower()} at Pretty Affairs Hub.",
+                },
+            )
+            parent_categories[parent_name] = parent
+            keep_slugs.add(parent.slug)
+            for child_name, child_order in children:
+                child, _ = Category.objects.update_or_create(
+                    slug=slugify(child_name),
+                    defaults={
+                        "name": child_name,
+                        "parent": parent,
+                        "is_active": True,
+                        "sort_order": child_order,
+                        "description": f"{child_name} in the {parent_name} edit.",
+                    },
+                )
+                leaf_categories[child_name] = child
+                keep_slugs.add(child.slug)
+
+        # Retire old demo categories that are outside the live assortment
+        Category.objects.exclude(slug__in=keep_slugs).update(is_active=False)
+
+        # Alias older names used by previous seed products
+        lipstick = leaf_categories["Lipstick"]
+        gloss = leaf_categories["Lip Gloss"]
+        oils = leaf_categories["Lip Oil"]
+
+        everyday, _ = Collection.objects.update_or_create(
+            slug="everyday-essentials",
+            defaults={
+                "name": "Everyday Essentials",
+                "is_featured": True,
+                "is_active": True,
+                "description": "Soft daily favourites for polished ease.",
+            },
         )
-        nudes, _ = Collection.objects.get_or_create(
-            name="Everyday Nudes", defaults={"is_featured": True}
+        night_out, _ = Collection.objects.update_or_create(
+            slug="night-out",
+            defaults={
+                "name": "Night Out",
+                "is_featured": True,
+                "is_active": True,
+                "description": "Bolder finishes for evenings and events.",
+            },
         )
+        gift_sets, _ = Collection.objects.update_or_create(
+            slug="gift-sets",
+            defaults={
+                "name": "Gift Sets",
+                "is_featured": True,
+                "is_active": True,
+                "description": "Ready-to-give beauty moments.",
+            },
+        )
+        Collection.objects.filter(slug__in=["bold-reds", "everyday-nudes"]).update(is_active=False)
 
         catalog = [
-            ("Velvet Rose Lipstick", lips, bold, "1600", True, True, False, False),
-            ("Crimson Muse", lips, bold, "1600", False, True, True, False),
-            ("Silk Nude Gloss", gloss, nudes, "1300", True, False, True, False),
-            ("Soft Sand Gloss", gloss, nudes, "1300", False, False, False, True),
-            ("Amber Glow Lip Oil", oils, nudes, "1900", True, True, False, True),
-            ("Berry Bloom Oil", oils, bold, "1900", False, False, True, False),
-            ("Dusk Palette", eyes, bold, "2800", True, False, False, True),
-            ("Morning Light Palette", eyes, nudes, "2800", False, True, False, False),
+            ("Velvet Rose Lipstick", lipstick, night_out, "1600", True, True, False, False),
+            ("Crimson Muse", lipstick, night_out, "1600", False, True, True, False),
+            ("Silk Nude Gloss", gloss, everyday, "1300", True, False, True, False),
+            ("Soft Sand Gloss", gloss, everyday, "1300", False, False, False, True),
+            ("Amber Glow Lip Oil", oils, everyday, "1900", True, True, False, True),
+            ("Berry Bloom Oil", oils, night_out, "1900", False, False, True, False),
         ]
 
         products = []
@@ -70,14 +185,23 @@ class Command(BaseCommand):
                     "is_limited_offer": trending,
                 },
             )
+            product.is_active = True
+            product.save(update_fields=["is_active"])
+            product.categories.clear()
             product.categories.add(category)
+            product.collections.clear()
             product.collections.add(collection)
+            if collection == night_out or featured:
+                product.collections.add(gift_sets)
             products.append(product)
+
+        # Retire discontinued demo eye products outside the live list
+        Product.objects.filter(name__in=["Dusk Palette", "Morning Light Palette"]).update(is_active=False)
 
         # Showcase low-stock urgency on a few hero pieces
         low_stock_map = {
             "Velvet Rose Lipstick": 4,
-            "Dusk Palette": 3,
+            "Silk Nude Gloss": 6,
             "Amber Glow Lip Oil": 5,
         }
         for product in products:

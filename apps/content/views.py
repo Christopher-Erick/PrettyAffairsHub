@@ -13,10 +13,12 @@ class HomeView(TemplateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        featured = Product.objects.featured()[:4]
-        context["featured_products"] = featured if featured.exists() else Product.objects.published()[:4]
-        context["new_arrivals"] = Product.objects.new_arrivals()[:4]
-        context["bestsellers"] = Product.objects.best_sellers()[:4]
+        featured = Product.objects.featured().prefetch_related("images", "variants")[:4]
+        context["featured_products"] = (
+            featured if featured.exists() else Product.objects.published().prefetch_related("images", "variants")[:4]
+        )
+        context["new_arrivals"] = Product.objects.new_arrivals().prefetch_related("images", "variants")[:4]
+        context["bestsellers"] = Product.objects.best_sellers().prefetch_related("images", "variants")[:4]
         context["categories"] = Category.objects.filter(is_active=True, parent__isnull=True)[:8]
         context["testimonials"] = Testimonial.objects.filter(is_featured=True)[:3]
         context["sections"] = HomepageSection.objects.filter(is_active=True)

@@ -43,7 +43,17 @@
       {% else %}
         <a class="text-link" href="{% url 'accounts:login' %}">Account</a>
       {% endif %}
-      <a class="text-link" href="{% url 'cart:detail' %}" aria-label="Shopping cart, {{ CART_ITEM_COUNT }} items">Cart ({{ CART_ITEM_COUNT }})</a>
+      <a class="text-link header-cart" href="{% url 'cart:detail' %}" aria-label="Shopping cart, {{ CART_ITEM_COUNT }} items">
+        <span class="header-cart__text">Cart ({{ CART_ITEM_COUNT }})</span>
+        <span class="header-cart__compact" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
+            <path d="M3 4h2l2.1 10.2a2 2 0 0 0 2 1.6h7.8a2 2 0 0 0 2-1.6L20.5 7H6"/>
+            <circle cx="9.5" cy="19" r="1"/>
+            <circle cx="17" cy="19" r="1"/>
+          </svg>
+          <span>{{ CART_ITEM_COUNT }}</span>
+        </span>
+      </a>
     </div>
   </div>
 
@@ -61,7 +71,11 @@
         <li><a href="{% url 'content:blog' %}">Journal</a></li>
         <li><a href="{% url 'content:about' %}">About</a></li>
         <li><a href="{% url 'content:contact' %}">Contact</a></li>
+        {% if user.is_authenticated %}
+        <li><a href="{% url 'accounts:profile' %}">Account</a></li>
+        {% else %}
         <li><a href="{% url 'accounts:login' %}">Account</a></li>
+        {% endif %}
       </ul>
     </nav>
   </div>

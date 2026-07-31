@@ -52,9 +52,25 @@
       <input type="hidden" name="next" value="{{ product.get_absolute_url }}">
       {% if product.variants.all %}
       <label class="field-label" for="variant">Shade / option</label>
-      <select class="field" id="variant" name="variant_id">
+      <div class="pdp__swatches" aria-label="Choose a shade">
         {% for v in product.variants.all %}
-        <option value="{{ v.id }}">{{ v.name }} {% if v.stock < 1 %}(sold out){% endif %}</option>
+        <button
+          class="shade-swatch shade-swatch--lg{% if v == product.default_variant %} is-selected{% endif %}"
+          type="button"
+          style="--swatch: {{ v.color_hex|default:'#C9A39A' }}"
+          data-pdp-swatch
+          data-variant-id="{{ v.id }}"
+          data-image="{% if v.image %}{{ v.image.url }}{% endif %}"
+          aria-label="Choose {{ v.name }}{% if v.stock < 1 %}, sold out{% endif %}"
+          title="{{ v.name }}"
+          {% if v.stock < 1 %}disabled{% endif %}
+        ></button>
+        {% endfor %}
+        <span class="pdp__shade-name" data-shade-name>{% if product.default_variant %}{{ product.default_variant.name }}{% endif %}</span>
+      </div>
+      <select class="field" id="variant" name="variant_id" data-variant-select>
+        {% for v in product.variants.all %}
+        <option value="{{ v.id }}" {% if v == product.default_variant %}selected{% endif %}>{{ v.name }} {% if v.stock < 1 %}(sold out){% endif %}</option>
         {% endfor %}
       </select>
       {% endif %}

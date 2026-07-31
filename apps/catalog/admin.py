@@ -58,6 +58,7 @@ class ProductAdmin(admin.ModelAdmin):
         "is_featured",
         "is_bestseller",
         "average_rating",
+        "source_name",
     )
     list_filter = (
         "is_active",
@@ -69,7 +70,7 @@ class ProductAdmin(admin.ModelAdmin):
         "brand",
         "categories",
     )
-    search_fields = ("name", "sku")
+    search_fields = ("name", "sku", "source_name", "source_url")
     prepopulated_fields = {"slug": ("name",)}
     filter_horizontal = ("categories", "collections")
     inlines = [ProductImageInline, ProductVariantInline]

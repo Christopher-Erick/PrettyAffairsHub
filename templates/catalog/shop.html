@@ -14,8 +14,19 @@
         <label class="field-label" for="category">Category</label>
         <select class="field" id="category" name="category">
           <option value="">All</option>
-          {% for cat in categories %}
-          <option value="{{ cat.slug }}" {% if current_filters.category == cat.slug %}selected{% endif %}>{{ cat.name }}</option>
+          {% for parent in category_tree %}
+            {% if parent.children.all %}
+            <optgroup label="{{ parent.name }}">
+              <option value="{{ parent.slug }}" {% if current_filters.category == parent.slug %}selected{% endif %}>All {{ parent.name }}</option>
+              {% for child in parent.children.all %}
+                {% if child.is_active %}
+                <option value="{{ child.slug }}" {% if current_filters.category == child.slug %}selected{% endif %}>{{ child.name }}</option>
+                {% endif %}
+              {% endfor %}
+            </optgroup>
+            {% else %}
+            <option value="{{ parent.slug }}" {% if current_filters.category == parent.slug %}selected{% endif %}>{{ parent.name }}</option>
+            {% endif %}
           {% endfor %}
         </select>
 
@@ -82,6 +93,80 @@
   </div>
 
   <div class="shop-results">
+    {% if discovery_categories %}
+    <section class="shop-mood-rail" aria-labelledby="mood-rail-heading">
+      <div class="shop-mood-rail__head">
+        <div>
+          <p class="eyebrow">Shop by mood</p>
+          <h2 id="mood-rail-heading" class="shop-mood-rail__title">Find your beauty lane</h2>
+        </div>
+        <p class="shop-mood-rail__hint">Tap a category to jump straight into the edit</p>
+      </div>
+      <div class="shop-mood-rail__track" role="list">
+        {% for item in discovery_categories %}
+        <a class="mood-chip{% if current_filters.category == item.category.slug %} is-active{% endif %}" href="{% url 'catalog:shop' %}?category={{ item.category.slug }}" role="listitem">
+          <span class="mood-chip__media" aria-hidden="true">
+            {% if item.sample and item.sample.primary_image and item.sample.primary_image.image %}
+              <img src="{{ item.sample.primary_image.image.url }}" alt="" loading="lazy" width="72" height="72">
+            {% else %}
+              <span class="mood-chip__fallback"></span>
+            {% endif %}
+          </span>
+          <span class="mood-chip__copy">
+            <span class="mood-chip__parent">{{ item.category.parent.name }}</span>
+            <span class="mood-chip__name">{{ item.category.name }}</span>
+            <span class="mood-chip__meta">{{ item.count }} piece{{ item.count|pluralize }}</span>
+          </span>
+          {% if item.swatches %}
+          <span class="mood-chip__swatches" aria-hidden="true">
+            {% for variant in item.swatches %}
+              <i style="--swatch: {{ variant.color_hex|default:'#C9A39A' }}"></i>
+            {% endfor %}
+          </span>
+          {% endif %}
+        </a>
+        {% endfor %}
+      </div>
+    </section>
+    {% endif %}
+
+    {% if shade_studio %}
+    <section class="shade-studio" aria-labelledby="shade-studio-heading">
+      <div class="shade-studio__head">
+        <div>
+          <p class="eyebrow">Shade studio</p>
+          <h2 id="shade-studio-heading" class="shade-studio__title">Colour stories worth opening</h2>
+        </div>
+        <p class="shade-studio__hint">Preview shades on the card — tap a swatch to switch the look</p>
+      </div>
+      <div class="shade-studio__track">
+        {% for product in shade_studio %}
+        <article class="shade-story">
+          <a class="shade-story__media" href="{{ product.get_absolute_url }}">
+            {% if product.primary_image and product.primary_image.image %}
+              <img src="{{ product.primary_image.image.url }}" alt="{{ product.primary_image.alt_text|default:product.name }}" loading="lazy" width="280" height="340">
+            {% else %}
+              <span class="product-card__placeholder" role="img" aria-label="{{ product.name }}"></span>
+            {% endif %}
+            <span class="shade-story__count">{{ product.shade_count }} shades</span>
+          </a>
+          <div class="shade-story__body">
+            <h3 class="shade-story__name"><a href="{{ product.get_absolute_url }}">{{ product.name }}</a></h3>
+            <div class="shade-story__swatches" aria-hidden="true">
+              {% for variant in product.variants.all|slice:":8" %}
+                {% if variant.is_active %}
+                <i style="--swatch: {{ variant.color_hex|default:'#C9A39A' }}"></i>
+                {% endif %}
+              {% endfor %}
+            </div>
+            <p class="shade-story__price">{{ SITE_CURRENCY_SYMBOL }} {{ product.price|floatformat:0 }}</p>
+          </div>
+        </article>
+        {% endfor %}
+      </div>
+    </section>
+    {% endif %}
+
     <form method="get" class="shop-search" role="search" data-shop-search data-clear-url="{% url 'catalog:shop' %}">
       <input type="hidden" name="category" value="{{ current_filters.category }}">
       <input type="hidden" name="collection" value="{{ current_filters.collection }}">
@@ -108,7 +193,7 @@
           type="search"
           name="q"
           value="{{ current_filters.q }}"
-          placeholder="Try “gloss”, “nude” or “palette”…"
+          placeholder="Try “gloss”, “nude” or “perfume”…"
           autocomplete="off"
           data-shop-search-input
         >
@@ -120,15 +205,26 @@
         <button type="button" data-search-term="Lip oil">Lip oil</button>
         <button type="button" data-search-term="Gloss">Gloss</button>
         <button type="button" data-search-term="Nude">Nude</button>
-        <button type="button" data-search-term="Palette">Palette</button>
+        <button type="button" data-search-term="Perfume">Perfume</button>
       </div>
     </form>
+
+    <div class="shop-results__meta">
+      <p>
+        Showing <strong>{{ result_count }}</strong> curated piece{{ result_count|pluralize }}
+        {% if current_filters.category %} in this lane{% endif %}
+      </p>
+    </div>
 
     <div class="product-grid">
       {% for product in products %}
         {% include "components/product_card.html" %}
       {% empty %}
-        <p>No products match these filters.</p>
+        <div class="shop-empty">
+          <p class="shop-empty__title">Nothing in this lane yet</p>
+          <p>We’re still sourcing authorized pieces for some categories. Try lips, fragrance, or pocket mirrors.</p>
+          <a class="btn btn--primary" href="{% url 'catalog:shop' %}">Browse full edit</a>
+        </div>
       {% endfor %}
     </div>
 
