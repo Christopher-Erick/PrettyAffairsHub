@@ -1,14 +1,20 @@
 from django.contrib import messages
-from django.db.models import Count, Q
+from django.core.cache import cache
+from django.db.models import Count, Prefetch, Q
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_POST
 from django.views.generic import DetailView, ListView
 from django.conf import settings
 
-from apps.catalog.models import Bundle, Category, Collection, Product
+from apps.catalog.models import Bundle, Category, Collection, Product, ProductVariant
 from apps.catalog.services import get_recently_viewed_ids, track_product_view
 from apps.reviews.forms import ReviewForm
 from apps.reviews.models import Review
+
+ACTIVE_VARIANTS = Prefetch(
+    "variants",
+    queryset=ProductVariant.objects.filter(is_active=True).order_by("id"),
+)
 
 
 def products_for_category_slug(qs, slug):
@@ -19,6 +25,14 @@ def products_for_category_slug(qs, slug):
     return qs.filter(categories__id__in=category.descendant_ids())
 
 
+def _shop_product_qs():
+    return (
+        Product.objects.published()
+        .select_related("brand")
+        .prefetch_related("images", "categories", ACTIVE_VARIANTS)
+    )
+
+
 class ProductListView(ListView):
     model = Product
     template_name = "catalog/shop.html"
@@ -26,7 +40,7 @@ class ProductListView(ListView):
     paginate_by = 12
 
     def get_queryset(self):
-        qs = Product.objects.published().prefetch_related("images", "categories", "variants")
+        qs = _shop_product_qs()
         q = self.request.GET.get("q", "").strip()
         category = self.request.GET.get("category")
         collection = self.request.GET.get("collection")
@@ -71,26 +85,33 @@ class ProductListView(ListView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context["category_tree"] = Category.tree_for_filters()
-        context["categories"] = Category.objects.filter(is_active=True)
-        context["collections"] = Collection.objects.filter(is_active=True)
+        context["category_tree"] = cache.get_or_set(
+            "catalog:category_tree",
+            lambda: list(Category.tree_for_filters()),
+            120,
+        )
+        context["categories"] = cache.get_or_set(
+            "catalog:categories_active",
+            lambda: list(Category.objects.filter(is_active=True)),
+            120,
+        )
+        context["collections"] = cache.get_or_set(
+            "catalog:collections_active",
+            lambda: list(Collection.objects.filter(is_active=True)),
+            120,
+        )
         context["current_filters"] = self.request.GET
         page_obj = context.get("page_obj")
         context["result_count"] = page_obj.paginator.count if page_obj is not None else len(context["products"])
         context["top_seller"] = (
-            Product.objects.published()
+            _shop_product_qs()
             .filter(is_bestseller=True)
-            .prefetch_related("images")
             .order_by("-average_rating", "-review_count")
             .first()
-            or Product.objects.published()
-            .prefetch_related("images")
-            .order_by("-average_rating", "-review_count")
-            .first()
+            or _shop_product_qs().order_by("-average_rating", "-review_count").first()
         )
 
-        discovery = []
-        leaf_categories = (
+        leaf_categories = list(
             Category.objects.filter(is_active=True, parent__isnull=False)
             .select_related("parent")
             .annotate(
@@ -103,20 +124,31 @@ class ProductListView(ListView):
             .filter(product_count__gt=0)
             .order_by("parent__sort_order", "sort_order", "name")
         )
-        for category in leaf_categories:
-            sample = (
-                Product.objects.published()
-                .filter(categories=category)
-                .prefetch_related("images", "variants")
+        leaf_ids = {c.id for c in leaf_categories}
+        samples_by_category: dict[int, Product] = {}
+        if leaf_ids:
+            for product in (
+                _shop_product_qs()
+                .filter(categories__id__in=leaf_ids)
                 .order_by("-is_featured", "-average_rating", "-created_at")
-                .first()
-            )
+                .distinct()
+            ):
+                for category in product.categories.all():
+                    if category.id in leaf_ids and category.id not in samples_by_category:
+                        samples_by_category[category.id] = product
+                if len(samples_by_category) >= len(leaf_ids):
+                    break
+
+        discovery = []
+        for category in leaf_categories:
+            sample = samples_by_category.get(category.id)
+            swatches = list(sample.variants.all()[:5]) if sample else []
             discovery.append(
                 {
                     "category": category,
                     "count": category.product_count,
                     "sample": sample,
-                    "swatches": list(sample.variants.filter(is_active=True)[:5]) if sample else [],
+                    "swatches": swatches,
                 }
             )
         context["discovery_categories"] = discovery
@@ -126,12 +158,11 @@ class ProductListView(ListView):
             filters.get(key) for key in ("category", "collection", "flag", "q", "min_price", "max_price")
         )
         context["shade_studio"] = (
-            Product.objects.published()
+            _shop_product_qs()
             .annotate(
                 shade_count=Count("variants", filter=Q(variants__is_active=True), distinct=True)
             )
             .filter(shade_count__gte=3)
-            .prefetch_related("images", "variants")
             .order_by("-shade_count", "-average_rating", "-review_count")[:6]
             if show_shade_studio
             else []
@@ -175,8 +206,15 @@ class ProductDetailView(DetailView):
     slug_field = "slug"
 
     def get_queryset(self):
-        return Product.objects.published().prefetch_related(
-            "images", "variants", "categories", "relations_from__to_product__images"
+        return (
+            Product.objects.published()
+            .select_related("brand")
+            .prefetch_related(
+                "images",
+                ACTIVE_VARIANTS,
+                "categories",
+                "relations_from__to_product__images",
+            )
         )
 
     def get_object(self, queryset=None):
@@ -187,25 +225,29 @@ class ProductDetailView(DetailView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         product = self.object
+        related_qs = _shop_product_qs()
         context["reviews"] = product.reviews.filter(is_approved=True)[:20]
         context["review_form"] = ReviewForm()
-        context["similar"] = Product.objects.published().filter(
-            relations_to__from_product=product,
-            relations_to__relation_type="similar",
-        )[:4]
+        context["similar"] = list(
+            related_qs.filter(
+                relations_to__from_product=product,
+                relations_to__relation_type="similar",
+            )[:4]
+        )
         if not context["similar"]:
-            context["similar"] = (
-                Product.objects.published()
-                .filter(categories__in=product.categories.all())
+            context["similar"] = list(
+                related_qs.filter(categories__in=product.categories.all())
                 .exclude(pk=product.pk)
                 .distinct()[:4]
             )
-        context["fbt"] = Product.objects.published().filter(
-            relations_to__from_product=product,
-            relations_to__relation_type="fbt",
-        )[:3]
+        context["fbt"] = list(
+            related_qs.filter(
+                relations_to__from_product=product,
+                relations_to__relation_type="fbt",
+            )[:3]
+        )
         recent_ids = [pid for pid in get_recently_viewed_ids(self.request) if pid != product.pk]
-        context["recently_viewed"] = Product.objects.published().filter(pk__in=recent_ids)[:4]
+        context["recently_viewed"] = list(related_qs.filter(pk__in=recent_ids)[:4])
         return context
 
 
@@ -229,8 +271,8 @@ class BundleDetailView(DetailView):
 
 def ritual_builder(request):
     products = list(
-        Product.objects.published()
-        .prefetch_related("images", "categories", "collections")
+        _shop_product_qs()
+        .prefetch_related("collections")
         .order_by("-is_bestseller", "-is_featured", "name")[:24]
     )
     catalog = []

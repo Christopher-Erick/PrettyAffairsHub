@@ -13,17 +13,24 @@ class HomeView(TemplateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        featured = Product.objects.featured().prefetch_related("images", "variants")[:4]
-        context["featured_products"] = (
-            featured if featured.exists() else Product.objects.published().prefetch_related("images", "variants")[:4]
+        card_qs = Product.objects.published().select_related("brand").prefetch_related(
+            "images", "variants"
         )
-        context["new_arrivals"] = Product.objects.new_arrivals().prefetch_related("images", "variants")[:4]
-        context["bestsellers"] = Product.objects.best_sellers().prefetch_related("images", "variants")[:4]
-        context["categories"] = Category.objects.filter(is_active=True, parent__isnull=True)[:8]
-        context["testimonials"] = Testimonial.objects.filter(is_featured=True)[:3]
-        context["sections"] = HomepageSection.objects.filter(is_active=True)
+        featured = list(Product.objects.featured().select_related("brand").prefetch_related("images", "variants")[:4])
+        context["featured_products"] = featured or list(card_qs[:4])
+        context["new_arrivals"] = list(
+            Product.objects.new_arrivals().select_related("brand").prefetch_related("images", "variants")[:4]
+        )
+        context["bestsellers"] = list(
+            Product.objects.best_sellers().select_related("brand").prefetch_related("images", "variants")[:4]
+        )
+        context["categories"] = list(
+            Category.objects.filter(is_active=True, parent__isnull=True)[:8]
+        )
+        context["testimonials"] = list(Testimonial.objects.filter(is_featured=True)[:3])
+        context["sections"] = list(HomepageSection.objects.filter(is_active=True))
         context["flash_sales"] = [s for s in FlashSale.objects.filter(is_active=True) if s.is_live][:1]
-        context["blog_posts"] = BlogPost.objects.filter(is_published=True)[:3]
+        context["blog_posts"] = list(BlogPost.objects.filter(is_published=True)[:3])
         return context
 
 
