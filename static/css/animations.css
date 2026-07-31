@@ -7,6 +7,18 @@
   }
 }
 
+@keyframes stock-pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(138, 69, 64, 0.4);
+  }
+  70% {
+    box-shadow: 0 0 0 10px rgba(138, 69, 64, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(138, 69, 64, 0);
+  }
+}
+
 @keyframes fade-up {
   from {
     opacity: 0;

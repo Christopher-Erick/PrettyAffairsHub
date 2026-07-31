@@ -1,5 +1,7 @@
 /* Pretty Affairs Hub — design tokens */
 :root {
+  color-scheme: light;
+
   --color-charcoal: #1c1715;
   --color-ink: #2a2320;
   --color-burgundy: #8a4540;
@@ -15,14 +17,85 @@
   --color-focus: #8a4540;
   --color-glow: rgba(138, 69, 64, 0.12);
 
-  /* Continuous surface story — same family end-to-end */
-  --bg-page: var(--color-ivory);
+  --bg-page: #f3ebe6;
   --bg-elevated: rgba(255, 252, 250, 0.72);
-  --bg-nav: rgba(250, 246, 243, 0.82);
-  --bg-announcement: #1c1715;
+  --bg-elevated-strong: rgba(255, 252, 250, 0.9);
+  --bg-nav: linear-gradient(
+    180deg,
+    rgba(250, 246, 243, 0.78) 0%,
+    rgba(243, 235, 230, 0.55) 100%
+  );
+  --bg-nav-scrolled: linear-gradient(
+    180deg,
+    rgba(250, 246, 243, 0.92) 0%,
+    rgba(243, 235, 230, 0.88) 100%
+  );
+  --bg-mobile-nav: linear-gradient(180deg, rgba(250, 246, 243, 0.98), rgba(243, 235, 230, 0.98));
+  --bg-announcement: linear-gradient(90deg, #1c1715, #2a1f1d 55%, #1c1715);
+  --bg-footer: linear-gradient(180deg, rgba(243, 235, 230, 0.15) 0%, #ebe1db 28%, #e4d8d1 100%);
+  --bg-soft-band: linear-gradient(
+    180deg,
+    rgba(243, 235, 230, 0) 0%,
+    rgba(232, 213, 207, 0.28) 28%,
+    rgba(232, 213, 207, 0.22) 72%,
+    rgba(250, 246, 243, 0) 100%
+  );
+  --bg-band: linear-gradient(
+    180deg,
+    rgba(250, 246, 243, 0) 0%,
+    rgba(232, 213, 207, 0.35) 35%,
+    rgba(239, 230, 224, 0.5) 70%,
+    rgba(243, 235, 230, 0.2) 100%
+  );
+  --bg-panel: linear-gradient(165deg, rgba(255, 252, 250, 0.65), rgba(232, 213, 207, 0.28));
+  --bg-chip: rgba(255, 252, 250, 0.45);
+  --bg-chip-hover: rgba(255, 252, 250, 0.85);
+  --bg-field: rgba(255, 252, 250, 0.72);
+  --bg-badge: rgba(255, 252, 250, 0.94);
+  --bg-media: linear-gradient(160deg, #ebe0da, #d9c4bd);
+
   --text-primary: var(--color-charcoal);
   --text-secondary: var(--color-muted);
   --text-inverse: #faf6f3;
+
+  --page-wash-color: #f3ebe6;
+  --page-wash-image:
+    radial-gradient(ellipse 100% 70% at 0% -8%, rgba(201, 163, 154, 0.32), transparent 58%),
+    radial-gradient(ellipse 80% 55% at 100% 12%, rgba(138, 69, 64, 0.07), transparent 52%),
+    radial-gradient(ellipse 90% 40% at 50% 100%, rgba(232, 213, 207, 0.55), transparent 60%),
+    linear-gradient(
+      180deg,
+      #efe6e0 0%,
+      #f3ebe6 18%,
+      #f7f1ec 42%,
+      #faf6f3 68%,
+      #f3ebe6 100%
+    );
+
+  --hero-atmosphere:
+    radial-gradient(ellipse 55% 60% at 78% 38%, rgba(201, 163, 154, 0.38), transparent 55%),
+    radial-gradient(ellipse 48% 52% at 16% 72%, rgba(138, 69, 64, 0.3), transparent 52%),
+    linear-gradient(
+      180deg,
+      #efe6e0 0%,
+      #d4b5ad 8%,
+      #6a4440 28%,
+      #3a2824 48%,
+      #5a3a36 68%,
+      #c4a49a 88%,
+      #f3ebe6 100%
+    );
+  --hero-veil:
+    radial-gradient(circle at 50% 46%, rgba(28, 23, 21, 0.15) 0%, rgba(28, 23, 21, 0.45) 62%, rgba(28, 23, 21, 0.2) 100%),
+    linear-gradient(180deg, rgba(239, 230, 224, 0.55) 0%, transparent 14%, transparent 70%, rgba(243, 235, 230, 0.85) 100%);
+
+  --shadow-soft: 0 18px 44px rgba(28, 23, 21, 0.06);
+  --shadow-lift: 0 10px 24px rgba(28, 23, 21, 0.08);
+  --hairline: rgba(28, 23, 21, 0.08);
+  --hairline-strong: rgba(28, 23, 21, 0.14);
+  --btn-primary-bg: #1c1715;
+  --btn-primary-fg: #faf6f3;
+  --btn-primary-hover: #6b3531;
 
   --font-display: "Cormorant Garamond", Georgia, serif;
   --font-script: "Pinyon Script", cursive;
@@ -50,16 +123,113 @@
   --space-8: clamp(2.75rem, 1.8rem + 3vw, 4.5rem);
   --space-9: clamp(3.5rem, 2rem + 5vw, 7rem);
 
-  /* Fluid width: safe gutters only — fills the viewport on large screens */
   --page-gutter: clamp(0.875rem, 0.55rem + 0.9vw, 1.35rem);
   --container: calc(100% - (var(--page-gutter) * 2));
   --radius-sm: 1px;
   --radius-md: 4px;
-  --shadow-soft: 0 18px 44px rgba(28, 23, 21, 0.06);
-  --shadow-lift: 0 10px 24px rgba(28, 23, 21, 0.08);
 
   --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
   --duration-fast: 200ms;
   --duration-med: 500ms;
   --header-h: 4.25rem;
+}
+
+/* Night vanity — warm plum + rose, not cold black */
+[data-theme="dark"] {
+  color-scheme: dark;
+
+  --color-charcoal: #f3ebe6;
+  --color-ink: #f7f0eb;
+  --color-burgundy: #d4a39c;
+  --color-burgundy-deep: #e0b4ad;
+  --color-rose: #b88980;
+  --color-blush: #3a2a28;
+  --color-sand: #241c1a;
+  --color-mist: #1a1412;
+  --color-ivory: #2a2220;
+  --color-white: #1f1917;
+  --color-muted: #b5a8a2;
+  --color-border: rgba(240, 220, 210, 0.12);
+  --color-focus: #d4a39c;
+  --color-glow: rgba(212, 163, 156, 0.18);
+
+  --bg-page: #14100f;
+  --bg-elevated: rgba(42, 34, 32, 0.88);
+  --bg-elevated-strong: rgba(48, 38, 36, 0.95);
+  --bg-nav: linear-gradient(
+    180deg,
+    rgba(22, 17, 16, 0.88) 0%,
+    rgba(26, 20, 18, 0.72) 100%
+  );
+  --bg-nav-scrolled: linear-gradient(
+    180deg,
+    rgba(22, 17, 16, 0.96) 0%,
+    rgba(28, 22, 20, 0.92) 100%
+  );
+  --bg-mobile-nav: linear-gradient(180deg, #1a1412, #161110);
+  --bg-announcement: linear-gradient(90deg, #0e0b0a, #2a1a18 50%, #0e0b0a);
+  --bg-footer: linear-gradient(180deg, rgba(20, 16, 15, 0.4) 0%, #1a1412 40%, #120e0d 100%);
+  --bg-soft-band: linear-gradient(
+    180deg,
+    rgba(20, 16, 15, 0) 0%,
+    rgba(58, 36, 34, 0.35) 30%,
+    rgba(42, 28, 26, 0.28) 70%,
+    rgba(20, 16, 15, 0) 100%
+  );
+  --bg-band: linear-gradient(
+    180deg,
+    rgba(20, 16, 15, 0) 0%,
+    rgba(58, 36, 34, 0.4) 35%,
+    rgba(42, 28, 26, 0.45) 70%,
+    rgba(20, 16, 15, 0.25) 100%
+  );
+  --bg-panel: linear-gradient(165deg, rgba(48, 38, 36, 0.9), rgba(58, 40, 38, 0.55));
+  --bg-chip: rgba(48, 38, 36, 0.55);
+  --bg-chip-hover: rgba(58, 44, 42, 0.9);
+  --bg-field: rgba(42, 34, 32, 0.9);
+  --bg-badge: rgba(28, 22, 20, 0.92);
+  --bg-media: linear-gradient(160deg, #3a2a28, #2a1e1c);
+
+  --text-primary: #f3ebe6;
+  --text-secondary: #b5a8a2;
+  --text-inverse: #faf6f3;
+
+  --page-wash-color: #14100f;
+  --page-wash-image:
+    radial-gradient(ellipse 90% 60% at 8% -10%, rgba(138, 69, 64, 0.28), transparent 55%),
+    radial-gradient(ellipse 70% 50% at 100% 18%, rgba(201, 163, 154, 0.12), transparent 50%),
+    radial-gradient(ellipse 80% 40% at 50% 100%, rgba(90, 50, 48, 0.35), transparent 55%),
+    linear-gradient(
+      180deg,
+      #1a1211 0%,
+      #14100f 22%,
+      #181312 48%,
+      #1c1513 72%,
+      #14100f 100%
+    );
+
+  --hero-atmosphere:
+    radial-gradient(ellipse 55% 60% at 78% 38%, rgba(201, 163, 154, 0.22), transparent 55%),
+    radial-gradient(ellipse 48% 52% at 16% 72%, rgba(138, 69, 64, 0.35), transparent 52%),
+    linear-gradient(
+      180deg,
+      #1a1412 0%,
+      #3a2824 12%,
+      #5a3834 32%,
+      #2a1a18 52%,
+      #4a302c 72%,
+      #2a1e1c 90%,
+      #14100f 100%
+    );
+  --hero-veil:
+    radial-gradient(circle at 50% 46%, rgba(10, 8, 7, 0.2) 0%, rgba(10, 8, 7, 0.55) 62%, rgba(10, 8, 7, 0.25) 100%),
+    linear-gradient(180deg, rgba(26, 20, 18, 0.65) 0%, transparent 16%, transparent 72%, rgba(20, 16, 15, 0.95) 100%);
+
+  --shadow-soft: 0 18px 44px rgba(0, 0, 0, 0.35);
+  --shadow-lift: 0 10px 28px rgba(0, 0, 0, 0.4);
+  --hairline: rgba(240, 220, 210, 0.1);
+  --hairline-strong: rgba(240, 220, 210, 0.18);
+  --btn-primary-bg: #d4a39c;
+  --btn-primary-fg: #1a1210;
+  --btn-primary-hover: #e8c4bd;
 }

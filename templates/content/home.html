@@ -13,7 +13,7 @@
     </p>
     <div class="hero__actions reveal reveal--delay-3">
       <a class="btn btn--primary" href="{% url 'catalog:shop' %}">Shop the edit</a>
-      <a class="btn btn--ghost" href="#featured">Explore featured</a>
+      <a class="btn btn--ghost" href="{% url 'catalog:ritual_builder' %}">Build my ritual</a>
     </div>
   </div>
 </section>
@@ -53,6 +53,7 @@
     {% for cat in categories %}
     <a class="vibe-chip" href="{% url 'catalog:category' cat.slug %}">{{ cat.name }}</a>
     {% endfor %}
+    <a class="vibe-chip" href="{% url 'catalog:ritual_builder' %}">Build a ritual</a>
     <a class="vibe-chip" href="{% url 'catalog:bundles' %}">Bundles</a>
     <a class="vibe-chip" href="{% url 'catalog:shop' %}?flag=offers">Limited offers</a>
   </div>

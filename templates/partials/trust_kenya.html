@@ -1,0 +1,36 @@
+<aside class="trust-strip" aria-label="Delivery and payment">
+  <div class="trust-strip__grid">
+    <div class="trust-strip__item">
+      <p class="trust-strip__label">Pay your way</p>
+      <p class="trust-strip__text">M-Pesa ready · Card on delivery options at checkout</p>
+    </div>
+    <div class="trust-strip__item">
+      <p class="trust-strip__label">Delivery to</p>
+      <label class="visually-hidden" for="eta-city">City</label>
+      <select class="field field--trust" id="eta-city" data-eta-city>
+        <option>Nairobi</option>
+        <option>Mombasa</option>
+        <option>Kisumu</option>
+        <option>Nakuru</option>
+        <option>Eldoret</option>
+        <option>Other</option>
+      </select>
+      <p class="trust-strip__text">ETA: <span data-eta-copy>1–2 business days</span></p>
+    </div>
+    <div class="trust-strip__item">
+      <p class="trust-strip__label">Peace of mind</p>
+      <p class="trust-strip__text">Free over KSh 5,000 · 7-day returns on unopened items</p>
+    </div>
+  </div>
+  {% if WHATSAPP_NUMBER %}
+  <a class="trust-strip__wa btn btn--ghost btn--full"
+     href="https://wa.me/{{ WHATSAPP_NUMBER }}?text=Hi%20Pretty%20Affairs%20Hub%2C%20I%20have%20a%20question%20about%20{{ product.name|urlencode }}"
+     target="_blank" rel="noopener">
+    Ask about this product on WhatsApp
+  </a>
+  {% else %}
+  <a class="trust-strip__wa btn btn--ghost btn--full" href="{% url 'content:contact' %}">
+    Ask a beauty specialist
+  </a>
+  {% endif %}
+</aside>

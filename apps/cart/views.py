@@ -54,6 +54,27 @@ def cart_add(request):
 
 
 @require_POST
+def cart_add_many(request):
+    ids = request.POST.getlist("product_id")
+    added = 0
+    errors = []
+    for product_id in ids:
+        try:
+            add_to_cart(request, product_id=product_id, quantity=1)
+            added += 1
+        except Exception as exc:
+            errors.append(str(exc))
+    if added:
+        messages.success(request, f"Added {added} ritual piece{'s' if added != 1 else ''} to your cart.")
+    for err in errors[:2]:
+        messages.error(request, err)
+    next_url = request.POST.get("next") or "cart:detail"
+    if next_url == "cart:detail":
+        return redirect("cart:detail")
+    return redirect(next_url)
+
+
+@require_POST
 def cart_update(request, item_id):
     try:
         update_cart_item(request, item_id, request.POST.get("quantity", 1))

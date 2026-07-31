@@ -6,6 +6,12 @@
   <p>Your order <strong>{{ order.order_number }}</strong> is confirmed.</p>
   <p>Status: {{ order.get_status_display }} · Total: {{ SITE_CURRENCY_SYMBOL }} {{ order.total }}</p>
   <p>A confirmation email was sent to {{ order.email }}.</p>
+  {% if order.is_gift and order.gift_note %}
+  <div class="gift-preview gift-preview--confirm">
+    <p class="gift-preview__label">Gift note</p>
+    <p class="gift-preview__script">{{ order.gift_note }}</p>
+  </div>
+  {% endif %}
   <a class="btn btn--primary" href="{% url 'catalog:shop' %}">Keep shopping</a>
   <a class="btn btn--ghost" href="{% url 'orders:track' %}">Track order</a>
 </section>

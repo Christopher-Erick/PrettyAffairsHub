@@ -1,0 +1,215 @@
+{% extends "base.html" %}
+{% block title %}Build your ritual — {{ SITE_NAME }}{% endblock %}
+{% block meta_description %}Answer a few questions and get a curated 3-piece beauty ritual with bundle pricing.{% endblock %}
+
+{% block content %}
+<section class="page-hero">
+  <p class="eyebrow">Interactive edit</p>
+  <h1 class="page-hero__title">Build your ritual</h1>
+  <p class="page-hero__text">Three soft questions. One tailored trio. Add the set to cart in a single tap.</p>
+</section>
+
+<section class="section ritual" data-ritual>
+  <ol class="ritual__steps" data-ritual-steps aria-label="Ritual steps">
+    <li class="is-active" data-step-indicator="1">Occasion</li>
+    <li data-step-indicator="2">Focus</li>
+    <li data-step-indicator="3">Finish</li>
+    <li data-step-indicator="4">Your edit</li>
+  </ol>
+
+  <div class="ritual__panel is-active" data-ritual-panel="1">
+    <h2 class="section__title">What’s the moment?</h2>
+    <p class="section__text">We’ll tune colour intensity to how you want to show up.</p>
+    <div class="ritual__choices">
+      <button type="button" class="ritual__choice" data-choice="occasion" data-value="everyday">Everyday soft</button>
+      <button type="button" class="ritual__choice" data-choice="occasion" data-value="evening">Evening glow</button>
+      <button type="button" class="ritual__choice" data-choice="occasion" data-value="bold">Bold statement</button>
+    </div>
+  </div>
+
+  <div class="ritual__panel" data-ritual-panel="2" hidden>
+    <h2 class="section__title">Where should we focus?</h2>
+    <p class="section__text">Lips, eyes, or a balanced full-face trio.</p>
+    <div class="ritual__choices">
+      <button type="button" class="ritual__choice" data-choice="focus" data-value="lips">Lips first</button>
+      <button type="button" class="ritual__choice" data-choice="focus" data-value="eyes">Eye story</button>
+      <button type="button" class="ritual__choice" data-choice="focus" data-value="full">Full face</button>
+    </div>
+    <button type="button" class="btn btn--ghost" data-ritual-back>Back</button>
+  </div>
+
+  <div class="ritual__panel" data-ritual-panel="3" hidden>
+    <h2 class="section__title">Preferred finish?</h2>
+    <p class="section__text">Texture changes the whole mood.</p>
+    <div class="ritual__choices">
+      <button type="button" class="ritual__choice" data-choice="finish" data-value="matte">Matte</button>
+      <button type="button" class="ritual__choice" data-choice="finish" data-value="gloss">Gloss &amp; shine</button>
+      <button type="button" class="ritual__choice" data-choice="finish" data-value="soft">Soft &amp; nourishing</button>
+    </div>
+    <button type="button" class="btn btn--ghost" data-ritual-back>Back</button>
+  </div>
+
+  <div class="ritual__panel" data-ritual-panel="4" hidden>
+    <h2 class="section__title">Your ritual edit</h2>
+    <p class="section__text" data-ritual-summary></p>
+    <div class="ritual__results" data-ritual-results></div>
+    <div class="ritual__total">
+      <p>Ritual total: <strong data-ritual-total>{{ currency_symbol }} 0</strong></p>
+      <p class="ritual__save" data-ritual-save hidden></p>
+    </div>
+    <form method="post" action="{% url 'cart:add_many' %}" data-ritual-form>
+      {% csrf_token %}
+      <input type="hidden" name="next" value="{% url 'cart:detail' %}">
+      <div data-ritual-inputs></div>
+      <div class="ritual__actions">
+        <button class="btn btn--primary" type="submit" data-ritual-add disabled>Add ritual to cart</button>
+        <button type="button" class="btn btn--ghost" data-ritual-restart>Start over</button>
+      </div>
+    </form>
+  </div>
+</section>
+
+{{ ritual_catalog|json_script:"ritual-catalog-data" }}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(() => {
+  const root = document.querySelector("[data-ritual]");
+  if (!root) return;
+  const catalog = JSON.parse(document.getElementById("ritual-catalog-data").textContent || "[]");
+  const symbol = "{{ currency_symbol|escapejs }}";
+  const answers = { occasion: "", focus: "", finish: "" };
+  let step = 1;
+
+  const panels = [...root.querySelectorAll("[data-ritual-panel]")];
+  const indicators = [...root.querySelectorAll("[data-step-indicator]")];
+  const results = root.querySelector("[data-ritual-results]");
+  const inputs = root.querySelector("[data-ritual-inputs]");
+  const totalEl = root.querySelector("[data-ritual-total]");
+  const saveEl = root.querySelector("[data-ritual-save]");
+  const summary = root.querySelector("[data-ritual-summary]");
+  const addBtn = root.querySelector("[data-ritual-add]");
+
+  const showStep = (n) => {
+    step = n;
+    panels.forEach((p) => {
+      const active = Number(p.dataset.ritualPanel) === n;
+      p.hidden = !active;
+      p.classList.toggle("is-active", active);
+    });
+    indicators.forEach((el) => {
+      el.classList.toggle("is-active", Number(el.dataset.stepIndicator) <= n);
+    });
+  };
+
+  const scoreProduct = (p) => {
+    let score = 0;
+    const cats = p.categories || [];
+    const cols = p.collections || [];
+    if (answers.occasion === "everyday" && cols.includes("everyday-nudes")) score += 4;
+    if (answers.occasion === "bold" && cols.includes("bold-reds")) score += 4;
+    if (answers.occasion === "evening" && (p.flags.bestseller || p.flags.trending)) score += 3;
+    if (answers.focus === "lips" && ["lipstick", "lip-gloss", "lip-oils"].some((c) => cats.includes(c))) score += 5;
+    if (answers.focus === "eyes" && cats.includes("eye-shadow")) score += 6;
+    if (answers.focus === "full") score += 2;
+    if (answers.finish === "gloss" && cats.includes("lip-gloss")) score += 4;
+    if (answers.finish === "soft" && cats.includes("lip-oils")) score += 4;
+    if (answers.finish === "matte" && cats.includes("lipstick")) score += 4;
+    if (p.flags.featured) score += 1;
+    if (p.in_stock) score += 2;
+    return score;
+  };
+
+  const pickRitual = () => {
+    const ranked = [...catalog]
+      .filter((p) => p.in_stock)
+      .map((p) => ({ ...p, score: scoreProduct(p) }))
+      .sort((a, b) => b.score - a.score || a.price - b.price);
+
+    const picked = [];
+    const usedCats = new Set();
+    for (const item of ranked) {
+      if (picked.length >= 3) break;
+      const primary = item.categories[0] || item.name;
+      if (answers.focus !== "full" && usedCats.has(primary) && picked.length < 2) continue;
+      if (picked.some((x) => x.id === item.id)) continue;
+      picked.push(item);
+      usedCats.add(primary);
+    }
+    while (picked.length < 3 && ranked.length) {
+      const next = ranked.find((p) => !picked.some((x) => x.id === p.id));
+      if (!next) break;
+      picked.push(next);
+    }
+    return picked.slice(0, 3);
+  };
+
+  const renderResults = () => {
+    const picked = pickRitual();
+    const labels = {
+      everyday: "everyday soft",
+      evening: "evening glow",
+      bold: "bold statement",
+      lips: "lips-first",
+      eyes: "eye-focused",
+      full: "full-face",
+      matte: "matte",
+      gloss: "glossy",
+      soft: "nourishing",
+    };
+    summary.textContent = `A ${labels[answers.occasion]} · ${labels[answers.focus]} · ${labels[answers.finish]} ritual.`;
+    results.innerHTML = "";
+    inputs.innerHTML = "";
+    let total = 0;
+    picked.forEach((p, i) => {
+      total += p.price;
+      const card = document.createElement("article");
+      card.className = "ritual__result";
+      card.innerHTML = `
+        <p class="ritual__result-step">0${i + 1}</p>
+        <h3 class="ritual__result-title"><a href="${p.url}">${p.name}</a></h3>
+        <p class="ritual__result-price">${symbol} ${Math.round(p.price)}</p>
+        ${p.is_low_stock ? `<p class="ritual__result-stock">Only ${p.stock} left</p>` : ""}
+      `;
+      results.appendChild(card);
+      const input = document.createElement("input");
+      input.type = "hidden";
+      input.name = "product_id";
+      input.value = String(p.id);
+      inputs.appendChild(input);
+    });
+    totalEl.textContent = `${symbol} ${Math.round(total)}`;
+    saveEl.hidden = false;
+    saveEl.textContent = picked.length
+      ? "Your trio is ready — add all three and checkout when you are."
+      : "No in-stock matches yet. Try another combination.";
+    addBtn.disabled = picked.length === 0;
+  };
+
+  root.querySelectorAll("[data-choice]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const key = btn.dataset.choice;
+      answers[key] = btn.dataset.value;
+      root.querySelectorAll(`[data-choice="${key}"]`).forEach((b) => b.classList.remove("is-selected"));
+      btn.classList.add("is-selected");
+      if (step < 3) showStep(step + 1);
+      else {
+        renderResults();
+        showStep(4);
+      }
+    });
+  });
+
+  root.querySelectorAll("[data-ritual-back]").forEach((btn) => {
+    btn.addEventListener("click", () => showStep(Math.max(1, step - 1)));
+  });
+
+  root.querySelector("[data-ritual-restart]")?.addEventListener("click", () => {
+    Object.keys(answers).forEach((k) => (answers[k] = ""));
+    root.querySelectorAll(".ritual__choice").forEach((b) => b.classList.remove("is-selected"));
+    showStep(1);
+  });
+})();
+</script>
+{% endblock %}

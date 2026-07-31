@@ -4,9 +4,39 @@
 <section class="checkout-layout section">
   <div>
     <h1 class="section__title">Checkout</h1>
-    <form method="post" class="stack-form">
+    <form method="post" class="stack-form" data-checkout-form>
       {% csrf_token %}
-      {{ form.as_p }}
+      {% for field in form %}
+        {% if field.name == "is_gift" %}
+          <div class="gift-atelier" data-gift-atelier>
+            <label class="gift-atelier__toggle">
+              {{ field }}
+              <span>{{ field.label }}</span>
+            </label>
+            <div class="gift-atelier__panel" data-gift-panel {% if not form.is_gift.value %}hidden{% endif %}>
+              <p class="eyebrow">Gift note atelier</p>
+              <p class="section__text">A handwritten-feel message for the recipient — preview updates as you type.</p>
+              {{ form.gift_note.errors }}
+              <label class="field-label" for="{{ form.gift_note.id_for_label }}">{{ form.gift_note.label }}</label>
+              {{ form.gift_note }}
+              <p class="gift-atelier__count"><span data-gift-count>0</span>/280</p>
+              <div class="gift-preview" aria-live="polite">
+                <p class="gift-preview__label">Card preview</p>
+                <p class="gift-preview__script" data-gift-preview>Your note will appear here…</p>
+              </div>
+            </div>
+          </div>
+        {% elif field.name != "gift_note" %}
+          <p>
+            <label class="field-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+            {{ field.errors }}
+            {{ field }}
+          </p>
+        {% endif %}
+      {% endfor %}
+      <aside class="trust-inline">
+        <p>Shipping from Kenya · M-Pesa phone helps us confirm payment · Free over KSh 5,000</p>
+      </aside>
       <button class="btn btn--primary" type="submit">Place order</button>
     </form>
   </div>
@@ -22,4 +52,27 @@
     <p><strong>Total: {{ SITE_CURRENCY_SYMBOL }} {{ totals.total }}</strong></p>
   </aside>
 </section>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(() => {
+  const toggle = document.querySelector("[data-gift-toggle]");
+  const panel = document.querySelector("[data-gift-panel]");
+  const input = document.querySelector("[data-gift-input]");
+  const preview = document.querySelector("[data-gift-preview]");
+  const count = document.querySelector("[data-gift-count]");
+  if (!toggle || !panel || !input) return;
+
+  const sync = () => {
+    panel.hidden = !toggle.checked;
+    const text = (input.value || "").trim();
+    if (preview) preview.textContent = text || "Your note will appear here…";
+    if (count) count.textContent = String((input.value || "").length);
+  };
+  toggle.addEventListener("change", sync);
+  input.addEventListener("input", sync);
+  sync();
+})();
+</script>
 {% endblock %}

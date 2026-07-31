@@ -153,6 +153,20 @@ class Product(TimeStampedModel):
         return self.stock > 0
 
     @property
+    def available_stock(self):
+        if self.variants.filter(is_active=True).exists():
+            from django.db.models import Sum
+
+            return self.variants.filter(is_active=True).aggregate(total=Sum("stock"))["total"] or 0
+        return self.stock
+
+    @property
+    def is_low_stock(self):
+        if not self.in_stock:
+            return False
+        return 0 < self.available_stock <= 8
+
+    @property
     def effective_price(self):
         return self.price
 

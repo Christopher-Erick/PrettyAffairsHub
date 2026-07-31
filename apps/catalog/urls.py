@@ -6,6 +6,7 @@ app_name = "catalog"
 
 urlpatterns = [
     path("", views.ProductListView.as_view(), name="shop"),
+    path("ritual/", views.ritual_builder, name="ritual_builder"),
     path("bundles/", views.BundleListView.as_view(), name="bundles"),
     path("bundles/<slug:slug>/", views.BundleDetailView.as_view(), name="bundle_detail"),
     path("category/<slug:slug>/", views.CategoryDetailView.as_view(), name="category"),

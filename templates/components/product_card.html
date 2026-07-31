@@ -1,6 +1,8 @@
-<article class="product-card">
+<article class="product-card{% if product.is_low_stock %} product-card--low-stock{% endif %}">
   <a class="product-card__media" href="{{ product.get_absolute_url }}">
-    {% if product.is_new %}<span class="badge">New</span>
+    {% if product.is_low_stock and product.in_stock %}
+      <span class="badge badge--pulse">Only {{ product.available_stock }} left</span>
+    {% elif product.is_new %}<span class="badge">New</span>
     {% elif product.is_bestseller %}<span class="badge">Best seller</span>
     {% elif product.is_trending %}<span class="badge">Trending</span>
     {% elif product.is_limited_offer %}<span class="badge">Offer</span>

@@ -6,7 +6,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 
 from apps.cart.services import cart_totals, get_or_create_cart
 from apps.discounts.models import Coupon
-from apps.orders.forms import CheckoutForm
+from apps.orders.forms import CheckoutForm, KENYA_CITIES
 from apps.orders.models import Order
 from apps.orders.services import DEFAULT_SHIPPING, FREE_SHIPPING_THRESHOLD, create_order_from_cart
 
@@ -18,22 +18,24 @@ def checkout(request):
         messages.info(request, "Your cart is empty.")
         return redirect("cart:detail")
 
-    initial = {}
+    initial = {"shipping_city": "Nairobi"}
     if request.user.is_authenticated:
         initial["email"] = request.user.email
         initial["shipping_name"] = request.user.get_full_name() or request.user.username
         default_address = request.user.addresses.filter(is_default=True).first()
         if default_address:
+            known_cities = {c[0] for c in KENYA_CITIES}
+            city = default_address.city if default_address.city in known_cities else "Other"
             initial.update(
                 {
                     "phone": default_address.phone,
                     "shipping_name": default_address.full_name,
                     "shipping_line1": default_address.line1,
                     "shipping_line2": default_address.line2,
-                    "shipping_city": default_address.city,
+                    "shipping_city": city,
                     "shipping_county": default_address.county,
                     "shipping_postal_code": default_address.postal_code,
-                    "shipping_country": default_address.country,
+                    "shipping_country": default_address.country or "Kenya",
                 }
             )
 

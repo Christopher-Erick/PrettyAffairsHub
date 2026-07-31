@@ -55,6 +55,8 @@ def create_order_from_cart(request, cleaned_data):
         shipping_postal_code=cleaned_data.get("shipping_postal_code", ""),
         shipping_country=cleaned_data.get("shipping_country", "Kenya"),
         notes=cleaned_data.get("notes", ""),
+        is_gift=bool(cleaned_data.get("is_gift")),
+        gift_note=(cleaned_data.get("gift_note") or "").strip() if cleaned_data.get("is_gift") else "",
         coupon_code=coupon_code or "",
         subtotal=totals["subtotal"],
         discount_amount=totals["discount_amount"],

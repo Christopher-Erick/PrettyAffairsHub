@@ -74,6 +74,17 @@ class Command(BaseCommand):
             product.collections.add(collection)
             products.append(product)
 
+        # Showcase low-stock urgency on a few hero pieces
+        low_stock_map = {
+            "Velvet Rose Lipstick": 4,
+            "Dusk Palette": 3,
+            "Amber Glow Lip Oil": 5,
+        }
+        for product in products:
+            if product.name in low_stock_map:
+                product.stock = low_stock_map[product.name]
+                product.save(update_fields=["stock"])
+
         if len(products) >= 4:
             ProductRelation.objects.get_or_create(
                 from_product=products[0],

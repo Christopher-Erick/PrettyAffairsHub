@@ -3,6 +3,7 @@ from django.db.models import Q
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_POST
 from django.views.generic import DetailView, ListView
+from django.conf import settings
 
 from apps.catalog.models import Bundle, Category, Collection, Product
 from apps.catalog.services import get_recently_viewed_ids, track_product_view
@@ -151,6 +152,44 @@ class BundleDetailView(DetailView):
 
     def get_queryset(self):
         return Bundle.objects.filter(is_active=True).prefetch_related("items__product__images")
+
+
+def ritual_builder(request):
+    products = list(
+        Product.objects.published()
+        .prefetch_related("images", "categories", "collections")
+        .order_by("-is_bestseller", "-is_featured", "name")[:24]
+    )
+    catalog = []
+    for product in products:
+        catalog.append(
+            {
+                "id": product.id,
+                "name": product.name,
+                "slug": product.slug,
+                "url": product.get_absolute_url(),
+                "price": float(product.price),
+                "stock": product.available_stock,
+                "in_stock": product.in_stock,
+                "is_low_stock": product.is_low_stock,
+                "categories": list(product.categories.values_list("slug", flat=True)),
+                "collections": list(product.collections.values_list("slug", flat=True)),
+                "flags": {
+                    "new": product.is_new,
+                    "bestseller": product.is_bestseller,
+                    "trending": product.is_trending,
+                    "featured": product.is_featured,
+                },
+            }
+        )
+    return render(
+        request,
+        "catalog/ritual_builder.html",
+        {
+            "ritual_catalog": catalog,
+            "currency_symbol": settings.SITE_CURRENCY_SYMBOL,
+        },
+    )
 
 
 @require_POST
