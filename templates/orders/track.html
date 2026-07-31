@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block title %}Track order — {{ SITE_NAME }}{% endblock %}
+{% block content %}
+<section class="section">
+  <h1 class="section__title">Track your order</h1>
+  <form method="post" class="stack-form">
+    {% csrf_token %}
+    <label class="field-label" for="order_number">Order number</label>
+    <input class="field" id="order_number" name="order_number" required>
+    <label class="field-label" for="email">Email</label>
+    <input class="field" id="email" type="email" name="email" required>
+    <button class="btn btn--primary" type="submit">Track</button>
+  </form>
+  {% if error %}<p class="alert alert--error">{{ error }}</p>{% endif %}
+  {% if order %}
+  <div class="review">
+    <h2>{{ order.order_number }}</h2>
+    <p>Status: {{ order.get_status_display }}</p>
+    {% if order.tracking_code %}<p>Tracking code: {{ order.tracking_code }}</p>{% endif %}
+  </div>
+  {% endif %}
+</section>
+{% endblock %}

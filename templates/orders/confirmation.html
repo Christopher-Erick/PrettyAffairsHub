@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block title %}Order {{ order.order_number }} — {{ SITE_NAME }}{% endblock %}
+{% block content %}
+<section class="section">
+  <h1 class="section__title">Thank you</h1>
+  <p>Your order <strong>{{ order.order_number }}</strong> is confirmed.</p>
+  <p>Status: {{ order.get_status_display }} · Total: {{ SITE_CURRENCY_SYMBOL }} {{ order.total }}</p>
+  <p>A confirmation email was sent to {{ order.email }}.</p>
+  <a class="btn btn--primary" href="{% url 'catalog:shop' %}">Keep shopping</a>
+  <a class="btn btn--ghost" href="{% url 'orders:track' %}">Track order</a>
+</section>
+{% endblock %}

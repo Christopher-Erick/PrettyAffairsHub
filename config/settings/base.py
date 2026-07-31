@@ -35,6 +35,10 @@ INSTALLED_APPS = [
     "apps.catalog",
     "apps.content",
     "apps.accounts",
+    "apps.cart",
+    "apps.orders",
+    "apps.discounts",
+    "apps.reviews",
 ]
 
 MIDDLEWARE = [
@@ -62,10 +66,15 @@ TEMPLATES = [
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
                 "apps.core.context_processors.site_settings",
+                "apps.cart.context_processors.cart_context",
             ],
         },
     },
 ]
+
+LOGIN_URL = "accounts:login"
+LOGIN_REDIRECT_URL = "accounts:profile"
+LOGOUT_REDIRECT_URL = "content:home"
 
 WSGI_APPLICATION = "config.wsgi.application"
 
@@ -129,3 +138,6 @@ EMAIL_BACKEND = env(
     default="django.core.mail.backends.console.EmailBackend",
 )
 DEFAULT_FROM_EMAIL = env("DEFAULT_FROM_EMAIL", default="hello@prettyaffairshub.com")
+
+# Tax rate percent (0 = disabled / inclusive pricing)
+TAX_RATE_PERCENT = env("TAX_RATE_PERCENT", default="0")

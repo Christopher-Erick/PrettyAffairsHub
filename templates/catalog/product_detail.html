@@ -1,0 +1,167 @@
+{% extends "base.html" %}
+
+{% block title %}{{ product.name }} — {{ SITE_NAME }}{% endblock %}
+{% block meta_description %}{{ product.short_description|default:product.description|truncatechars:155 }}{% endblock %}
+{% block og_title %}{{ product.name }}{% endblock %}
+
+{% block content %}
+<article class="pdp">
+  <div class="pdp__gallery" data-gallery>
+    <div class="pdp__main-image">
+      {% with img=product.primary_image %}
+        {% if img and img.image %}
+          <img id="pdp-zoom" src="{{ img.image.url }}" alt="{{ img.alt_text|default:product.name }}" data-zoom>
+        {% else %}
+          <div class="product-card__placeholder pdp__placeholder" role="img" aria-label="{{ product.name }}"></div>
+        {% endif %}
+      {% endwith %}
+    </div>
+    {% if product.images.count > 1 %}
+    <div class="pdp__thumbs" role="list">
+      {% for image in product.images.all %}
+        {% if image.image %}
+        <button type="button" class="pdp__thumb" data-thumb="{{ image.image.url }}" aria-label="View image {{ forloop.counter }}">
+          <img src="{{ image.image.url }}" alt="" loading="lazy">
+        </button>
+        {% endif %}
+      {% endfor %}
+    </div>
+    {% endif %}
+  </div>
+
+  <div class="pdp__info">
+    <p class="eyebrow">{% if product.in_stock %}In stock{% else %}Out of stock{% endif %}</p>
+    <h1 class="pdp__title">{{ product.name }}</h1>
+    <p class="pdp__price">{{ SITE_CURRENCY_SYMBOL }} {{ product.price }}
+      {% if product.on_sale %}<span class="price-compare">{{ SITE_CURRENCY_SYMBOL }} {{ product.compare_at_price }}</span>{% endif %}
+    </p>
+    {% if product.review_count %}
+    <p class="product-card__rating">★ {{ product.average_rating }} · {{ product.review_count }} reviews</p>
+    {% endif %}
+    <p>{{ product.short_description|default:product.description|truncatewords:40 }}</p>
+
+    <form class="pdp__actions" action="{% url 'cart:add' %}" method="post">
+      {% csrf_token %}
+      <input type="hidden" name="product_id" value="{{ product.id }}">
+      <input type="hidden" name="next" value="{{ product.get_absolute_url }}">
+      {% if product.variants.all %}
+      <label class="field-label" for="variant">Shade / option</label>
+      <select class="field" id="variant" name="variant_id">
+        {% for v in product.variants.all %}
+        <option value="{{ v.id }}">{{ v.name }} {% if v.stock < 1 %}(sold out){% endif %}</option>
+        {% endfor %}
+      </select>
+      {% endif %}
+      <label class="field-label" for="qty">Quantity</label>
+      <input class="field" id="qty" type="number" name="quantity" value="1" min="1">
+      <div class="pdp__buttons">
+        <button class="btn btn--primary" type="submit" {% if not product.in_stock %}disabled{% endif %}>Add to cart</button>
+        <button class="btn btn--ghost" type="submit" name="buy_now" formaction="{% url 'cart:add' %}" {% if not product.in_stock %}disabled{% endif %} onclick="this.form.next.value='{% url 'orders:checkout' %}'">Buy now</button>
+      </div>
+    </form>
+
+    {% if user.is_authenticated %}
+    <form action="{% url 'accounts:wishlist_toggle' product.slug %}" method="post">
+      {% csrf_token %}
+      <input type="hidden" name="next" value="{{ product.get_absolute_url }}">
+      <button class="btn btn--ghost" type="submit">Wishlist</button>
+    </form>
+    {% endif %}
+
+    <div class="share-row" aria-label="Share">
+      <span class="field-label">Share</span>
+      <a href="https://wa.me/?text={{ product.name|urlencode }}%20{{ request.build_absolute_uri }}" target="_blank" rel="noopener">WhatsApp</a>
+      <a href="https://www.facebook.com/sharer/sharer.php?u={{ request.build_absolute_uri|urlencode }}" target="_blank" rel="noopener">Facebook</a>
+      <a href="https://twitter.com/intent/tweet?text={{ product.name|urlencode }}&url={{ request.build_absolute_uri|urlencode }}" target="_blank" rel="noopener">X</a>
+    </div>
+
+    <div class="pdp__meta">
+      <p><strong>Delivery:</strong> Nationwide shipping. Free over KSh 5,000.</p>
+      <p><strong>Returns:</strong> 7-day return on unopened items.</p>
+    </div>
+  </div>
+</article>
+
+<section class="section">
+  <div class="tabs">
+    <div>
+      <h2 class="section__title">Description</h2>
+      <p>{{ product.description|linebreaks }}</p>
+    </div>
+    {% if product.benefit_list %}
+    <div>
+      <h2 class="section__title">Benefits</h2>
+      <ul>{% for b in product.benefit_list %}<li>{{ b }}</li>{% endfor %}</ul>
+    </div>
+    {% endif %}
+    {% if product.ingredients %}<div><h2 class="section__title">Ingredients</h2><p>{{ product.ingredients|linebreaks }}</p></div>{% endif %}
+    {% if product.directions %}<div><h2 class="section__title">Directions</h2><p>{{ product.directions|linebreaks }}</p></div>{% endif %}
+    {% if product.specifications %}<div><h2 class="section__title">Specifications</h2><p>{{ product.specifications|linebreaks }}</p></div>{% endif %}
+  </div>
+</section>
+
+{% if fbt %}
+<section class="section section--tight">
+  <h2 class="section__title">Frequently bought together</h2>
+  <div class="product-grid">{% for product in fbt %}{% include "components/product_card.html" %}{% endfor %}</div>
+</section>
+{% endif %}
+
+{% if similar %}
+<section class="section section--tight">
+  <h2 class="section__title">Similar products</h2>
+  <div class="product-grid">{% for product in similar %}{% include "components/product_card.html" %}{% endfor %}</div>
+</section>
+{% endif %}
+
+{% if recently_viewed %}
+<section class="section section--tight">
+  <h2 class="section__title">Recently viewed</h2>
+  <div class="product-grid">{% for product in recently_viewed %}{% include "components/product_card.html" %}{% endfor %}</div>
+</section>
+{% endif %}
+
+<section class="section" id="reviews">
+  <h2 class="section__title">Reviews</h2>
+  {% for review in reviews %}
+  <article class="review">
+    <p class="product-card__rating">★ {{ review.rating }} — {{ review.author_name }}</p>
+    {% if review.title %}<h3>{{ review.title }}</h3>{% endif %}
+    <p>{{ review.body }}</p>
+  </article>
+  {% empty %}
+  <p>No reviews yet. Be the first to share your thoughts.</p>
+  {% endfor %}
+
+  <h3 class="section__title">Write a review</h3>
+  <form method="post" action="{% url 'catalog:submit_review' product.slug %}" class="stack-form">
+    {% csrf_token %}
+    {{ review_form.as_p }}
+    <button class="btn btn--primary" type="submit">Submit review</button>
+  </form>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  (() => {
+    const main = document.querySelector("[data-zoom]");
+    const thumbs = document.querySelectorAll("[data-thumb]");
+    thumbs.forEach((btn) => btn.addEventListener("click", () => {
+      if (main) main.src = btn.dataset.thumb;
+    }));
+    if (main) {
+      main.addEventListener("mousemove", (e) => {
+        const r = main.getBoundingClientRect();
+        const x = ((e.clientX - r.left) / r.width) * 100;
+        const y = ((e.clientY - r.top) / r.height) * 100;
+        main.style.transformOrigin = `${x}% ${y}%`;
+        main.style.transform = "scale(1.6)";
+      });
+      main.addEventListener("mouseleave", () => {
+        main.style.transform = "scale(1)";
+      });
+    }
+  })();
+</script>
+{% endblock %}

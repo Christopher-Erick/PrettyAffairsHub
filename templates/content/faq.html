@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block title %}FAQs — {{ SITE_NAME }}{% endblock %}
+{% block content %}
+<section class="section narrow">
+  <h1 class="section__title">Frequently asked questions</h1>
+  {% for faq in faqs %}
+  <details class="faq">
+    <summary>{{ faq.question }}</summary>
+    <p>{{ faq.answer|linebreaks }}</p>
+  </details>
+  {% empty %}
+  <p>FAQs coming soon.</p>
+  {% endfor %}
+</section>
+{% endblock %}

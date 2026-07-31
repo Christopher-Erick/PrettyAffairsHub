@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block title %}Order history — {{ SITE_NAME }}{% endblock %}
+{% block content %}
+<section class="section">
+  <h1 class="section__title">Order history</h1>
+  {% for order in orders %}
+  <article class="review">
+    <h2><a href="{% url 'orders:detail' order.order_number %}">{{ order.order_number }}</a></h2>
+    <p>{{ order.created_at|date:"M j, Y" }} · {{ order.get_status_display }} · {{ SITE_CURRENCY_SYMBOL }} {{ order.total }}</p>
+  </article>
+  {% empty %}
+  <p>No orders yet.</p>
+  {% endfor %}
+</section>
+{% endblock %}

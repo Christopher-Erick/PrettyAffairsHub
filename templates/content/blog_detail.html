@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block title %}{{ post.title }} — {{ SITE_NAME }}{% endblock %}
+{% block content %}
+<article class="section narrow prose">
+  <p class="eyebrow">{% if post.is_tutorial %}Tutorial{% else %}Journal{% endif %}</p>
+  <h1 class="section__title">{{ post.title }}</h1>
+  <p>{{ post.published_at|date:"F j, Y" }}</p>
+  {{ post.body|linebreaks }}
+</article>
+{% endblock %}

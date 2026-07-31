@@ -1,15 +1,32 @@
 <article class="product-card">
-  <a class="product-card__media" href="{% url 'catalog:shop' %}">
-    {% if product.badge %}
-    <span class="badge">{{ product.badge }}</span>
+  <a class="product-card__media" href="{{ product.get_absolute_url }}">
+    {% if product.is_new %}<span class="badge">New</span>
+    {% elif product.is_bestseller %}<span class="badge">Best seller</span>
+    {% elif product.is_trending %}<span class="badge">Trending</span>
+    {% elif product.is_limited_offer %}<span class="badge">Offer</span>
     {% endif %}
-    <div class="product-card__placeholder" role="img" aria-label="{{ product.image_alt }}"></div>
+    {% if product.primary_image and product.primary_image.image %}
+      <img src="{{ product.primary_image.image.url }}" alt="{{ product.primary_image.alt_text|default:product.name }}" loading="lazy" width="480" height="600">
+    {% else %}
+      <div class="product-card__placeholder" role="img" aria-label="{{ product.name }}"></div>
+    {% endif %}
   </a>
   <div class="product-card__body">
-    <h3 class="product-card__title">
-      <a href="{% url 'catalog:shop' %}">{{ product.name }}</a>
-    </h3>
-    <p class="product-card__price">{{ SITE_CURRENCY_SYMBOL }} {{ product.price }}</p>
-    <button class="btn btn--ghost btn--full" type="button">Add to cart</button>
+    <h3 class="product-card__title"><a href="{{ product.get_absolute_url }}">{{ product.name }}</a></h3>
+    <p class="product-card__price">
+      {{ SITE_CURRENCY_SYMBOL }} {{ product.price }}
+      {% if product.on_sale %}<span class="price-compare">{{ SITE_CURRENCY_SYMBOL }} {{ product.compare_at_price }}</span>{% endif %}
+    </p>
+    {% if product.review_count %}
+    <p class="product-card__rating" aria-label="Rated {{ product.average_rating }} out of 5">★ {{ product.average_rating }} ({{ product.review_count }})</p>
+    {% endif %}
+    <form action="{% url 'cart:add' %}" method="post">
+      {% csrf_token %}
+      <input type="hidden" name="product_id" value="{{ product.id }}">
+      <input type="hidden" name="next" value="{{ request.path }}">
+      <button class="btn btn--ghost btn--full" type="submit" {% if not product.in_stock %}disabled{% endif %}>
+        {% if product.in_stock %}Add to cart{% else %}Sold out{% endif %}
+      </button>
+    </form>
   </div>
 </article>

@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block title %}Order {{ order.order_number }} — {{ SITE_NAME }}{% endblock %}
+{% block content %}
+<section class="section">
+  <h1 class="section__title">{{ order.order_number }}</h1>
+  <p>Status: {{ order.get_status_display }}{% if order.tracking_code %} · Tracking: {{ order.tracking_code }}{% endif %}</p>
+  <p>Ships to {{ order.shipping_name }}, {{ order.shipping_line1 }}, {{ order.shipping_city }}</p>
+  <ul>
+    {% for item in order.items.all %}
+    <li>{{ item.product_name }}{% if item.variant_name %} ({{ item.variant_name }}){% endif %} × {{ item.quantity }} — {{ SITE_CURRENCY_SYMBOL }} {{ item.line_total }}</li>
+    {% endfor %}
+  </ul>
+  <p><strong>Total: {{ SITE_CURRENCY_SYMBOL }} {{ order.total }}</strong></p>
+  <h2 class="section__title">Timeline</h2>
+  <ul>{% for event in order.events.all %}<li>{{ event.created_at|date:"M j, Y H:i" }} — {{ event.status }}{% if event.note %}: {{ event.note }}{% endif %}</li>{% endfor %}</ul>
+</section>
+{% endblock %}

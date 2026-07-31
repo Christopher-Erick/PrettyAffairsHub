@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block title %}Wishlist — {{ SITE_NAME }}{% endblock %}
+{% block content %}
+<section class="section">
+  <h1 class="section__title">Wishlist</h1>
+  <div class="product-grid">
+    {% for product in products %}{% include "components/product_card.html" %}{% empty %}<p>Your wishlist is empty.</p>{% endfor %}
+  </div>
+</section>
+{% endblock %}

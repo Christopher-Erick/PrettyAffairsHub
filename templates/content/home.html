@@ -18,6 +18,15 @@
   </div>
 </section>
 
+{% if flash_sales %}
+<section class="section section--tight">
+  <div class="section__intro">
+    <p class="eyebrow">Flash sale</p>
+    <h2 class="section__title">{{ flash_sales.0.name }} — {{ flash_sales.0.percent_off }}% off</h2>
+  </div>
+</section>
+{% endif %}
+
 <section class="section section--tight" id="featured" aria-labelledby="featured-heading">
   <div class="section__intro">
     <p class="eyebrow">Featured</p>
@@ -26,21 +35,59 @@
   </div>
   <div class="product-grid">
     {% for product in featured_products %}
-      {% include "components/product_card.html" with product=product %}
+      {% include "components/product_card.html" %}
+    {% empty %}
+      <p>Products will appear here once the catalog is seeded.</p>
     {% endfor %}
   </div>
-  <div class="section__cta">
-    <a class="btn btn--primary" href="{% url 'catalog:shop' %}">View all products</a>
-  </div>
+  <div class="section__cta"><a class="btn btn--primary" href="{% url 'catalog:shop' %}">View all products</a></div>
 </section>
 
-<section class="band" aria-labelledby="promise-heading">
-  <div class="band__inner">
-    <p class="eyebrow">The Pretty Affairs promise</p>
-    <h2 id="promise-heading" class="band__title">Elegant shopping, grounded in trust</h2>
-    <p class="band__text">
-      Clear ingredients, thoughtful packaging, and a checkout experience that stays calm from first glance to final click.
-    </p>
+{% if bestsellers %}
+<section class="section" aria-labelledby="best-heading">
+  <div class="section__intro">
+    <p class="eyebrow">Best sellers</p>
+    <h2 id="best-heading" class="section__title">Customer favourites</h2>
+  </div>
+  <div class="product-grid">
+    {% for product in bestsellers %}{% include "components/product_card.html" %}{% endfor %}
   </div>
 </section>
+{% endif %}
+
+{% if testimonials %}
+<section class="band" aria-labelledby="love-heading">
+  <div class="band__inner">
+    <p class="eyebrow">Kind words</p>
+    <h2 id="love-heading" class="band__title">Loved by the Pretty Affairs community</h2>
+    <div class="quote-grid">
+      {% for t in testimonials %}
+      <blockquote class="quote">
+        <p>“{{ t.quote }}”</p>
+        <footer>— {{ t.author_name }}</footer>
+      </blockquote>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+{% endif %}
+
+{% if blog_posts %}
+<section class="section" aria-labelledby="journal-heading">
+  <div class="section__intro">
+    <p class="eyebrow">Journal</p>
+    <h2 id="journal-heading" class="section__title">Beauty notes & tutorials</h2>
+  </div>
+  <div class="post-grid">
+    {% for post in blog_posts %}
+    <article class="post-card">
+      <p class="eyebrow">{% if post.is_tutorial %}Tutorial{% else %}Article{% endif %}</p>
+      <h3><a href="{{ post.get_absolute_url }}">{{ post.title }}</a></h3>
+      <p>{{ post.excerpt }}</p>
+    </article>
+    {% endfor %}
+  </div>
+  <div class="section__cta"><a class="btn btn--ghost" href="{% url 'content:blog' %}">Read the journal</a></div>
+</section>
+{% endif %}
 {% endblock %}

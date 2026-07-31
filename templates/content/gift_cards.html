@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block title %}Gift cards — {{ SITE_NAME }}{% endblock %}
+{% block content %}
+<section class="section">
+  <h1 class="section__title">Gift cards</h1>
+  <p>Give the gift of beauty. Redeemable across the Pretty Affairs Hub collection.</p>
+  <div class="product-grid">
+    {% for card in cards %}
+    <article class="product-card">
+      <div class="product-card__placeholder" role="img" aria-label="Gift card"></div>
+      <div class="product-card__body">
+        <h3 class="product-card__title">{{ SITE_CURRENCY_SYMBOL }} {{ card.initial_balance }} Gift Card</h3>
+        <p class="product-card__price">Code managed in-store / admin</p>
+      </div>
+    </article>
+    {% empty %}
+    <p>Gift cards will be listed here. Admins can create codes in Django Admin.</p>
+    {% endfor %}
+  </div>
+</section>
+{% endblock %}

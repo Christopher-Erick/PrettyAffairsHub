@@ -49,5 +49,12 @@ See `docs/` for architecture, deployment, security, and development guides.
 
 ## Current milestone
 
-Phase 0 foundation + Phase 1 design system and homepage shell are in place.  
-Next: Phase 2 catalog (products, categories, collections, admin).
+Phases 0–6 are implemented: foundation, design system, catalog, cart/checkout, accounts/orders, merchandising, and trust/content.
+
+```bash
+python manage.py seed_demo
+```
+
+loads sample products, coupons (`PRETTY10`), FAQs, blog posts, and more.
+
+Next: Phase 7 payments hardening + Phase 8 Cloudflare production deploy.

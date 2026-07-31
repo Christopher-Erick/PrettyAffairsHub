@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block title %}Cart — {{ SITE_NAME }}{% endblock %}
+{% block content %}
+<section class="section">
+  <h1 class="section__title">Your cart</h1>
+  {% if items %}
+  <div class="cart-table">
+    {% for item in items %}
+    <div class="cart-row">
+      <div>
+        <strong><a href="{{ item.product.get_absolute_url }}">{{ item.product.name }}</a></strong>
+        {% if item.variant %}<p>{{ item.variant.name }}</p>{% endif %}
+        <p>{{ SITE_CURRENCY_SYMBOL }} {{ item.unit_price }}</p>
+      </div>
+      <form action="{% url 'cart:update' item.id %}" method="post" class="inline-form">
+        {% csrf_token %}
+        <label class="visually-hidden" for="qty-{{ item.id }}">Quantity</label>
+        <input class="field field--sm" id="qty-{{ item.id }}" type="number" name="quantity" value="{{ item.quantity }}" min="0">
+        <button class="btn btn--ghost" type="submit">Update</button>
+      </form>
+      <p>{{ SITE_CURRENCY_SYMBOL }} {{ item.line_total }}</p>
+      <form action="{% url 'cart:remove' item.id %}" method="post">
+        {% csrf_token %}
+        <button class="text-link" type="submit">Remove</button>
+      </form>
+    </div>
+    {% endfor %}
+  </div>
+  <form action="{% url 'cart:apply_coupon' %}" method="post" class="inline-form">
+    {% csrf_token %}
+    <label class="visually-hidden" for="coupon">Coupon</label>
+    <input class="field" id="coupon" name="coupon_code" placeholder="Coupon code" value="{{ cart.coupon_code }}">
+    <button class="btn btn--ghost" type="submit">Apply</button>
+  </form>
+  <div class="totals">
+    <p>Subtotal: {{ SITE_CURRENCY_SYMBOL }} {{ totals.subtotal }}</p>
+    <p>Discount: − {{ SITE_CURRENCY_SYMBOL }} {{ totals.discount_amount }}</p>
+    <p>Shipping: {{ SITE_CURRENCY_SYMBOL }} {{ totals.shipping_amount }}</p>
+    <p><strong>Total: {{ SITE_CURRENCY_SYMBOL }} {{ totals.total }}</strong></p>
+    <a class="btn btn--primary" href="{% url 'orders:checkout' %}">Checkout</a>
+  </div>
+  {% else %}
+  <p>Your cart is empty.</p>
+  <a class="btn btn--primary" href="{% url 'catalog:shop' %}">Continue shopping</a>
+  {% endif %}
+</section>
+{% endblock %}

@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block title %}{{ bundle.name }} — {{ SITE_NAME }}{% endblock %}
+{% block content %}
+<section class="section">
+  <h1 class="section__title">{{ bundle.name }}</h1>
+  <p class="pdp__price">{{ SITE_CURRENCY_SYMBOL }} {{ bundle.price }}
+    {% if bundle.compare_at_price %}<span class="price-compare">{{ SITE_CURRENCY_SYMBOL }} {{ bundle.compare_at_price }}</span>{% endif %}
+  </p>
+  <p>{{ bundle.description|linebreaks }}</p>
+  <h2 class="section__title">Includes</h2>
+  <div class="product-grid">
+    {% for item in bundle.items.all %}
+      {% with product=item.product %}{% include "components/product_card.html" %}{% endwith %}
+    {% endfor %}
+  </div>
+</section>
+{% endblock %}

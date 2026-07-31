@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block title %}Journal — {{ SITE_NAME }}{% endblock %}
+{% block content %}
+<section class="section">
+  <h1 class="section__title">Beauty journal</h1>
+  <p><a href="?tutorials=1">Tutorials</a> · <a href="{% url 'content:blog' %}">All posts</a></p>
+  <div class="post-grid">
+    {% for post in posts %}
+    <article class="post-card">
+      <p class="eyebrow">{% if post.is_tutorial %}Tutorial{% else %}Article{% endif %}</p>
+      <h2><a href="{{ post.get_absolute_url }}">{{ post.title }}</a></h2>
+      <p>{{ post.excerpt }}</p>
+    </article>
+    {% empty %}<p>No posts yet.</p>{% endfor %}
+  </div>
+</section>
+{% endblock %}

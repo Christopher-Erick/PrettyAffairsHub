@@ -1,0 +1,96 @@
+from decimal import Decimal
+
+from django.contrib import messages
+from django.contrib.auth.decorators import login_required
+from django.shortcuts import get_object_or_404, redirect, render
+
+from apps.cart.services import cart_totals, get_or_create_cart
+from apps.discounts.models import Coupon
+from apps.orders.forms import CheckoutForm
+from apps.orders.models import Order
+from apps.orders.services import DEFAULT_SHIPPING, FREE_SHIPPING_THRESHOLD, create_order_from_cart
+
+
+def checkout(request):
+    cart = get_or_create_cart(request)
+    items = cart.items.select_related("product", "variant")
+    if not items.exists():
+        messages.info(request, "Your cart is empty.")
+        return redirect("cart:detail")
+
+    initial = {}
+    if request.user.is_authenticated:
+        initial["email"] = request.user.email
+        initial["shipping_name"] = request.user.get_full_name() or request.user.username
+        default_address = request.user.addresses.filter(is_default=True).first()
+        if default_address:
+            initial.update(
+                {
+                    "phone": default_address.phone,
+                    "shipping_name": default_address.full_name,
+                    "shipping_line1": default_address.line1,
+                    "shipping_line2": default_address.line2,
+                    "shipping_city": default_address.city,
+                    "shipping_county": default_address.county,
+                    "shipping_postal_code": default_address.postal_code,
+                    "shipping_country": default_address.country,
+                }
+            )
+
+    form = CheckoutForm(request.POST or None, initial=initial)
+    discount = Decimal("0")
+    code = cart.coupon_code
+    if request.method == "POST" and form.is_valid():
+        try:
+            order = create_order_from_cart(request, form.cleaned_data)
+            messages.success(request, f"Order {order.order_number} placed successfully.")
+            return redirect("orders:confirmation", order_number=order.order_number)
+        except ValueError as exc:
+            messages.error(request, str(exc))
+    if code:
+        coupon = Coupon.objects.filter(code__iexact=code).first()
+        if coupon:
+            discount = coupon.calculate_discount(cart.subtotal)
+    shipping = (
+        Decimal("0")
+        if cart.subtotal - discount >= FREE_SHIPPING_THRESHOLD
+        else DEFAULT_SHIPPING
+    )
+    totals = cart_totals(cart, discount, shipping)
+    return render(
+        request,
+        "orders/checkout.html",
+        {"form": form, "cart": cart, "items": items, "totals": totals},
+    )
+
+
+def order_confirmation(request, order_number):
+    order = get_object_or_404(Order, order_number=order_number)
+    if request.user.is_authenticated and order.user_id and order.user_id != request.user.id:
+        messages.error(request, "You cannot view that order.")
+        return redirect("content:home")
+    return render(request, "orders/confirmation.html", {"order": order})
+
+
+@login_required
+def order_history(request):
+    orders = Order.objects.filter(user=request.user).prefetch_related("items")
+    return render(request, "orders/history.html", {"orders": orders})
+
+
+@login_required
+def order_detail(request, order_number):
+    order = get_object_or_404(Order, order_number=order_number, user=request.user)
+    return render(request, "orders/detail.html", {"order": order})
+
+
+def track_order(request):
+    order = None
+    error = ""
+    if request.method == "POST":
+        number = request.POST.get("order_number", "").strip()
+        email = request.POST.get("email", "").strip()
+        order = Order.objects.filter(order_number__iexact=number, email__iexact=email).first()
+        if not order:
+            error = "No order found with that number and email."
+    return render(request, "orders/track.html", {"order": order, "error": error})

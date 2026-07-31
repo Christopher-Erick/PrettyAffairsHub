@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block title %}About — {{ SITE_NAME }}{% endblock %}
+{% block content %}
+<section class="section narrow">
+  <p class="eyebrow">About</p>
+  <h1 class="section__title">{{ page.title|default:SITE_NAME }}</h1>
+  {% if page %}
+  <div class="prose">{{ page.body|linebreaks }}</div>
+  {% else %}
+  <p>{{ SITE_NAME }} is your one stop beauty destination — elegant essentials, thoughtful formulas, and a calm shopping experience.</p>
+  {% endif %}
+</section>
+{% endblock %}

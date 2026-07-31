@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block title %}Bundles — {{ SITE_NAME }}{% endblock %}
+{% block content %}
+<section class="section">
+  <h1 class="section__title">Combos & bundles</h1>
+  <div class="product-grid">
+    {% for bundle in bundles %}
+    <article class="product-card">
+      <a class="product-card__media" href="{{ bundle.get_absolute_url }}">
+        <div class="product-card__placeholder" role="img" aria-label="{{ bundle.name }}"></div>
+      </a>
+      <div class="product-card__body">
+        <h3 class="product-card__title"><a href="{{ bundle.get_absolute_url }}">{{ bundle.name }}</a></h3>
+        <p class="product-card__price">{{ SITE_CURRENCY_SYMBOL }} {{ bundle.price }}
+          {% if bundle.compare_at_price %}<span class="price-compare">{{ SITE_CURRENCY_SYMBOL }} {{ bundle.compare_at_price }}</span>{% endif %}
+        </p>
+      </div>
+    </article>
+    {% empty %}<p>Bundles coming soon.</p>{% endfor %}
+  </div>
+</section>
+{% endblock %}

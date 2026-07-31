@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block title %}Account — {{ SITE_NAME }}{% endblock %}
+{% block content %}
+<section class="section">
+  <h1 class="section__title">Your account</h1>
+  <p>
+    <a href="{% url 'accounts:wishlist' %}">Wishlist</a> ·
+    <a href="{% url 'orders:history' %}">Orders</a> ·
+    <a href="{% url 'orders:track' %}">Track</a> ·
+    <a href="{% url 'accounts:logout' %}">Sign out</a>
+  </p>
+  <form method="post" class="stack-form narrow">
+    {% csrf_token %}
+    <label class="field-label" for="id_first_name">First name</label>
+    <input class="field" name="first_name" id="id_first_name" value="{{ form.initial.first_name }}">
+    <label class="field-label" for="id_last_name">Last name</label>
+    <input class="field" name="last_name" id="id_last_name" value="{{ form.initial.last_name }}">
+    <label class="field-label" for="id_email">Email</label>
+    <input class="field" type="email" name="email" id="id_email" value="{{ form.initial.email }}">
+    {{ form.phone.label_tag }} {{ form.phone }}
+    <button class="btn btn--primary" type="submit">Save profile</button>
+  </form>
+  <h2 class="section__title">Addresses</h2>
+  <ul>{% for a in addresses %}<li>{{ a.full_name }} — {{ a.line1 }}, {{ a.city }}</li>{% empty %}<li>No addresses yet.</li>{% endfor %}</ul>
+  <a class="btn btn--ghost" href="{% url 'accounts:address_create' %}">Add address</a>
+  <h2 class="section__title">Recent orders</h2>
+  {% for order in orders %}
+  <p><a href="{% url 'orders:detail' order.order_number %}">{{ order.order_number }}</a> — {{ order.get_status_display }}</p>
+  {% empty %}<p>No orders yet.</p>{% endfor %}
+</section>
+{% endblock %}
