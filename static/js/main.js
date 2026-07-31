@@ -68,6 +68,39 @@
     });
   }
 
+  const shopSearch = document.querySelector("[data-shop-search]");
+  if (shopSearch) {
+    const input = shopSearch.querySelector("[data-shop-search-input]");
+    const clear = shopSearch.querySelector("[data-shop-search-clear]");
+    const quickTerms = shopSearch.querySelectorAll("[data-search-term]");
+
+    const syncClear = () => {
+      if (clear && input) clear.hidden = !input.value;
+    };
+
+    if (input) {
+      input.addEventListener("input", syncClear);
+      syncClear();
+    }
+
+    if (clear && input) {
+      clear.addEventListener("click", () => {
+        input.value = "";
+        syncClear();
+        window.location.assign(shopSearch.dataset.clearUrl || window.location.pathname);
+      });
+    }
+
+    quickTerms.forEach((button) => {
+      button.addEventListener("click", () => {
+        if (!input) return;
+        input.value = button.dataset.searchTerm || "";
+        syncClear();
+        shopSearch.requestSubmit();
+      });
+    });
+  }
+
   const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   if (!reduceMotion && "IntersectionObserver" in window) {
     document
