@@ -37,7 +37,7 @@ class ProductListView(ListView):
     model = Product
     template_name = "catalog/shop.html"
     context_object_name = "products"
-    paginate_by = 12
+    paginate_by = 24
 
     def get_queryset(self):
         qs = _shop_product_qs()
@@ -54,6 +54,8 @@ class ProductListView(ListView):
                 Q(name__icontains=q)
                 | Q(short_description__icontains=q)
                 | Q(description__icontains=q)
+                | Q(variants__name__icontains=q)
+                | Q(brand__name__icontains=q)
             )
         if category:
             qs = products_for_category_slug(qs, category)
