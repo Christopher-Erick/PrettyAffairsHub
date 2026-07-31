@@ -98,7 +98,7 @@
       {% for product in featured_products %}
         {% include "components/product_card.html" %}
       {% empty %}
-        <p>Products will appear here once the catalog is seeded.</p>
+        <p>New pieces are landing shortly — browse the full collection in the meantime.</p>
       {% endfor %}
     </div>
     <div class="section__cta"><a class="btn btn--primary" href="{% url 'catalog:shop' %}">View all products</a></div>

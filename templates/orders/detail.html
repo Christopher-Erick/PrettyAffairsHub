@@ -12,6 +12,6 @@
   </ul>
   <p><strong>Total: {{ SITE_CURRENCY_SYMBOL }} {{ order.total }}</strong></p>
   <h2 class="section__title">Timeline</h2>
-  <ul>{% for event in order.events.all %}<li>{{ event.created_at|date:"M j, Y H:i" }} — {{ event.status }}{% if event.note %}: {{ event.note }}{% endif %}</li>{% endfor %}</ul>
+  <ul>{% for event in order.events.all %}<li>{{ event.created_at|date:"M j, Y H:i" }} — {{ event.status_label }}{% if event.note %}: {{ event.note }}{% endif %}</li>{% endfor %}</ul>
 </section>
 {% endblock %}

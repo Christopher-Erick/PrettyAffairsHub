@@ -41,3 +41,39 @@ class ProductDetailPageTests(TestCase):
             content.index('<h2 class="section__title">Ingredients</h2>'),
             info_end,
         )
+
+
+class InternalCatalogDataTests(TestCase):
+    """Sourcing and stock-keeping fields are operational data, not shopper copy."""
+
+    def setUp(self):
+        self.product = Product.objects.create(
+            name="Velvet Lip Oil",
+            price="1800.00",
+            stock=4,
+            sku="PAH-LIPS-A1B2C3D",
+            source_name="The Lip Tribe",
+            source_url="https://example.com/products/velvet-lip-oil",
+        )
+
+    def assert_no_internal_fields(self, response):
+        self.assertEqual(response.status_code, 200)
+        self.assertNotContains(response, self.product.sku)
+        self.assertNotContains(response, self.product.source_name)
+        self.assertNotContains(response, "example.com/products/velvet-lip-oil")
+
+    def test_product_detail_hides_source_and_sku(self):
+        self.assert_no_internal_fields(
+            self.client.get(
+                reverse("catalog:product_detail", kwargs={"slug": self.product.slug})
+            )
+        )
+
+    def test_shop_listing_hides_source_and_sku(self):
+        self.assert_no_internal_fields(self.client.get(reverse("catalog:shop")))
+
+    def test_shop_empty_state_avoids_importer_jargon(self):
+        response = self.client.get(reverse("catalog:shop"), {"q": "zzzzzznomatch"})
+
+        self.assertEqual(response.status_code, 200)
+        self.assertNotContains(response, "authorized")

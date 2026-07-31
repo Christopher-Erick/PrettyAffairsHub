@@ -1,21 +1,37 @@
 {% extends "base.html" %}
 {% block title %}Gift cards — {{ SITE_NAME }}{% endblock %}
 {% block content %}
-<section class="section">
+<section class="section narrow">
+  <p class="eyebrow">Always the right shade</p>
   <h1 class="section__title">Gift cards</h1>
-  <p>Give the gift of beauty. Redeemable across the Pretty Affairs Hub collection.</p>
+  <p class="section__text">Give the gift of beauty. Redeemable across the Pretty Affairs Hub collection, online and in store.</p>
+
+  {% if denominations %}
   <div class="product-grid">
-    {% for card in cards %}
+    {% for amount in denominations %}
     <article class="product-card">
-      <div class="product-card__placeholder" role="img" aria-label="Gift card"></div>
+      <div class="product-card__placeholder" role="img" aria-label="{{ SITE_CURRENCY_SYMBOL }} {{ amount }} gift card"></div>
       <div class="product-card__body">
-        <h3 class="product-card__title">{{ SITE_CURRENCY_SYMBOL }} {{ card.initial_balance }} Gift Card</h3>
-        <p class="product-card__price">Code managed in-store / admin</p>
+        <h2 class="product-card__title">{{ SITE_CURRENCY_SYMBOL }} {{ amount }} gift card</h2>
+        <p class="product-card__price">Delivered by email with a unique code</p>
       </div>
     </article>
-    {% empty %}
-    <p>Gift cards will be listed here. Admins can create codes in Django Admin.</p>
     {% endfor %}
+  </div>
+  {% endif %}
+
+  <h2 class="section__title">How it works</h2>
+  <ol class="prose">
+    <li>Tell us the amount and who it is for.</li>
+    <li>We send a unique code to you or straight to the recipient.</li>
+    <li>They enter the code at checkout — any unused balance stays on the card.</li>
+  </ol>
+
+  <div class="confirmation__actions">
+    {% if WHATSAPP_NUMBER %}
+    <a class="btn btn--primary" href="https://wa.me/{{ WHATSAPP_NUMBER }}?text=Hi%20Pretty%20Affairs%20Hub%20—%20I%27d%20like%20to%20buy%20a%20gift%20card" target="_blank" rel="noopener">Order a gift card on WhatsApp</a>
+    {% endif %}
+    <a class="btn btn--ghost" href="{% url 'content:contact' %}">Ask us a question</a>
   </div>
 </section>
 {% endblock %}

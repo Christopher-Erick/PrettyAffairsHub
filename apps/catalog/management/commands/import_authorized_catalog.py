@@ -418,9 +418,8 @@ class Command(BaseCommand):
         product.name = data["name"][:200]
         product.brand = brand
         product.short_description = description[:255]
-        product.description = (
-            f"{description} Selected from {data['source']} for the Pretty Affairs Hub edit."
-        )
+        # Sourcing stays in source_name/source_url for staff; shopper copy never names it.
+        product.description = f"{description} Curated for the Pretty Affairs Hub edit."
         product.benefits = benefits
         product.directions = directions
         product.price = data["price"]

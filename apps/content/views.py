@@ -6,12 +6,14 @@ from django.views.generic import DetailView, ListView, TemplateView
 from apps.catalog.models import Category, Product, ProductVariant
 from apps.content.forms import ContactForm, NewsletterForm
 from apps.content.models import BlogPost, FAQ, HomepageSection, SitePage, Testimonial
-from apps.discounts.models import FlashSale, GiftCard
+from apps.discounts.models import FlashSale
 
 ACTIVE_VARIANTS = Prefetch(
     "variants",
     queryset=ProductVariant.objects.filter(is_active=True).order_by("id"),
 )
+
+GIFT_CARD_DENOMINATIONS = [1000, 2500, 5000, 10000]
 
 
 def _card_qs():
@@ -131,5 +133,10 @@ def newsletter_subscribe(request):
 
 
 def gift_cards(request):
-    cards = GiftCard.objects.filter(is_active=True).order_by("initial_balance")[:8]
-    return render(request, "content/gift_cards.html", {"cards": cards})
+    # Issued gift cards are customer property and stay in the staff admin; shoppers
+    # only see the denominations we sell.
+    return render(
+        request,
+        "content/gift_cards.html",
+        {"denominations": GIFT_CARD_DENOMINATIONS},
+    )

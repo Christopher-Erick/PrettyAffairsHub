@@ -91,3 +91,7 @@ class OrderEvent(models.Model):
 
     def __str__(self):
         return f"{self.order.order_number}: {self.status}"
+
+    @property
+    def status_label(self):
+        return dict(Order.STATUS_CHOICES).get(self.status, self.status.replace("_", " ").title())
