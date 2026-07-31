@@ -137,7 +137,7 @@
   const variantSelect = document.querySelector("[data-variant-select]");
   const pdpSwatches = [...document.querySelectorAll("[data-pdp-swatch]:not(:disabled)")];
   if (variantSelect && pdpSwatches.length) {
-    const pdpImage = document.querySelector("[data-zoom]");
+    const pdpImage = document.querySelector("[data-pdp-main-image]");
     const shadeName = document.querySelector("[data-shade-name]");
     const choosePdpShade = (swatch) => {
       pdpSwatches.forEach((item) => item.classList.toggle("is-selected", item === swatch));
