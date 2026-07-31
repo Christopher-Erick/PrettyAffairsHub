@@ -1,11 +1,23 @@
 from django.contrib import messages
+from django.db.models import Count, Prefetch, Q
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.generic import DetailView, ListView, TemplateView
 
-from apps.catalog.models import Category, Product
+from apps.catalog.models import Category, Product, ProductVariant
 from apps.content.forms import ContactForm, NewsletterForm
 from apps.content.models import BlogPost, FAQ, HomepageSection, SitePage, Testimonial
 from apps.discounts.models import FlashSale, GiftCard
+
+ACTIVE_VARIANTS = Prefetch(
+    "variants",
+    queryset=ProductVariant.objects.filter(is_active=True).order_by("id"),
+)
+
+
+def _card_qs():
+    return Product.objects.published().select_related("brand").prefetch_related(
+        "images", ACTIVE_VARIANTS
+    )
 
 
 class HomeView(TemplateView):
@@ -13,19 +25,34 @@ class HomeView(TemplateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        card_qs = Product.objects.published().select_related("brand").prefetch_related(
-            "images", "variants"
-        )
-        featured = list(Product.objects.featured().select_related("brand").prefetch_related("images", "variants")[:4])
-        context["featured_products"] = featured or list(card_qs[:4])
+        card_qs = _card_qs()
+        featured = list(Product.objects.featured().select_related("brand").prefetch_related("images", ACTIVE_VARIANTS)[:8])
+        context["featured_products"] = featured or list(card_qs[:8])
         context["new_arrivals"] = list(
-            Product.objects.new_arrivals().select_related("brand").prefetch_related("images", "variants")[:4]
+            Product.objects.new_arrivals().select_related("brand").prefetch_related("images", ACTIVE_VARIANTS)[:8]
         )
         context["bestsellers"] = list(
-            Product.objects.best_sellers().select_related("brand").prefetch_related("images", "variants")[:4]
+            Product.objects.best_sellers().select_related("brand").prefetch_related("images", ACTIVE_VARIANTS)[:8]
+        )
+        context["shade_picks"] = list(
+            card_qs.annotate(
+                shade_count=Count("variants", filter=Q(variants__is_active=True), distinct=True)
+            )
+            .filter(shade_count__gte=3)
+            .order_by("-shade_count", "-average_rating", "-review_count")[:8]
         )
         context["categories"] = list(
-            Category.objects.filter(is_active=True, parent__isnull=True)[:8]
+            Category.objects.filter(is_active=True, parent__isnull=False)
+            .select_related("parent")
+            .annotate(
+                product_count=Count(
+                    "products",
+                    filter=Q(products__is_active=True),
+                    distinct=True,
+                )
+            )
+            .filter(product_count__gt=0)
+            .order_by("parent__sort_order", "sort_order", "name")[:10]
         )
         context["testimonials"] = list(Testimonial.objects.filter(is_featured=True)[:3])
         context["sections"] = list(HomepageSection.objects.filter(is_active=True))

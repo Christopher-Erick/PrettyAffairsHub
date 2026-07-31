@@ -47,11 +47,11 @@
   <div class="section__intro">
     <p class="eyebrow">What’s your vibe?</p>
     <h2 class="section__title">Shop by ritual</h2>
-    <p class="section__text">Move through colour families and textures without the clutter.</p>
+    <p class="section__text">Jump into the lanes that actually have pieces ready to shop.</p>
   </div>
   <div class="vibe-row">
     {% for cat in categories %}
-    <a class="vibe-chip" href="{% url 'catalog:category' cat.slug %}">{{ cat.name }}</a>
+    <a class="vibe-chip" href="{% url 'catalog:category' cat.slug %}">{{ cat.name }} · {{ cat.product_count }}</a>
     {% endfor %}
     <a class="vibe-chip" href="{% url 'catalog:ritual_builder' %}">Build a ritual</a>
     <a class="vibe-chip" href="{% url 'catalog:bundles' %}">Bundles</a>
@@ -60,6 +60,23 @@
 </section>
 {% endif %}
 
+{% if shade_picks %}
+<section class="section section--soft" aria-labelledby="shade-home-heading">
+  <div class="section__inner">
+    <div class="section__intro">
+      <p class="eyebrow">Shade studio</p>
+      <h2 id="shade-home-heading" class="section__title">Colour stories worth opening</h2>
+      <p class="section__text">Multi-shade favourites — tap a swatch on any card to preview the look.</p>
+    </div>
+    <div class="product-grid">
+      {% for product in shade_picks %}
+        {% include "components/product_card.html" %}
+      {% endfor %}
+    </div>
+    <div class="section__cta"><a class="btn btn--ghost" href="{% url 'catalog:shop' %}?q=tint">Browse more shades</a></div>
+  </div>
+</section>
+{% endif %}
 {% if flash_sales %}
 <section class="section section--tight">
   <div class="section__intro">
