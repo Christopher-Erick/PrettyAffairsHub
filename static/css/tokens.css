@@ -1,68 +1,65 @@
 /* Pretty Affairs Hub — design tokens */
 :root {
-  /* Brand — charcoal + rose-burgundy from logo, blended warm neutrals */
   --color-charcoal: #1c1715;
   --color-ink: #2a2320;
   --color-burgundy: #8a4540;
   --color-burgundy-deep: #6b3531;
   --color-rose: #c9a39a;
   --color-blush: #e8d5cf;
-  --color-sand: #f0e7e1;
-  --color-mist: #f4ece7;
+  --color-sand: #efe6e0;
+  --color-mist: #f3ebe6;
   --color-ivory: #faf6f3;
   --color-white: #fffcfa;
   --color-muted: #7a716c;
-  --color-border: rgba(28, 23, 21, 0.1);
+  --color-border: rgba(28, 23, 21, 0.08);
   --color-focus: #8a4540;
-  --color-glow: rgba(138, 69, 64, 0.14);
+  --color-glow: rgba(138, 69, 64, 0.12);
 
-  /* Surfaces */
+  /* Continuous surface story — same family end-to-end */
   --bg-page: var(--color-ivory);
-  --bg-elevated: var(--color-white);
-  --bg-nav: rgba(250, 246, 243, 0.88);
-  --bg-nav-bar: linear-gradient(180deg, rgba(232, 213, 207, 0.55), rgba(240, 231, 225, 0.72));
-  --bg-announcement: var(--color-charcoal);
+  --bg-elevated: rgba(255, 252, 250, 0.72);
+  --bg-nav: rgba(250, 246, 243, 0.82);
+  --bg-announcement: #1c1715;
   --text-primary: var(--color-charcoal);
   --text-secondary: var(--color-muted);
   --text-inverse: #faf6f3;
 
-  /* Typography */
   --font-display: "Cormorant Garamond", Georgia, serif;
   --font-script: "Pinyon Script", cursive;
   --font-sans: "Outfit", "Segoe UI", sans-serif;
 
-  --fs-xs: clamp(0.7rem, 0.68rem + 0.1vw, 0.76rem);
-  --fs-sm: clamp(0.84rem, 0.8rem + 0.2vw, 0.94rem);
-  --fs-base: clamp(0.98rem, 0.94rem + 0.2vw, 1.05rem);
-  --fs-md: clamp(1.15rem, 1rem + 0.5vw, 1.35rem);
-  --fs-lg: clamp(1.75rem, 1.3rem + 1.5vw, 2.6rem);
-  --fs-xl: clamp(2.6rem, 1.7rem + 3.2vw, 5rem);
-  --fs-script: clamp(1.5rem, 1.15rem + 1.5vw, 2.4rem);
+  --fs-xs: clamp(0.68rem, 0.65rem + 0.15vw, 0.75rem);
+  --fs-sm: clamp(0.82rem, 0.78rem + 0.25vw, 0.94rem);
+  --fs-base: clamp(0.95rem, 0.9rem + 0.3vw, 1.06rem);
+  --fs-md: clamp(1.1rem, 0.95rem + 0.6vw, 1.4rem);
+  --fs-lg: clamp(1.6rem, 1.15rem + 1.8vw, 2.75rem);
+  --fs-xl: clamp(2.35rem, 1.4rem + 3.8vw, 5.25rem);
+  --fs-script: clamp(1.35rem, 1rem + 1.6vw, 2.35rem);
 
   --lh-tight: 1.05;
   --lh-snug: 1.3;
   --lh-body: 1.65;
 
-  /* Spacing */
   --space-1: 0.25rem;
   --space-2: 0.5rem;
   --space-3: 0.75rem;
   --space-4: 1rem;
   --space-5: 1.5rem;
-  --space-6: 2rem;
-  --space-7: 3rem;
-  --space-8: 4.5rem;
-  --space-9: 7rem;
+  --space-6: clamp(1.5rem, 1.2rem + 1vw, 2rem);
+  --space-7: clamp(2rem, 1.4rem + 2vw, 3rem);
+  --space-8: clamp(2.75rem, 1.8rem + 3vw, 4.5rem);
+  --space-9: clamp(3.5rem, 2rem + 5vw, 7rem);
 
-  /* Layout */
-  --container: 74rem;
+  /* Fluid width: phones → ultra-wide */
+  --page-gutter: clamp(1rem, 2.5vw, 2.5rem);
+  --container: min(100% - (var(--page-gutter) * 2), 92rem);
   --radius-sm: 1px;
   --radius-md: 4px;
-  --shadow-soft: 0 20px 50px rgba(28, 23, 21, 0.07);
-  --shadow-lift: 0 12px 28px rgba(28, 23, 21, 0.1);
+  --shadow-soft: 0 18px 44px rgba(28, 23, 21, 0.06);
+  --shadow-lift: 0 10px 24px rgba(28, 23, 21, 0.08);
 
-  /* Motion */
   --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
   --duration-fast: 200ms;
   --duration-med: 500ms;
+  --header-h: 4.25rem;
 }
