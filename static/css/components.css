@@ -294,6 +294,15 @@
   color: var(--text-secondary);
 }
 
+.product-card__shade {
+  margin: 0;
+  min-height: 1.15em;
+  font-size: var(--fs-xs);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+
 .pdp__swatches {
   margin-bottom: var(--space-2);
 }

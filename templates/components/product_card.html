@@ -42,6 +42,7 @@
         {% endfor %}
         {% if variants|length > 6 %}<span class="product-card__swatch-more">+{{ variants|length|add:"-6" }}</span>{% endif %}
       </div>
+      <p class="product-card__shade" data-card-shade-name aria-live="polite">{% if product.default_variant %}{{ product.default_variant.name }}{% endif %}</p>
       {% endif %}
     {% endwith %}
     <p class="product-card__rating" aria-label="Rated {{ product.average_rating|default:0 }} out of 5 from {{ product.review_count }} reviews">

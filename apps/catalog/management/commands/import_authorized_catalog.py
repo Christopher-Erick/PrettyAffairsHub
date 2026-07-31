@@ -29,6 +29,7 @@ from apps.catalog.models import (
     ProductImage,
     ProductVariant,
 )
+from apps.catalog.shade_colors import resolve_shade_color
 
 
 LIP_TRIBE_FEED = "https://theliptribe.co.ke/products.json?limit=250"
@@ -50,38 +51,6 @@ CATEGORY_RULES = {
     "Perfumes": ("eau de parfum", " edp", "parfum"),
     "Body Splash": ("body splash", "body mist"),
     "Cologne": ("cologne", "eau de toilette", " edt"),
-}
-
-SHADE_COLORS = {
-    "clear": "#E8DAD3",
-    "transparent": "#E8DAD3",
-    "pink": "#D86C91",
-    "rose": "#A94F5C",
-    "berry": "#8D294C",
-    "cherry": "#A71930",
-    "red": "#B8222E",
-    "crimson": "#991E32",
-    "coral": "#E96F62",
-    "peach": "#E99B7B",
-    "orange": "#D86C31",
-    "nude": "#B98269",
-    "beige": "#B99A83",
-    "sand": "#B99A83",
-    "tan": "#9A674F",
-    "caramel": "#9A6042",
-    "maple": "#8D503D",
-    "toast": "#8A5648",
-    "brown": "#6F4336",
-    "cocoa": "#694037",
-    "plum": "#713B5B",
-    "purple": "#714B76",
-    "wine": "#711F3A",
-    "burgundy": "#711F3A",
-    "black": "#2A2320",
-    "gold": "#C29A52",
-    "honey": "#C7954F",
-    "green": "#5A865F",
-    "blue": "#4F6F91",
 }
 
 COPY = {
@@ -138,22 +107,6 @@ def category_for(title: str, allowed: set[str] | None = None) -> str | None:
         if any(keyword in haystack for keyword in keywords):
             return category
     return None
-
-
-def shade_color(name: str) -> str:
-    lowered = name.lower()
-    for keyword, color in SHADE_COLORS.items():
-        if keyword in lowered:
-            return color
-    digest = hashlib.sha256(name.encode("utf-8")).hexdigest()
-    hue = int(digest[:2], 16)
-    saturation = 38 + int(digest[2:4], 16) % 35
-    lightness = 38 + int(digest[4:6], 16) % 28
-    # HSL is useful in CSS, but the model stores hex. Convert a stable HSL here.
-    import colorsys
-
-    red, green, blue = colorsys.hls_to_rgb(hue / 255, lightness / 100, saturation / 100)
-    return f"#{round(red * 255):02X}{round(green * 255):02X}{round(blue * 255):02X}"
 
 
 def image_filename(url: str, prefix: str) -> str:
@@ -357,7 +310,6 @@ class Command(BaseCommand):
                     "price_override": Decimal(variant["price"]) if variant.get("price") else None,
                     "stock": 8 if variant.get("available", True) else 0,
                     "is_active": True,
-                    "color_hex": shade_color(title),
                 },
             )
             featured = variant.get("featured_image") or {}
@@ -371,3 +323,6 @@ class Command(BaseCommand):
                     )
                 except Exception as exc:
                     self.stderr.write(f"Variant image skipped for {product.name}/{title}: {exc}")
+
+            item.color_hex = resolve_shade_color(title, item.image or None)
+            item.save(update_fields=["color_hex"])

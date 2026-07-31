@@ -114,11 +114,13 @@
   document.querySelectorAll("[data-product-card]").forEach((card) => {
     const image = card.querySelector("[data-card-image]");
     const variantInput = card.querySelector("[data-card-variant]");
+    const shadeName = card.querySelector("[data-card-shade-name]");
     const swatches = [...card.querySelectorAll("[data-card-swatch]:not(:disabled)")];
 
     const chooseShade = (swatch) => {
       swatches.forEach((item) => item.classList.toggle("is-selected", item === swatch));
       if (variantInput) variantInput.value = swatch.dataset.variantId || "";
+      if (shadeName) shadeName.textContent = swatch.getAttribute("title") || "";
       if (image && swatch.dataset.image) {
         image.classList.add("is-changing");
         image.src = swatch.dataset.image;
