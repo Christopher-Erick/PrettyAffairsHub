@@ -18,29 +18,55 @@
   </div>
 </section>
 
-<section class="story-grid" aria-label="Discover">
-  <a class="story-panel story-panel--one" href="{% url 'catalog:shop' %}?flag=new">
-    <span class="story-panel__shade" aria-hidden="true"></span>
-    <span class="story-panel__copy">
-      <span class="story-panel__title">Designed for you</span>
-      <span class="story-panel__cta">Discover</span>
-    </span>
-  </a>
-  <a class="story-panel story-panel--two" href="{% url 'catalog:shop' %}?flag=bestsellers">
-    <span class="story-panel__shade" aria-hidden="true"></span>
-    <span class="story-panel__copy">
-      <span class="story-panel__title">For every occasion</span>
-      <span class="story-panel__cta">Explore</span>
-    </span>
-  </a>
-  <a class="story-panel story-panel--three" href="{% url 'catalog:shop' %}">
-    <span class="story-panel__shade" aria-hidden="true"></span>
-    <span class="story-panel__copy">
-      <span class="story-panel__title">Find your faves</span>
-      <span class="story-panel__cta">Shop</span>
-    </span>
-  </a>
+{% if story_panels %}
+<section class="colour-cabinet" aria-labelledby="colour-cabinet-heading">
+  <div class="colour-cabinet__intro">
+    <p class="eyebrow">The colour cabinet</p>
+    <h2 id="colour-cabinet-heading" class="colour-cabinet__title">A little colour changes everything</h2>
+    <p class="colour-cabinet__lede">Three mood-lifting favourites, picked to make your beauty bag brighter.</p>
+  </div>
+  <div class="story-grid">
+    {% for panel in story_panels %}
+    {% with product=panel.product %}
+    <a class="story-panel story-panel--{{ panel.tone }}" href="{{ product.get_absolute_url }}" aria-label="Shop {{ product.name }}">
+      <span class="story-panel__number" aria-hidden="true">0{{ forloop.counter }}</span>
+      <span class="story-panel__media">
+        {% if product.primary_image and product.primary_image.image %}
+        <img
+          src="{{ product.primary_image.image.url }}"
+          alt="{{ product.primary_image.alt_text|default:product.name }}"
+          {% if forloop.first %}fetchpriority="high"{% else %}loading="lazy"{% endif %}
+          decoding="async"
+          width="720"
+          height="720"
+          sizes="(max-width: 719px) 100vw, 33vw"
+        >
+        {% else %}
+        <span class="story-panel__placeholder" role="img" aria-label="{{ product.name }}"></span>
+        {% endif %}
+      </span>
+      <span class="story-panel__copy">
+        <span class="story-panel__eyebrow">{{ panel.eyebrow }}</span>
+        <span class="story-panel__title">{{ panel.title }}</span>
+        <span class="story-panel__product">{{ product.name }}</span>
+        <span class="story-panel__footer">
+          <span class="story-panel__swatches" aria-label="Available shades">
+            {% for variant in product.variants.all|slice:":5" %}
+              {% if variant.is_active %}
+              <span class="story-panel__swatch" style="--swatch: {{ variant.color_hex|default:'#C9A39A' }}" title="{{ variant.name }}"></span>
+              {% endif %}
+            {% endfor %}
+          </span>
+          <span class="story-panel__price">{{ SITE_CURRENCY_SYMBOL }} {{ product.price|floatformat:0 }}</span>
+          <span class="story-panel__cta">{{ panel.cta }} <span aria-hidden="true">→</span></span>
+        </span>
+      </span>
+    </a>
+    {% endwith %}
+    {% endfor %}
+  </div>
 </section>
+{% endif %}
 
 {% if categories %}
 <section class="section section--tight">

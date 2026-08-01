@@ -28,7 +28,11 @@ class HomeView(TemplateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         card_qs = _card_qs()
-        featured = list(Product.objects.featured().select_related("brand").prefetch_related("images", ACTIVE_VARIANTS)[:8])
+        featured = list(
+            Product.objects.featured()
+            .select_related("brand")
+            .prefetch_related("images", ACTIVE_VARIANTS)[:8]
+        )
         context["featured_products"] = featured or list(card_qs[:8])
         context["new_arrivals"] = list(
             Product.objects.new_arrivals().select_related("brand").prefetch_related("images", ACTIVE_VARIANTS)[:8]
@@ -43,6 +47,54 @@ class HomeView(TemplateView):
             .filter(shade_count__gte=3)
             .order_by("-shade_count", "-average_rating", "-review_count")[:8]
         )
+        story_slugs = (
+            "fenty-beauty-gloss-bomb-universal-lip-luminizer",
+            "gisou-honey-infused-lip-oil",
+            "laneige-lip-sleeping-mask",
+        )
+        story_products = {
+            product.slug: product
+            for product in card_qs.filter(slug__in=story_slugs)
+        }
+        story_fallbacks = iter(
+            product
+            for product in (
+                context["shade_picks"]
+                + context["featured_products"]
+                + context["new_arrivals"]
+                + context["bestsellers"]
+            )
+            if product.primary_image and product.primary_image.image
+        )
+        used_ids = set()
+        selected_story_products = []
+        for slug in story_slugs:
+            product = story_products.get(slug)
+            while product is None or product.id in used_ids:
+                product = next(story_fallbacks, None)
+                if product is None:
+                    break
+            if product is not None:
+                selected_story_products.append(product)
+                used_ids.add(product.id)
+
+        story_copy = (
+            ("The gloss edit", "Glow in every shade", "Shop the shine", "coral"),
+            ("Honeyed colour", "Juicy, glass-like lips", "Find your tint", "pink"),
+            ("Night-time colour care", "Wake up to softer lips", "Meet the ritual", "citrus"),
+        )
+        context["story_panels"] = [
+            {
+                "product": product,
+                "eyebrow": eyebrow,
+                "title": title,
+                "cta": cta,
+                "tone": tone,
+            }
+            for product, (eyebrow, title, cta, tone) in zip(
+                selected_story_products, story_copy
+            )
+        ]
         context["categories"] = list(
             Category.objects.filter(is_active=True, parent__isnull=False)
             .select_related("parent")
