@@ -79,7 +79,8 @@ class Command(BaseCommand):
                 "Body Essentials",
                 7,
                 [
-                    ("Boob Tape", 1),
+                    ("Body & Hand Care", 1),
+                    ("Boob Tape", 2),
                 ],
             ),
         ]

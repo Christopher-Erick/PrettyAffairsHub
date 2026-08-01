@@ -43,6 +43,10 @@ SOURCE_ATELIER = "Atelier Edit"
 SOURCE_HARBOUR = "Harbour Edit"
 USER_AGENT = "PrettyAffairsHub/1.0 catalogue importer"
 
+# Keywords describing what a product *is*. Order matters: the first match wins, so
+# narrower product forms must come before broader ones. Scent-line and designer names
+# never belong here — they say nothing about the product form and would misfile the
+# body care items that share a fragrance line (see SCENT_LINE_HINTS).
 CATEGORY_RULES = {
     "Lip Oil": (
         "lip oil",
@@ -83,22 +87,38 @@ CATEGORY_RULES = {
     "Jewellery Boxes": ("jewellery box", "jewelry box"),
     "Boob Tape": ("boob tape", "breast tape"),
     "Acrylic Bangles": ("acrylic bangle", "acrylic bracelet"),
-    "Perfumes": (
-        "eau de parfum",
-        " edp",
-        "parfum",
-        "perfume",
-        "euphoria",
-        "good girl",
-        "scandal",
-        "gucci bloom",
-        "divine couture",
-        "jasmin secret",
-        "rose envoutante",
+    "Body & Hand Care": (
+        "body lotion",
+        "body milk",
+        "body cream",
+        "body butter",
+        "body scrub",
+        "body wash",
+        "hand cream",
+        "hand lotion",
+        "hand balm",
+        "shower oil",
+        "shower gel",
+        "shower cream",
+        "bath oil",
     ),
-    "Body Splash": ("body splash", "body mist", "body lotion", "hand cream"),
+    "Body Splash": ("body splash", "body mist"),
+    "Perfumes": ("eau de parfum", " edp", "parfum", "perfume"),
     "Cologne": ("cologne", "eau de toilette", " edt", " for him", " him "),
 }
+
+# Scent lines and designer houses. These only identify a fragrance family, not a product
+# form, so they are consulted after CATEGORY_RULES — otherwise a "Rose Envoutante Body
+# Lotion" would be filed as a perfume.
+SCENT_LINE_HINTS = (
+    "euphoria",
+    "good girl",
+    "scandal",
+    "gucci bloom",
+    "divine couture",
+    "jasmin secret",
+    "rose envoutante",
+)
 
 FEED_A_CATEGORIES = {
     "Lip Oil",
@@ -116,6 +136,7 @@ FEED_B_CATEGORIES = {
     "Cologne",
     "Lashes",
     "Body Splash",
+    "Body & Hand Care",
 }
 
 FEED_B_FRAGRANCE_HINTS = (
@@ -187,9 +208,14 @@ COPY = {
         "Spray lightly onto pulse points and clothing from a safe distance.",
     ),
     "Body Splash": (
-        "A body care essential selected for a soft finish and everyday freshness.",
-        "Soft finish\nEveryday freshness\nLayerable scent",
-        "Apply to clean skin and allow to absorb. Reapply as desired.",
+        "A light body mist selected for an easy veil of scent you can wear all day.",
+        "Weightless scent\nEveryday freshness\nLayers over fragrance",
+        "Mist over clean skin from a short distance. Reapply as desired.",
+    ),
+    "Body & Hand Care": (
+        "A nourishing body and hand treat selected for softness that lasts.",
+        "Deeply conditioning\nSilky, non-greasy finish\nSubtle lingering scent",
+        "Massage into clean, dry skin and allow to absorb. Reapply as often as you like.",
     ),
 }
 
@@ -248,6 +274,8 @@ def feed_b_category(title: str) -> str | None:
     )
     if any(blocker in lowered for blocker in makeup_blockers):
         return None
+    if any(hint in lowered for hint in SCENT_LINE_HINTS):
+        return "Perfumes"
     if any(hint in lowered for hint in FEED_B_FRAGRANCE_HINTS):
         return "Perfumes"
     if re.search(r"\b\d+\s*ml\b", lowered) and "spf" not in lowered:

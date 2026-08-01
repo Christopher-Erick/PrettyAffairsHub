@@ -1,6 +1,10 @@
-from django.test import TestCase
+from django.test import SimpleTestCase, TestCase
 from django.urls import reverse
 
+from apps.catalog.management.commands.import_authorized_catalog import (
+    category_for,
+    feed_b_category,
+)
 from apps.catalog.models import Product
 
 
@@ -90,3 +94,34 @@ class InternalCatalogDataTests(TestCase):
                 break
         else:
             self.assertIn('class="shop-search"', content)
+
+
+class CategoryRuleTests(SimpleTestCase):
+    """A product's form decides its category; a shared scent line never does."""
+
+    def test_body_care_from_a_fragrance_line_is_not_a_perfume(self):
+        for title in (
+            "Jeanne En Provence Rose Envoutante Body Lotion 200ml",
+            "Jeanne En Provence Jasmin Secret Hand Cream 75ml",
+            "Jeanne En Provence Orange Blossom Shower Oil 250ml",
+        ):
+            with self.subTest(title=title):
+                self.assertEqual(feed_b_category(title), "Body & Hand Care")
+
+    def test_fragrance_forms_still_resolve(self):
+        cases = {
+            "Jeanne En Provence Jasmin Secret Eau De Parfum 60ml": "Perfumes",
+            "Versace Eros Najim Parfum 100ml": "Perfumes",
+            "Jeanne Arthes Sultan Men Oud Eau De Toilette 100ml": "Cologne",
+            "Orange Blossom Body Mist 250ml": "Body Splash",
+        }
+        for title, expected in cases.items():
+            with self.subTest(title=title):
+                self.assertEqual(feed_b_category(title), expected)
+
+    def test_scent_line_name_alone_falls_back_to_perfume(self):
+        self.assertEqual(feed_b_category("Gucci Bloom Ambrosia dOro 100ml"), "Perfumes")
+
+    def test_lip_products_are_unaffected(self):
+        self.assertEqual(category_for("Gisou Honey Infused Lip Oil"), "Lip Oil")
+        self.assertEqual(category_for("Fenty Beauty Gloss Bomb"), "Lip Gloss")
