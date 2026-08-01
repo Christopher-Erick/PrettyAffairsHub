@@ -1,0 +1,29 @@
+{% extends "desk/base_desk.html" %}
+{% block title %}{{ label }} — Store Manager{% endblock %}
+{% block content %}
+<section class="desk-hero">
+  <h1>{{ label }}</h1>
+  {% if help %}<p>{{ help }}</p>{% endif %}
+</section>
+
+<div class="desk-toolbar">
+  <a class="btn btn--ghost" href="{% url 'desk:content_hub' %}">Back</a>
+  <a class="btn btn--primary" href="{% url create_url %}">Add new</a>
+</div>
+
+<ul class="desk-list">
+  {% for item in items %}
+  <li>
+    <a href="{% url edit_url_name item.pk %}">
+      {% if display == "question" %}{{ item.question }}
+      {% elif display == "author_name" %}{{ item.author_name }}
+      {% elif display == "name" %}{{ item.name }}
+      {% else %}{{ item.title }}{% endif %}
+    </a>
+    <a href="{% url edit_url_name item.pk %}">Edit</a>
+  </li>
+  {% empty %}
+  <li>Nothing here yet. Add the first one.</li>
+  {% endfor %}
+</ul>
+{% endblock %}

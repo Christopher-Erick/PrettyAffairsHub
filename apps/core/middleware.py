@@ -30,6 +30,7 @@ PUBLIC_PREFIXES = (
 # Never edge-cache these (auth, cart, checkout, admin).
 PRIVATE_PREFIXES = (
     "/admin/",
+    "/manage/",
     "/accounts/",
     "/cart/",
     "/checkout/",

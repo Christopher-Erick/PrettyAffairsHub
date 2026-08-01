@@ -1,0 +1,71 @@
+{% extends "desk/base_desk.html" %}
+{% block title %}{% if product %}Edit{% else %}New{% endif %} product — Store Manager{% endblock %}
+{% block content %}
+<section class="desk-hero">
+  <h1>{% if product %}Edit product{% else %}Add product{% endif %}</h1>
+  <p>Fill in what customers should see. Save when you’re done.</p>
+</section>
+
+<form class="desk-form" method="post" enctype="multipart/form-data">
+  {% csrf_token %}
+  {% for field in form %}
+  <div>
+    {% if field.field.widget.input_type == "checkbox" %}
+      <label>{{ field }} {{ field.label }}</label>
+    {% else %}
+      <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+      {{ field }}
+    {% endif %}
+    {% if field.help_text %}<span class="help">{{ field.help_text }}</span>{% endif %}
+    {{ field.errors }}
+  </div>
+  {% endfor %}
+  <div class="desk-form-actions">
+    <button class="btn btn--primary" type="submit">Save product</button>
+    <a class="btn btn--ghost" href="{% url 'desk:product_list' %}">Cancel</a>
+    {% if product %}<a class="btn btn--ghost" href="{{ product.get_absolute_url }}" target="_blank" rel="noopener">View on shop</a>{% endif %}
+  </div>
+</form>
+
+{% if product %}
+<section class="desk-panel">
+  <h2>Shades & options</h2>
+  <p class="desk-muted">Colour choices customers pick on the product page.</p>
+  <table class="desk-table">
+    <thead><tr><th>Name</th><th>Colour</th><th>Stock</th><th></th></tr></thead>
+    <tbody>
+      {% for v in variants %}
+      <tr>
+        <td>{{ v.name }}</td>
+        <td>{% if v.color_hex %}<span style="display:inline-block;width:1rem;height:1rem;border-radius:50%;background:{{ v.color_hex }};vertical-align:middle"></span> {{ v.color_hex }}{% else %}—{% endif %}</td>
+        <td>{{ v.stock }}</td>
+        <td>
+          <form method="post" action="{% url 'desk:variant_delete' product.pk v.pk %}" onsubmit="return confirm('Remove this shade?');">
+            {% csrf_token %}
+            <button class="btn btn--ghost" type="submit">Remove</button>
+          </form>
+        </td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="4">No shades yet.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <form class="desk-form" method="post" action="{% url 'desk:variant_add' product.pk %}" style="margin-top:1rem">
+    {% csrf_token %}
+    {% for field in variant_form %}
+    <div>
+      {% if field.field.widget.input_type == "checkbox" %}
+        <label>{{ field }} {{ field.label }}</label>
+      {% else %}
+        <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+        {{ field }}
+      {% endif %}
+    </div>
+    {% endfor %}
+    <button class="btn btn--primary" type="submit">Add shade</button>
+  </form>
+</section>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,35 @@
+{% extends "desk/base_desk.html" %}
+{% block title %}Site content — Store Manager{% endblock %}
+{% block content %}
+<section class="desk-hero">
+  <h1>Site content</h1>
+  <p>Edit what customers read on the homepage, journal, and info pages.</p>
+</section>
+
+<div class="desk-actions">
+  <a class="desk-action" href="{% url 'desk:section_list' %}">
+    <strong>Homepage sections</strong>
+    <span>{{ sections }} sections</span>
+  </a>
+  <a class="desk-action" href="{% url 'desk:blog_list' %}">
+    <strong>Journal</strong>
+    <span>{{ posts }} posts</span>
+  </a>
+  <a class="desk-action" href="{% url 'desk:faq_list' %}">
+    <strong>FAQs</strong>
+    <span>{{ faqs }} questions</span>
+  </a>
+  <a class="desk-action" href="{% url 'desk:testimonial_list' %}">
+    <strong>Customer quotes</strong>
+    <span>{{ testimonials }} quotes</span>
+  </a>
+  <a class="desk-action" href="{% url 'desk:page_list' %}">
+    <strong>Site pages</strong>
+    <span>{{ pages }} pages (About, etc.)</span>
+  </a>
+  <a class="desk-action" href="{% url 'desk:flash_list' %}">
+    <strong>Flash sales</strong>
+    <span>{{ flash_sales }} promos</span>
+  </a>
+</div>
+{% endblock %}

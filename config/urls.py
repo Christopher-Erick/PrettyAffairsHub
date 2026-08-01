@@ -13,6 +13,7 @@ def robots_txt(request):
         "User-agent: *",
         "Allow: /",
         "Disallow: /admin/",
+        "Disallow: /manage/",
         "Disallow: /accounts/",
         "Disallow: /cart/",
         "Disallow: /orders/checkout/",
@@ -23,6 +24,7 @@ def robots_txt(request):
 
 urlpatterns = [
     path("admin/", admin.site.urls),
+    path("manage/", include("apps.desk.urls")),
     path("", include("apps.content.urls")),
     path("shop/", include("apps.catalog.urls")),
     path("cart/", include("apps.cart.urls")),

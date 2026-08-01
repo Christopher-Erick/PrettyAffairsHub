@@ -1,0 +1,62 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex,nofollow">
+  <title>{% block title %}Store Manager — {{ SITE_NAME }}{% endblock %}</title>
+  <link rel="icon" href="{% static 'img/favicon.png' %}" type="image/png">
+  <script>
+    (function () {
+      try {
+        var theme = localStorage.getItem("pah-theme") === "dark" ? "dark" : "light";
+        document.documentElement.setAttribute("data-theme", theme);
+      } catch (e) {
+        document.documentElement.setAttribute("data-theme", "light");
+      }
+    })();
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{% static 'css/tokens.css' %}?v={{ ASSET_VERSION }}">
+  <link rel="stylesheet" href="{% static 'css/base.css' %}?v={{ ASSET_VERSION }}">
+  <link rel="stylesheet" href="{% static 'css/components.css' %}?v={{ ASSET_VERSION }}">
+  <link rel="stylesheet" href="{% static 'css/desk.css' %}?v={{ ASSET_VERSION }}">
+</head>
+<body class="desk-body">
+  <header class="desk-top">
+    <a class="desk-top__brand" href="{% url 'desk:home' %}">
+      <img src="{% static 'img/logo-mark.png' %}" alt="{{ SITE_NAME }}" width="140" height="82" class="desk-top__logo desk-top__logo--light">
+      <img src="{% static 'img/logo-light.png' %}" alt="" width="140" height="82" class="desk-top__logo desk-top__logo--dark" aria-hidden="true">
+      <span class="desk-top__label">Store Manager</span>
+    </a>
+    <nav class="desk-nav" aria-label="Store Manager">
+      <a href="{% url 'desk:home' %}">Home</a>
+      <a href="{% url 'desk:product_list' %}">Products</a>
+      <a href="{% url 'desk:order_list' %}">Orders</a>
+      <a href="{% url 'desk:content_hub' %}">Site content</a>
+      <a href="{% url 'desk:message_list' %}">Messages</a>
+      <a href="{% url 'content:home' %}">View shop</a>
+      <a href="{% url 'accounts:logout' %}">Sign out</a>
+    </nav>
+  </header>
+
+  <main class="desk-main">
+    {% if messages %}
+    <ul class="desk-flash">
+      {% for message in messages %}
+      <li class="desk-flash__item">{{ message }}</li>
+      {% endfor %}
+    </ul>
+    {% endif %}
+    {% block content %}{% endblock %}
+  </main>
+
+  <footer class="desk-foot">
+    <a href="{% url 'admin:index' %}">Advanced tools</a>
+    <span>Plain English desk for running the shop</span>
+  </footer>
+</body>
+</html>

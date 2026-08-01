@@ -17,7 +17,7 @@
       <a href="{% url 'orders:history' %}">Orders</a>
       <a href="{% url 'orders:track' %}">Track</a>
       {% if is_store_admin %}
-      <a href="{% url 'admin:index' %}">Store admin</a>
+      <a href="{% url 'desk:home' %}">Store Manager</a>
       {% endif %}
       <a href="{% url 'accounts:logout' %}">Sign out</a>
     </nav>
@@ -25,9 +25,9 @@
 
   {% if is_store_admin %}
   <aside class="account-admin" aria-labelledby="store-admin-heading">
-    <h2 class="account-admin__title" id="store-admin-heading">Store admin</h2>
-    <p class="account-admin__text">Catalogue, orders, discounts, and site content live in the store admin.</p>
-    <a class="btn btn--primary" href="{% url 'admin:index' %}">Open store admin</a>
+    <h2 class="account-admin__title" id="store-admin-heading">Store Manager</h2>
+    <p class="account-admin__text">Update products, orders, and site content customers see — in plain English.</p>
+    <a class="btn btn--primary" href="{% url 'desk:home' %}">Open Store Manager</a>
   </aside>
   {% endif %}
 

@@ -1,0 +1,19 @@
+{% extends "desk/base_desk.html" %}
+{% block title %}Message — Store Manager{% endblock %}
+{% block content %}
+<section class="desk-hero">
+  <h1>{{ item.subject|default:"Contact message" }}</h1>
+  <p>{{ item.name }} · {{ item.email }} · {{ item.created_at|date:"d M Y H:i" }}</p>
+</section>
+
+<p style="white-space:pre-wrap">{{ item.message }}</p>
+
+<form class="desk-form" method="post" style="margin-top:1.5rem">
+  {% csrf_token %}
+  <label>{{ form.is_handled }} Marked as handled</label>
+  <div class="desk-form-actions">
+    <button class="btn btn--primary" type="submit">Save</button>
+    <a class="btn btn--ghost" href="{% url 'desk:message_list' %}">Back</a>
+  </div>
+</form>
+{% endblock %}

@@ -1,0 +1,22 @@
+{% extends "desk/base_desk.html" %}
+{% block title %}Messages — Store Manager{% endblock %}
+{% block content %}
+<section class="desk-hero">
+  <h1>Messages</h1>
+  <p>Messages sent from the contact form.</p>
+</section>
+
+<ul class="desk-list">
+  {% for item in items %}
+  <li>
+    <a href="{% url 'desk:message_detail' item.pk %}">
+      {{ item.name }} — {{ item.subject|default:"Contact" }}
+      {% if not item.is_handled %}<span class="desk-badge">New</span>{% endif %}
+    </a>
+    <span class="desk-muted">{{ item.created_at|date:"d M Y" }}</span>
+  </li>
+  {% empty %}
+  <li>No messages yet.</li>
+  {% endfor %}
+</ul>
+{% endblock %}

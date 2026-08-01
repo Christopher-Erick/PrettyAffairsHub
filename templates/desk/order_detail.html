@@ -1,0 +1,57 @@
+{% extends "desk/base_desk.html" %}
+{% block title %}{{ order.order_number }} — Store Manager{% endblock %}
+{% block content %}
+<section class="desk-hero">
+  <h1>{{ order.order_number }}</h1>
+  <p>{{ order.shipping_name }} · {{ order.email }}{% if order.phone %} · {{ order.phone }}{% endif %}</p>
+</section>
+
+<p class="desk-muted">
+  {{ order.shipping_line1 }}{% if order.shipping_line2 %}, {{ order.shipping_line2 }}{% endif %},
+  {{ order.shipping_city }}{% if order.shipping_county %}, {{ order.shipping_county }}{% endif %}
+  {{ order.shipping_postal_code }} · {{ order.shipping_country }}
+</p>
+
+<table class="desk-table" style="margin:1.25rem 0">
+  <thead><tr><th>Item</th><th>Qty</th><th>Line</th></tr></thead>
+  <tbody>
+    {% for item in order.items.all %}
+    <tr>
+      <td>{{ item.product_name }}{% if item.variant_name %} — {{ item.variant_name }}{% endif %}</td>
+      <td>{{ item.quantity }}</td>
+      <td>{{ SITE_CURRENCY_SYMBOL }} {{ item.line_total }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+<p><strong>Total {{ SITE_CURRENCY_SYMBOL }} {{ order.total }}</strong></p>
+
+<form class="desk-form" method="post" style="margin-top:1.5rem">
+  {% csrf_token %}
+  {% for field in form %}
+  <div>
+    <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+    {{ field }}
+    {{ field.errors }}
+  </div>
+  {% endfor %}
+  <div class="desk-form-actions">
+    <button class="btn btn--primary" type="submit">Update order</button>
+    <a class="btn btn--ghost" href="{% url 'desk:order_list' %}">Back to orders</a>
+  </div>
+</form>
+
+{% if order.events.all %}
+<section class="desk-panel">
+  <h2>History</h2>
+  <ul class="desk-list">
+    {% for event in order.events.all %}
+    <li>
+      <span>{{ event.status_label }}{% if event.note %} — {{ event.note }}{% endif %}</span>
+      <span class="desk-muted">{{ event.created_at|date:"d M Y H:i" }}</span>
+    </li>
+    {% endfor %}
+  </ul>
+</section>
+{% endif %}
+{% endblock %}

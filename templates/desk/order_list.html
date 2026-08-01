@@ -1,0 +1,45 @@
+{% extends "desk/base_desk.html" %}
+{% block title %}Orders — Store Manager{% endblock %}
+{% block content %}
+<section class="desk-hero">
+  <h1>Orders</h1>
+  <p>Open an order to change status or add a tracking number.</p>
+</section>
+
+<div class="desk-toolbar">
+  <form method="get">
+    <select class="field" name="status">
+      <option value="">All statuses</option>
+      {% for value, label in status_choices %}
+      <option value="{{ value }}" {% if status == value %}selected{% endif %}>{{ label }}</option>
+      {% endfor %}
+    </select>
+    <button class="btn btn--ghost" type="submit">Filter</button>
+  </form>
+</div>
+
+<table class="desk-table">
+  <thead>
+    <tr>
+      <th>Order</th>
+      <th>Customer</th>
+      <th class="hide-sm">Total</th>
+      <th>Status</th>
+      <th class="hide-sm">Date</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for order in orders %}
+    <tr>
+      <td><a href="{% url 'desk:order_detail' order.order_number %}">{{ order.order_number }}</a></td>
+      <td>{{ order.email }}</td>
+      <td class="hide-sm">{{ SITE_CURRENCY_SYMBOL }} {{ order.total }}</td>
+      <td><span class="desk-badge">{{ order.get_status_display }}</span></td>
+      <td class="hide-sm">{{ order.created_at|date:"d M Y" }}</td>
+    </tr>
+    {% empty %}
+    <tr><td colspan="5">No orders yet.</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}
