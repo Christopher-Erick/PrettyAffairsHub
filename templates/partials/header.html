@@ -7,8 +7,14 @@
         <span class="icon-btn__lines" aria-hidden="true"></span>
       </button>
       <a class="site-header__brand" href="{% url 'content:home' %}">
-        <img class="site-header__logo site-header__logo--light" src="{% static 'img/logo-mark.png' %}" alt="{{ SITE_NAME }}" width="160" height="94">
-        <img class="site-header__logo site-header__logo--dark" src="{% static 'img/logo-light.png' %}" alt="" width="160" height="94" aria-hidden="true">
+        <span class="site-header__mark" aria-hidden="true">
+          <img class="site-header__logo site-header__logo--light" src="{% static 'img/logo-mark.png' %}" alt="" width="160" height="94">
+          <img class="site-header__logo site-header__logo--dark" src="{% static 'img/logo-light.png' %}" alt="" width="160" height="94">
+        </span>
+        <span class="site-header__identity">
+          <span class="site-header__wordmark">{{ SITE_NAME }}</span>
+          <span class="site-header__tagline">{{ SITE_TAGLINE }}</span>
+        </span>
       </a>
     </div>
 
