@@ -27,6 +27,7 @@ WHATSAPP_NUMBER = env("WHATSAPP_NUMBER", default="")
 SITE_PHONE = env("SITE_PHONE", default="")
 SITE_EMAIL = env("SITE_EMAIL", default="")
 SITE_INSTAGRAM = env("SITE_INSTAGRAM", default="")  # handle without @
+SITE_TIKTOK = env("SITE_TIKTOK", default="")  # handle without @
 SITE_CITY = env("SITE_CITY", default="Nairobi, Kenya")
 SECURITY_CONTACT_EMAIL = env("SECURITY_CONTACT_EMAIL", default=SITE_EMAIL)
 

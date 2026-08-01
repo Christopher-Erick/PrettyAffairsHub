@@ -35,6 +35,7 @@ def site_settings(request):
         "SITE_PHONE": getattr(settings, "SITE_PHONE", ""),
         "SITE_EMAIL": getattr(settings, "SITE_EMAIL", ""),
         "SITE_INSTAGRAM": getattr(settings, "SITE_INSTAGRAM", ""),
+        "SITE_TIKTOK": getattr(settings, "SITE_TIKTOK", ""),
         "SITE_CITY": getattr(settings, "SITE_CITY", ""),
         "ANNOUNCEMENT_TEXT": (
             "Free delivery on orders over KSh 5,000 · Easy returns on sealed items · Chat on WhatsApp"

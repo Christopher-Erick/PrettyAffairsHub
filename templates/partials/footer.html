@@ -3,7 +3,7 @@
     <div class="site-footer__brand">
       <p class="site-footer__name">{{ SITE_NAME }}</p>
       <p class="site-footer__tagline">{{ SITE_TAGLINE }}</p>
-      {% if SITE_PHONE or WHATSAPP_NUMBER or SITE_EMAIL %}
+      {% if SITE_PHONE or WHATSAPP_NUMBER or SITE_EMAIL or SITE_INSTAGRAM or SITE_TIKTOK %}
       <ul class="site-footer__contact">
         {% if SITE_PHONE %}<li><a href="tel:{{ SITE_PHONE }}">{{ SITE_PHONE }}</a></li>{% endif %}
         {% if WHATSAPP_NUMBER %}
@@ -11,7 +11,10 @@
         {% endif %}
         {% if SITE_EMAIL %}<li><a href="mailto:{{ SITE_EMAIL }}">{{ SITE_EMAIL }}</a></li>{% endif %}
         {% if SITE_INSTAGRAM %}
-        <li><a href="https://instagram.com/{{ SITE_INSTAGRAM }}" target="_blank" rel="noopener noreferrer">@{{ SITE_INSTAGRAM }}</a></li>
+        <li><a href="https://instagram.com/{{ SITE_INSTAGRAM }}" target="_blank" rel="noopener noreferrer">Instagram @{{ SITE_INSTAGRAM }}</a></li>
+        {% endif %}
+        {% if SITE_TIKTOK %}
+        <li><a href="https://www.tiktok.com/@{{ SITE_TIKTOK }}" target="_blank" rel="noopener noreferrer">TikTok @{{ SITE_TIKTOK }}</a></li>
         {% endif %}
       </ul>
       {% endif %}
