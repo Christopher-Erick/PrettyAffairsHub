@@ -12,6 +12,8 @@ db.sqlite3
 .env
 .env.local
 *.pem
+# Database dump contains user emails and password hashes.
+local_catalogue_dump.json
 
 # Static / media build artifacts
 staticfiles/
