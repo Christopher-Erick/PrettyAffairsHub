@@ -17,7 +17,7 @@
         {% endif %}
       {% endwith %}
     </div>
-    {% if product.images.count > 1 %}
+    {% if product.images.all|length > 1 %}
     <div class="pdp__thumbs" role="list">
       {% for image in product.images.all %}
         {% if image.image %}

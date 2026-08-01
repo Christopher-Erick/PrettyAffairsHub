@@ -4,12 +4,22 @@ from __future__ import annotations
 
 from django.db.models import Count, Prefetch, Q
 
-from apps.catalog.models import Category, Collection, Product, ProductVariant
+from apps.catalog.models import Category, Collection, Product, ProductImage, ProductVariant
 from apps.core.smart_cache import get_or_set, versioned_key
 
 ACTIVE_VARIANTS = Prefetch(
     "variants",
-    queryset=ProductVariant.objects.filter(is_active=True).order_by("id"),
+    queryset=ProductVariant.objects.filter(is_active=True).only(
+        "id", "product_id", "name", "color_hex", "stock", "is_active", "price_override", "image"
+    ),
+)
+
+# Cards only need the first image; still ordered so primary_image stays correct.
+CARD_IMAGES = Prefetch(
+    "images",
+    queryset=ProductImage.objects.order_by("sort_order", "id").only(
+        "id", "product_id", "image", "alt_text", "sort_order"
+    ),
 )
 
 
@@ -17,7 +27,7 @@ def shop_product_qs():
     return (
         Product.objects.published()
         .select_related("brand")
-        .prefetch_related("images", "categories", ACTIVE_VARIANTS)
+        .prefetch_related(CARD_IMAGES, "categories", ACTIVE_VARIANTS)
     )
 
 
@@ -42,6 +52,16 @@ def cached_active_collections():
     )
 
 
+def cached_category_descendant_ids(slug: str):
+    def producer():
+        category = Category.objects.filter(slug=slug, is_active=True).first()
+        if not category:
+            return []
+        return category.descendant_ids()
+
+    return get_or_set(versioned_key("catalog:category_descendants", slug), producer)
+
+
 def _build_discovery():
     leaf_categories = list(
         Category.objects.filter(is_active=True, parent__isnull=False)
@@ -54,7 +74,7 @@ def _build_discovery():
             )
         )
         .filter(product_count__gt=0)
-        .order_by("parent__sort_order", "sort_order", "name")
+        .order_by("parent__sort_order", "sort_order", "name")[:16]
     )
     leaf_ids = {c.id for c in leaf_categories}
     samples_by_category: dict[int, Product] = {}
@@ -109,28 +129,29 @@ def cached_home_rails():
 
     def producer():
         card_qs = shop_product_qs()
+        rail = 6
         featured = list(
             Product.objects.featured()
             .select_related("brand")
-            .prefetch_related("images", ACTIVE_VARIANTS)[:8]
+            .prefetch_related(CARD_IMAGES, ACTIVE_VARIANTS)[:rail]
         )
-        featured = featured or list(card_qs[:8])
+        featured = featured or list(card_qs[:rail])
         new_arrivals = list(
             Product.objects.new_arrivals()
             .select_related("brand")
-            .prefetch_related("images", ACTIVE_VARIANTS)[:8]
+            .prefetch_related(CARD_IMAGES, ACTIVE_VARIANTS)[:rail]
         )
         bestsellers = list(
             Product.objects.best_sellers()
             .select_related("brand")
-            .prefetch_related("images", ACTIVE_VARIANTS)[:8]
+            .prefetch_related(CARD_IMAGES, ACTIVE_VARIANTS)[:rail]
         )
         shade_picks = list(
             card_qs.annotate(
                 shade_count=Count("variants", filter=Q(variants__is_active=True), distinct=True)
             )
             .filter(shade_count__gte=3)
-            .order_by("-shade_count", "-average_rating", "-review_count")[:8]
+            .order_by("-shade_count", "-average_rating", "-review_count")[:rail]
         )
         categories = list(
             Category.objects.filter(is_active=True, parent__isnull=False)

@@ -3,6 +3,7 @@ from django.conf import settings
 from django.contrib.sitemaps.views import sitemap
 from django.http import HttpResponse
 from django.urls import include, path, re_path
+from django.views.decorators.cache import cache_control
 from django.views.static import serve
 
 from apps.core.sitemaps import sitemaps
@@ -22,6 +23,10 @@ def robots_txt(request):
     return HttpResponse("\n".join(lines), content_type="text/plain")
 
 
+# Product photos live under MEDIA_ROOT. Long browser cache so repeat visits skip re-download.
+# WhiteNoise only serves STATIC; this serves /media/ on Render until R2 is wired.
+cached_media_serve = cache_control(public=True, max_age=60 * 60 * 24 * 30, immutable=True)(serve)
+
 urlpatterns = [
     path("admin/", admin.site.urls),
     path("manage/", include("apps.desk.urls")),
@@ -34,12 +39,10 @@ urlpatterns = [
     path("robots.txt", robots_txt, name="robots_txt"),
 ]
 
-# Product photos live under MEDIA_ROOT and are committed for now.
-# WhiteNoise only serves STATIC; this serves /media/ on Render until R2 is wired.
 urlpatterns += [
     re_path(
         r"^media/(?P<path>.*)$",
-        serve,
+        cached_media_serve,
         {"document_root": settings.MEDIA_ROOT},
     ),
 ]

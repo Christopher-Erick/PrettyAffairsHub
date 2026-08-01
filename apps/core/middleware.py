@@ -61,13 +61,13 @@ class CloudflareCacheMiddleware:
         if not self._is_public_path(request.path):
             return response
 
-        # Browser: short. Cloudflare edge (s-maxage / CDN-Cache-Control): long.
-        # Edge is purged when catalogue data changes (if API token is set).
+        # Browser: 5 minutes for anonymous HTML. Edge (s-maxage): 1 day when Cloudflare proxies.
         response["Cache-Control"] = (
-            "public, max-age=60, s-maxage=86400, stale-while-revalidate=600"
+            "public, max-age=300, s-maxage=86400, stale-while-revalidate=600"
         )
         response["CDN-Cache-Control"] = "public, max-age=86400"
-        response["Vary"] = "Accept-Encoding, Cookie"
+        # Only vary on encoding for anonymous HTML — Cookie would kill edge/browser reuse.
+        response["Vary"] = "Accept-Encoding"
         return response
 
     def _is_private(self, request) -> bool:

@@ -84,6 +84,9 @@ WSGI_APPLICATION = "config.wsgi.application"
 
 def _database_from_url(url: str) -> dict:
     parsed = urlparse(url)
+    port = str(parsed.port or 5432)
+    # Transaction pooler (Supabase :6543) must not hold persistent connections.
+    conn_max_age = 0 if port == "6543" else 60
     return {
         "ENGINE": "django.db.backends.postgresql",
         "NAME": (parsed.path.lstrip("/") or "postgres"),
@@ -91,8 +94,9 @@ def _database_from_url(url: str) -> dict:
         # Passwords in DATABASE_URL are percent-encoded when they contain @, !, %, etc.
         "PASSWORD": unquote(parsed.password or ""),
         "HOST": parsed.hostname or "localhost",
-        "PORT": str(parsed.port or 5432),
-        "CONN_MAX_AGE": 60,
+        "PORT": port,
+        "CONN_MAX_AGE": conn_max_age,
+        "CONN_HEALTH_CHECKS": True,
         "OPTIONS": {"sslmode": env("POSTGRES_SSLMODE", default="require")},
     }
 

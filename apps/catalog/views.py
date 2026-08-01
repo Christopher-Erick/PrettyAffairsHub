@@ -8,6 +8,7 @@ from django.conf import settings
 from apps.catalog.cache import (
     cached_active_categories,
     cached_active_collections,
+    cached_category_descendant_ids,
     cached_category_tree,
     cached_discovery_categories,
     cached_product_detail,
@@ -24,10 +25,10 @@ from apps.reviews.models import Review
 
 def products_for_category_slug(qs, slug):
     """Filter products by category slug, including all nested children."""
-    category = Category.objects.filter(slug=slug, is_active=True).first()
-    if not category:
+    ids = cached_category_descendant_ids(slug)
+    if not ids:
         return qs.none()
-    return qs.filter(categories__id__in=category.descendant_ids())
+    return qs.filter(categories__id__in=ids)
 
 
 def _shop_product_qs():
@@ -67,9 +68,8 @@ class ProductListView(ListView):
             qs = qs.filter(
                 Q(name__icontains=q)
                 | Q(short_description__icontains=q)
-                | Q(description__icontains=q)
-                | Q(variants__name__icontains=q)
                 | Q(brand__name__icontains=q)
+                | Q(variants__name__icontains=q)
             )
         if category:
             qs = products_for_category_slug(qs, category)
@@ -100,8 +100,38 @@ class ProductListView(ListView):
         return qs.order_by(sort_map.get(sort, "-created_at")).distinct()
 
     def get_queryset(self):
-        fingerprint = self._filter_fingerprint()
-        return cached_product_list(fingerprint, lambda: list(self._build_queryset()))
+        # Real queryset for counting/slicing; page payloads are cached in paginate_queryset.
+        return self._build_queryset()
+
+    def paginate_queryset(self, queryset, page_size):
+        from django.core.paginator import InvalidPage, Paginator
+
+        page_kwarg = self.page_kwarg
+        page_number = self.kwargs.get(page_kwarg) or self.request.GET.get(page_kwarg) or 1
+        try:
+            page_number = max(1, int(page_number))
+        except (TypeError, ValueError):
+            page_number = 1
+
+        fingerprint = f"{self._filter_fingerprint()}|page={page_number}|size={page_size}"
+
+        def producer():
+            total = queryset.count()
+            start = (page_number - 1) * page_size
+            items = list(queryset[start : start + page_size])
+            return {"count": total, "items": items, "page": page_number}
+
+        payload = cached_product_list(fingerprint, producer)
+        total = payload["count"]
+        items = payload["items"]
+        paginator = Paginator(range(total), page_size)
+        try:
+            page = paginator.page(page_number)
+        except InvalidPage:
+            page = paginator.page(1)
+            items = list(queryset[0:page_size])
+        page.object_list = items
+        return (paginator, page, items, page.has_other_pages())
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -123,14 +153,15 @@ class ProductListView(ListView):
                 or shop_product_qs().order_by("-average_rating", "-review_count").first()
             ),
         )
-        context["discovery_categories"] = cached_discovery_categories()
-
         filters = self.request.GET
-        show_shade_studio = not any(
+        browsing_clean = not any(
             filters.get(key)
             for key in ("category", "collection", "flag", "q", "min_price", "max_price")
         )
-        context["shade_studio"] = cached_shade_studio() if show_shade_studio else []
+        context["discovery_categories"] = (
+            cached_discovery_categories() if browsing_clean else []
+        )
+        context["shade_studio"] = cached_shade_studio() if browsing_clean else []
         return context
 
 

@@ -4,6 +4,7 @@ from django.db import transaction
 
 from apps.catalog.models import Product, ProductVariant
 from apps.cart.models import Cart, CartItem
+from apps.cart.context_processors import refresh_cart_item_count
 
 
 def _ensure_session(request):
@@ -19,6 +20,7 @@ def get_or_create_cart(request):
         guest = Cart.objects.filter(session_key=session_key, user__isnull=True).first()
         if guest and guest.pk != cart.pk:
             _merge_carts(guest, cart)
+            refresh_cart_item_count(request, cart)
         return cart
 
     session_key = _ensure_session(request)
@@ -68,6 +70,7 @@ def add_to_cart(request, product_id, quantity=1, variant_id=None):
         item.quantity = new_qty
         item.unit_price = unit_price
         item.save(update_fields=["quantity", "unit_price"])
+    refresh_cart_item_count(request, cart)
     return item
 
 
@@ -77,18 +80,21 @@ def update_cart_item(request, item_id, quantity):
     quantity = int(quantity)
     if quantity <= 0:
         item.delete()
+        refresh_cart_item_count(request, cart)
         return None
     available = item.variant.stock if item.variant else item.product.stock
     if quantity > available:
         raise ValueError("Not enough stock available.")
     item.quantity = quantity
     item.save(update_fields=["quantity"])
+    refresh_cart_item_count(request, cart)
     return item
 
 
 def remove_cart_item(request, item_id):
     cart = get_or_create_cart(request)
     cart.items.filter(pk=item_id).delete()
+    refresh_cart_item_count(request, cart)
 
 
 def cart_totals(cart, discount_amount=Decimal("0"), shipping_amount=Decimal("0"), tax_rate=Decimal("0")):
