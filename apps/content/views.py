@@ -11,52 +11,49 @@ from apps.core.smart_cache import get_or_set
 GIFT_CARD_DENOMINATIONS = [1000, 2500, 5000, 10000]
 
 
-class HomeView(TemplateView):
-    template_name = "content/home.html"
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        rails = cached_home_rails()
-        context["featured_products"] = rails["featured_products"]
-        context["new_arrivals"] = rails["new_arrivals"]
-        context["bestsellers"] = rails["bestsellers"]
-        context["shade_picks"] = rails["shade_picks"]
-        context["categories"] = rails["categories"]
-
-        story_slugs = (
-            "fenty-beauty-gloss-bomb-universal-lip-luminizer",
-            "gisou-honey-infused-lip-oil",
-            "laneige-lip-sleeping-mask",
+def _home_page_payload():
+    """One cache fill for the whole homepage (rails + CMS blocks)."""
+    rails = cached_home_rails()
+    story_slugs = (
+        "fenty-beauty-gloss-bomb-universal-lip-luminizer",
+        "gisou-honey-infused-lip-oil",
+        "laneige-lip-sleeping-mask",
+    )
+    story_products = rails.get("story_products") or {}
+    story_fallbacks = iter(
+        product
+        for product in (
+            rails["shade_picks"]
+            + rails["featured_products"]
+            + rails["new_arrivals"]
+            + rails["bestsellers"]
         )
-        story_products = rails.get("story_products") or {}
-        story_fallbacks = iter(
-            product
-            for product in (
-                context["shade_picks"]
-                + context["featured_products"]
-                + context["new_arrivals"]
-                + context["bestsellers"]
-            )
-            if product.primary_image and product.primary_image.image
-        )
-        used_ids = set()
-        selected_story_products = []
-        for slug in story_slugs:
-            product = story_products.get(slug)
-            while product is None or product.id in used_ids:
-                product = next(story_fallbacks, None)
-                if product is None:
-                    break
-            if product is not None:
-                selected_story_products.append(product)
-                used_ids.add(product.id)
+        if product.primary_image and product.primary_image.image
+    )
+    used_ids = set()
+    selected_story_products = []
+    for slug in story_slugs:
+        product = story_products.get(slug)
+        while product is None or product.id in used_ids:
+            product = next(story_fallbacks, None)
+            if product is None:
+                break
+        if product is not None:
+            selected_story_products.append(product)
+            used_ids.add(product.id)
 
-        story_copy = (
-            ("The gloss edit", "Glow in every shade", "Shop the shine", "coral"),
-            ("Honeyed colour", "Juicy, glass-like lips", "Find your tint", "pink"),
-            ("Night-time colour care", "Wake up to softer lips", "Meet the ritual", "citrus"),
-        )
-        context["story_panels"] = [
+    story_copy = (
+        ("The gloss edit", "Glow in every shade", "Shop the shine", "coral"),
+        ("Honeyed colour", "Juicy, glass-like lips", "Find your tint", "pink"),
+        ("Night-time colour care", "Wake up to softer lips", "Meet the ritual", "citrus"),
+    )
+    return {
+        "featured_products": rails["featured_products"],
+        "new_arrivals": rails["new_arrivals"],
+        "bestsellers": rails["bestsellers"],
+        "shade_picks": rails["shade_picks"],
+        "categories": rails["categories"],
+        "story_panels": [
             {
                 "product": product,
                 "eyebrow": eyebrow,
@@ -65,23 +62,20 @@ class HomeView(TemplateView):
                 "tone": tone,
             }
             for product, (eyebrow, title, cta, tone) in zip(selected_story_products, story_copy)
-        ]
-        context["testimonials"] = get_or_set(
-            "content:testimonials:featured",
-            lambda: list(Testimonial.objects.filter(is_featured=True)[:3]),
-        )
-        context["sections"] = get_or_set(
-            "content:homepage_sections",
-            lambda: list(HomepageSection.objects.filter(is_active=True)),
-        )
-        context["flash_sales"] = get_or_set(
-            "content:flash_sales:live",
-            lambda: [s for s in FlashSale.objects.filter(is_active=True) if s.is_live][:1],
-        )
-        context["blog_posts"] = get_or_set(
-            "content:blog_posts:home",
-            lambda: list(BlogPost.objects.filter(is_published=True)[:3]),
-        )
+        ],
+        "testimonials": list(Testimonial.objects.filter(is_featured=True)[:3]),
+        "sections": list(HomepageSection.objects.filter(is_active=True)),
+        "flash_sales": [s for s in FlashSale.objects.filter(is_active=True) if s.is_live][:1],
+        "blog_posts": list(BlogPost.objects.filter(is_published=True)[:2]),
+    }
+
+
+class HomeView(TemplateView):
+    template_name = "content/home.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context.update(get_or_set("content:home:page", _home_page_payload))
         return context
 
 
@@ -99,7 +93,10 @@ class FAQListView(ListView):
     context_object_name = "faqs"
 
     def get_queryset(self):
-        return FAQ.objects.filter(is_active=True)
+        return get_or_set(
+            "content:faqs:active",
+            lambda: list(FAQ.objects.filter(is_active=True)),
+        )
 
 
 class BlogListView(ListView):

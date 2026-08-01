@@ -129,7 +129,8 @@ def cached_home_rails():
 
     def producer():
         card_qs = shop_product_qs()
-        rail = 6
+        # Keep rails short — each card triggers an image download through Django.
+        rail = 4
         featured = list(
             Product.objects.featured()
             .select_related("brand")
@@ -164,7 +165,7 @@ def cached_home_rails():
                 )
             )
             .filter(product_count__gt=0)
-            .order_by("parent__sort_order", "sort_order", "name")[:10]
+            .order_by("parent__sort_order", "sort_order", "name")[:8]
         )
         story_slugs = (
             "fenty-beauty-gloss-bomb-universal-lip-luminizer",

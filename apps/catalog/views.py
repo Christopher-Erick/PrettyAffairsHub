@@ -39,7 +39,7 @@ class ProductListView(ListView):
     model = Product
     template_name = "catalog/shop.html"
     context_object_name = "products"
-    paginate_by = 24
+    paginate_by = 16
 
     def _filter_fingerprint(self) -> str:
         get = self.request.GET

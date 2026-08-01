@@ -81,7 +81,7 @@ class CloudflareCacheMiddleware:
             session_key = getattr(session, "session_key", None)
             get = getattr(session, "get", None)
             if session_key and callable(get):
-                if get("cart_id") or get("_auth_user_id"):
+                if get("_auth_user_id") or (get("cart_item_count") or 0) > 0:
                     return True
         return False
 

@@ -45,6 +45,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
+    "django.middleware.gzip.GZipMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
@@ -168,6 +169,9 @@ if REDIS_URL:
             "KEY_PREFIX": "pah",
         }
     }
+    # Sessions in Redis avoid a Supabase round-trip on every request.
+    SESSION_ENGINE = "django.contrib.sessions.backends.cache"
+    SESSION_CACHE_ALIAS = "default"
 else:
     CACHES = {
         "default": {
@@ -176,6 +180,10 @@ else:
             "TIMEOUT": None,
         }
     }
+
+# Bust static/media browser caches on each Render deploy when available.
+ASSET_VERSION = env("RENDER_GIT_COMMIT", default=env("ASSET_VERSION", default="1"))[:12]
+SESSION_SAVE_EVERY_REQUEST = False
 
 # Supabase project metadata (DB connection uses DATABASE_URL / SUPABASE_DB_URL above)
 SUPABASE_URL = env("SUPABASE_URL", default="")
