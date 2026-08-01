@@ -22,7 +22,13 @@ SITE_NAME = "Pretty Affairs Hub"
 SITE_TAGLINE = "Your One Stop Beauty Destination"
 SITE_CURRENCY = env("SITE_CURRENCY", default="KES")
 SITE_CURRENCY_SYMBOL = env("SITE_CURRENCY_SYMBOL", default="KSh")
+# Digits only with country code, e.g. 2547XXXXXXXX — enables the floating WhatsApp button.
 WHATSAPP_NUMBER = env("WHATSAPP_NUMBER", default="")
+SITE_PHONE = env("SITE_PHONE", default="")
+SITE_EMAIL = env("SITE_EMAIL", default="")
+SITE_INSTAGRAM = env("SITE_INSTAGRAM", default="")  # handle without @
+SITE_CITY = env("SITE_CITY", default="Nairobi, Kenya")
+SECURITY_CONTACT_EMAIL = env("SECURITY_CONTACT_EMAIL", default=SITE_EMAIL)
 
 INSTALLED_APPS = [
     "django.contrib.admin",

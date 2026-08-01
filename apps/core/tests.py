@@ -93,3 +93,19 @@ class CloudflareCacheMiddlewareTests(SimpleTestCase):
         request.session = {}
         response = self.middleware(request)
         self.assertEqual(response["Cache-Control"], "private, no-store")
+
+
+class SecurityHeadersTests(SimpleTestCase):
+    def test_csp_header_is_present(self):
+        from apps.core.middleware import SecurityHeadersMiddleware
+
+        def get_response(request):
+            from django.http import HttpResponse
+
+            return HttpResponse("ok")
+
+        middleware = SecurityHeadersMiddleware(get_response)
+        request = RequestFactory().get("/")
+        response = middleware(request)
+        self.assertIn("Content-Security-Policy", response)
+        self.assertIn("default-src 'self'", response["Content-Security-Policy"])

@@ -6,6 +6,22 @@ from __future__ import annotations
 class SecurityHeadersMiddleware:
     """Attach baseline security headers not covered by Django defaults."""
 
+    # Allow Google Fonts + self. Inline script is limited to the theme boot snippet
+    # in base.html (localStorage theme). Tighten further when third-party tags arrive.
+    CSP = (
+        "default-src 'self'; "
+        "base-uri 'self'; "
+        "form-action 'self' https://wa.me; "
+        "frame-ancestors 'none'; "
+        "object-src 'none'; "
+        "img-src 'self' data: blob: https:; "
+        "font-src 'self' https://fonts.gstatic.com data:; "
+        "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
+        "script-src 'self' 'unsafe-inline'; "
+        "connect-src 'self'; "
+        "upgrade-insecure-requests"
+    )
+
     def __init__(self, get_response):
         self.get_response = get_response
 
@@ -14,6 +30,8 @@ class SecurityHeadersMiddleware:
         response.headers.setdefault("Referrer-Policy", "strict-origin-when-cross-origin")
         response.headers.setdefault("Permissions-Policy", "geolocation=(), microphone=(), camera=()")
         response.headers.setdefault("X-Content-Type-Options", "nosniff")
+        response.headers.setdefault("Cross-Origin-Opener-Policy", "same-origin")
+        response.headers.setdefault("Content-Security-Policy", self.CSP)
         return response
 
 

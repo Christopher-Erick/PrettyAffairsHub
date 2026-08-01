@@ -23,6 +23,16 @@ def robots_txt(request):
     return HttpResponse("\n".join(lines), content_type="text/plain")
 
 
+def security_txt(request):
+    contact = getattr(settings, "SECURITY_CONTACT_EMAIL", "") or getattr(settings, "SITE_EMAIL", "")
+    lines = [
+        f"Contact: mailto:{contact}" if contact else "Contact: https://prettyaffairshub.onrender.com/contact/",
+        "Preferred-Languages: en",
+        "Canonical: https://prettyaffairshub.onrender.com/.well-known/security.txt",
+    ]
+    return HttpResponse("\n".join(lines) + "\n", content_type="text/plain; charset=utf-8")
+
+
 # Product photos live under MEDIA_ROOT. Long browser cache so repeat visits skip re-download.
 # WhiteNoise only serves STATIC; this serves /media/ on Render until R2 is wired.
 cached_media_serve = cache_control(public=True, max_age=60 * 60 * 24 * 30, immutable=True)(serve)
@@ -37,6 +47,7 @@ urlpatterns = [
     path("accounts/", include("apps.accounts.urls")),
     path("sitemap.xml", sitemap, {"sitemaps": sitemaps}, name="sitemap"),
     path("robots.txt", robots_txt, name="robots_txt"),
+    path(".well-known/security.txt", security_txt, name="security_txt"),
 ]
 
 urlpatterns += [

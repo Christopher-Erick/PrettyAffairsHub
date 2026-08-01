@@ -1,13 +1,29 @@
 {% extends "base.html" %}
 {% block title %}About — {{ SITE_NAME }}{% endblock %}
+{% block meta_description %}About {{ SITE_NAME }} — Kenya beauty destination for curated colour, skin-kind formulas, and everyday elegance.{% endblock %}
 {% block content %}
-<section class="section narrow">
-  <p class="eyebrow">About</p>
+<section class="section narrow trust-page">
+  <p class="eyebrow">Our story</p>
   <h1 class="section__title">{{ page.title|default:SITE_NAME }}</h1>
   {% if page %}
   <div class="prose">{{ page.body|linebreaks }}</div>
   {% else %}
-  <p>{{ SITE_NAME }} is your one stop beauty destination — elegant essentials, thoughtful formulas, and a calm shopping experience.</p>
+  <div class="prose">
+    <p>{{ SITE_NAME }} is a Kenya-based beauty destination for curated colour, skin-kind formulas, and finishing pieces — designed for everyday elegance.</p>
+    <p>We pack every order with care, favour honest shade guidance, and are here on WhatsApp when you need a match tip before you buy.</p>
+  </div>
   {% endif %}
+
+  <aside class="trust-page__cta" aria-label="Get in touch">
+    <h2 class="trust-page__cta-title">Talk to us</h2>
+    <p class="trust-page__cta-text">Prefer a quick answer before you order? Reach the team directly.</p>
+    <div class="trust-page__actions">
+      {% if WHATSAPP_NUMBER %}
+      <a class="btn btn--primary" href="https://wa.me/{{ WHATSAPP_NUMBER }}" target="_blank" rel="noopener noreferrer">WhatsApp</a>
+      {% endif %}
+      <a class="btn btn--ghost" href="{% url 'content:contact' %}">Contact form</a>
+      <a class="btn btn--ghost" href="{% url 'content:page' 'shipping' %}">Shipping info</a>
+    </div>
+  </aside>
 </section>
 {% endblock %}

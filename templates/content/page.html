@@ -1,8 +1,21 @@
 {% extends "base.html" %}
 {% block title %}{{ page.title }} — {{ SITE_NAME }}{% endblock %}
+{% block meta_description %}{{ page.title }} — {{ SITE_NAME }}. {% endblock %}
 {% block content %}
-<article class="section narrow prose">
+<section class="section narrow trust-page">
+  <p class="eyebrow">Policies</p>
   <h1 class="section__title">{{ page.title }}</h1>
-  {{ page.body|linebreaks }}
-</article>
+  <div class="prose">{{ page.body|linebreaks }}</div>
+  <p class="trust-page__more">
+    <a href="{% url 'content:page' 'shipping' %}">Shipping</a>
+    ·
+    <a href="{% url 'content:page' 'returns' %}">Returns</a>
+    ·
+    <a href="{% url 'content:page' 'privacy' %}">Privacy</a>
+    ·
+    <a href="{% url 'content:page' 'terms' %}">Terms</a>
+    ·
+    <a href="{% url 'content:contact' %}">Contact</a>
+  </p>
+</section>
 {% endblock %}

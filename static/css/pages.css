@@ -1124,6 +1124,123 @@
   font-size: var(--fs-sm);
 }
 
+.pdp-sticky {
+  display: none;
+}
+
+@media (max-width: 799px) {
+  .pdp-sticky {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 35;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem max(1rem, env(safe-area-inset-right)) calc(0.75rem + env(safe-area-inset-bottom)) max(1rem, env(safe-area-inset-left));
+    background: color-mix(in srgb, var(--bg-panel) 92%, transparent);
+    backdrop-filter: blur(10px);
+    box-shadow: 0 -1px 0 var(--hairline);
+  }
+
+  .pdp-sticky__info {
+    flex: 1;
+    min-width: 0;
+    display: grid;
+    gap: 0.15rem;
+  }
+
+  .pdp-sticky__name {
+    font-size: 0.85rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .pdp-sticky__price {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+  }
+
+  .pdp-sticky .btn {
+    flex-shrink: 0;
+  }
+
+  .whatsapp-float {
+    bottom: calc(4.75rem + env(safe-area-inset-bottom));
+  }
+}
+
+.contact-layout {
+  display: grid;
+  gap: var(--space-6);
+}
+
+@media (min-width: 800px) {
+  .contact-layout {
+    grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.05fr);
+    align-items: start;
+  }
+}
+
+.contact-channels {
+  list-style: none;
+  margin: var(--space-5) 0 0;
+  padding: 0;
+  display: grid;
+  gap: var(--space-3);
+}
+
+.contact-channels__label {
+  display: block;
+  font-size: var(--fs-xs);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  margin-bottom: 0.2rem;
+}
+
+.trust-page__cta {
+  margin-top: var(--space-7);
+  padding: var(--space-5);
+  background: color-mix(in srgb, var(--bg-panel) 88%, var(--color-glow) 12%);
+  box-shadow: inset 0 0 0 1px var(--hairline);
+}
+
+.trust-page__cta-title {
+  margin: 0 0 var(--space-2);
+  font-size: var(--fs-md);
+}
+
+.trust-page__cta-text {
+  margin: 0 0 var(--space-4);
+  color: var(--text-secondary);
+}
+
+.trust-page__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+}
+
+.trust-page__more {
+  margin-top: var(--space-6);
+  color: var(--text-secondary);
+  font-size: var(--fs-sm);
+}
+
+.trust-page__more a {
+  color: inherit;
+}
+
+.prose {
+  display: grid;
+  gap: var(--space-4);
+  line-height: 1.7;
+  color: var(--text-primary);
+}
+
 .tabs {
   display: grid;
   gap: var(--space-6);

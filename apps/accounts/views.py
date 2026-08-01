@@ -35,6 +35,13 @@ class UserLoginView(LoginView):
     template_name = "accounts/login.html"
     redirect_authenticated_user = True
 
+    def post(self, request, *args, **kwargs):
+        from apps.core.ratelimit import rate_limit_exceeded, too_many_requests
+
+        if rate_limit_exceeded(request, scope="login", limit=12, window_seconds=600):
+            return too_many_requests("Too many sign-in attempts. Please wait and try again.")
+        return super().post(request, *args, **kwargs)
+
     def form_valid(self, form):
         response = super().form_valid(form)
         # Fold any guest cart into the signed-in shopper's cart.

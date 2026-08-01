@@ -45,10 +45,12 @@
       <p class="product-card__shade" data-card-shade-name aria-live="polite">{% if product.default_variant %}{{ product.default_variant.name }}{% endif %}</p>
       {% endif %}
     {% endwith %}
-    <p class="product-card__rating" aria-label="Rated {{ product.average_rating|default:0 }} out of 5 from {{ product.review_count }} reviews">
+    {% if product.review_count %}
+    <p class="product-card__rating" aria-label="Rated {{ product.average_rating }} out of 5 from {{ product.review_count }} reviews">
       ★ {{ product.average_rating|floatformat:1 }}
       <span class="product-card__rating-count">({{ product.review_count }})</span>
     </p>
+    {% endif %}
     <form class="product-card__actions" action="{% url 'cart:add' %}" method="post">
       {% csrf_token %}
       <input type="hidden" name="product_id" value="{{ product.id }}">

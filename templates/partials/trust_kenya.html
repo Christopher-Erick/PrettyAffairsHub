@@ -19,7 +19,12 @@
     </div>
     <div class="trust-strip__item">
       <p class="trust-strip__label">Peace of mind</p>
-      <p class="trust-strip__text">Free over KSh 5,000 · 7-day returns on unopened items</p>
+      <p class="trust-strip__text">
+        Free over KSh 5,000 ·
+        <a href="{% url 'content:page' 'returns' %}">7-day returns</a>
+        on unopened items ·
+        <a href="{% url 'content:page' 'shipping' %}">Shipping</a>
+      </p>
     </div>
   </div>
   {% if WHATSAPP_NUMBER %}

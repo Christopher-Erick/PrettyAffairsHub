@@ -32,5 +32,11 @@ def site_settings(request):
         "SITE_CURRENCY": settings.SITE_CURRENCY,
         "SITE_CURRENCY_SYMBOL": settings.SITE_CURRENCY_SYMBOL,
         "WHATSAPP_NUMBER": settings.WHATSAPP_NUMBER,
-        "ANNOUNCEMENT_TEXT": "Free delivery on orders over KSh 5,000 · New season essentials",
+        "SITE_PHONE": getattr(settings, "SITE_PHONE", ""),
+        "SITE_EMAIL": getattr(settings, "SITE_EMAIL", ""),
+        "SITE_INSTAGRAM": getattr(settings, "SITE_INSTAGRAM", ""),
+        "SITE_CITY": getattr(settings, "SITE_CITY", ""),
+        "ANNOUNCEMENT_TEXT": (
+            "Free delivery on orders over KSh 5,000 · Easy returns on sealed items · Chat on WhatsApp"
+        ),
     }

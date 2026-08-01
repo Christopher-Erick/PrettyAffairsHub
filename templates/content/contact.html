@@ -1,8 +1,55 @@
 {% extends "base.html" %}
 {% block title %}Contact — {{ SITE_NAME }}{% endblock %}
+{% block meta_description %}Contact {{ SITE_NAME }} — WhatsApp, email, and order help for beauty shopping in Kenya.{% endblock %}
 {% block content %}
-<section class="section narrow">
-  <h1 class="section__title">Contact us</h1>
+<section class="section contact-layout">
+  <div>
+    <p class="eyebrow">We’re here</p>
+    <h1 class="section__title">Contact us</h1>
+    <p class="section__text">Questions about shades, delivery, or an order? Send a message — or reach us faster on WhatsApp.</p>
+
+    <ul class="contact-channels">
+      {% if WHATSAPP_NUMBER %}
+      <li>
+        <span class="contact-channels__label">WhatsApp</span>
+        <a href="https://wa.me/{{ WHATSAPP_NUMBER }}" target="_blank" rel="noopener noreferrer">Chat with the team</a>
+      </li>
+      {% endif %}
+      {% if SITE_PHONE %}
+      <li>
+        <span class="contact-channels__label">Phone</span>
+        <a href="tel:{{ SITE_PHONE }}">{{ SITE_PHONE }}</a>
+      </li>
+      {% endif %}
+      {% if SITE_EMAIL %}
+      <li>
+        <span class="contact-channels__label">Email</span>
+        <a href="mailto:{{ SITE_EMAIL }}">{{ SITE_EMAIL }}</a>
+      </li>
+      {% endif %}
+      {% if SITE_INSTAGRAM %}
+      <li>
+        <span class="contact-channels__label">Instagram</span>
+        <a href="https://instagram.com/{{ SITE_INSTAGRAM }}" target="_blank" rel="noopener noreferrer">@{{ SITE_INSTAGRAM }}</a>
+      </li>
+      {% endif %}
+      {% if SITE_CITY %}
+      <li>
+        <span class="contact-channels__label">Based in</span>
+        <span>{{ SITE_CITY }}</span>
+      </li>
+      {% endif %}
+      <li>
+        <span class="contact-channels__label">Orders</span>
+        <a href="{% url 'orders:track' %}">Track an order</a>
+      </li>
+    </ul>
+
+    {% if not WHATSAPP_NUMBER and not SITE_PHONE and not SITE_EMAIL %}
+    <p class="section__text">Use the form below and we will reply by email.</p>
+    {% endif %}
+  </div>
+
   <form method="post" class="stack-form">
     {% csrf_token %}
     {{ form.as_p }}

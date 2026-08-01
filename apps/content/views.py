@@ -63,7 +63,7 @@ def _home_page_payload():
             }
             for product, (eyebrow, title, cta, tone) in zip(selected_story_products, story_copy)
         ],
-        "testimonials": list(Testimonial.objects.filter(is_featured=True)[:3]),
+            "testimonials": list(Testimonial.objects.filter(is_featured=True)[:4]),
         "sections": list(HomepageSection.objects.filter(is_active=True)),
         "flash_sales": [s for s in FlashSale.objects.filter(is_active=True) if s.is_live][:1],
         "blog_posts": list(BlogPost.objects.filter(is_published=True)[:2]),
@@ -130,6 +130,12 @@ class SitePageDetailView(DetailView):
 
 
 def contact(request):
+    from apps.core.ratelimit import rate_limit_exceeded, too_many_requests
+
+    if request.method == "POST" and rate_limit_exceeded(
+        request, scope="contact", limit=8, window_seconds=600
+    ):
+        return too_many_requests()
     form = ContactForm(request.POST or None)
     if request.method == "POST" and form.is_valid():
         form.save()
@@ -140,8 +146,11 @@ def contact(request):
 
 def newsletter_subscribe(request):
     from apps.core.http import safe_redirect
+    from apps.core.ratelimit import rate_limit_exceeded, too_many_requests
 
     if request.method == "POST":
+        if rate_limit_exceeded(request, scope="newsletter", limit=12, window_seconds=600):
+            return too_many_requests()
         form = NewsletterForm(request.POST)
         if form.is_valid():
             from apps.content.models import NewsletterSubscriber

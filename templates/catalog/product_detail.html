@@ -69,7 +69,7 @@
     </div>
     {% endif %}
 
-    <form class="pdp__actions" action="{% url 'cart:add' %}" method="post">
+    <form id="pdp-cart-form" class="pdp__actions" action="{% url 'cart:add' %}" method="post">
       {% csrf_token %}
       <input type="hidden" name="product_id" value="{{ product.id }}">
       <input type="hidden" name="next" value="{{ product.get_absolute_url }}">
@@ -104,6 +104,16 @@
         <button class="btn btn--ghost" type="submit" name="buy_now" formaction="{% url 'cart:add' %}" {% if not product.in_stock %}disabled{% endif %} onclick="this.form.next.value='{% url 'orders:checkout' %}'">Buy now</button>
       </div>
     </form>
+
+    <div class="pdp-sticky" aria-label="Quick add">
+      <div class="pdp-sticky__info">
+        <span class="pdp-sticky__name">{{ product.name }}</span>
+        <span class="pdp-sticky__price">{{ SITE_CURRENCY_SYMBOL }} {{ product.price|floatformat:0 }}</span>
+      </div>
+      <button class="btn btn--primary" type="submit" form="pdp-cart-form" {% if not product.in_stock %}disabled{% endif %}>
+        {% if product.in_stock %}Add to cart{% else %}Sold out{% endif %}
+      </button>
+    </div>
 
     {% if user.is_authenticated %}
     <form action="{% url 'accounts:wishlist_toggle' product.slug %}" method="post">
