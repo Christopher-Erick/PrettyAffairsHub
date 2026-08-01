@@ -38,12 +38,35 @@ FIXED_KEYS = (
 )
 
 
+def _cache_get(key: str) -> Any:
+    """Read from cache, treating an unreachable backend as a miss.
+
+    A dead or over-quota cache must never take the shop down; the database
+    can still answer every read.
+    """
+    try:
+        return cache.get(key)
+    except Exception:
+        logger.warning("Cache read failed for %s; falling back to the database", key)
+        return None
+
+
+def _cache_set(key: str, value: Any, timeout: int | None) -> None:
+    try:
+        cache.set(key, value, timeout=timeout)
+    except Exception:
+        logger.warning("Cache write failed for %s", key)
+
+
 def catalog_version() -> int:
-    value = cache.get(VERSION_KEY)
+    value = _cache_get(VERSION_KEY)
     if value is None:
-        cache.set(VERSION_KEY, 1, timeout=CACHE_TIMEOUT)
+        _cache_set(VERSION_KEY, 1, CACHE_TIMEOUT)
         return 1
-    return int(value)
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return 1
 
 
 def versioned_key(namespace: str, *parts: Any) -> str:
@@ -53,11 +76,11 @@ def versioned_key(namespace: str, *parts: Any) -> str:
 
 
 def get_or_set(key: str, producer: Callable[[], T], timeout: int | None = CACHE_TIMEOUT) -> T:
-    cached = cache.get(key)
+    cached = _cache_get(key)
     if cached is not None:
         return cached
     value = producer()
-    cache.set(key, value, timeout=timeout)
+    _cache_set(key, value, timeout)
     return value
 
 
@@ -69,9 +92,15 @@ def invalidate_catalog_cache(*, reason: str = "") -> None:
     try:
         cache.incr(VERSION_KEY)
     except ValueError:
-        cache.set(VERSION_KEY, catalog_version() + 1, timeout=CACHE_TIMEOUT)
+        _cache_set(VERSION_KEY, catalog_version() + 1, CACHE_TIMEOUT)
+    except Exception:
+        logger.warning("Cache version bump failed; skipping invalidation")
+        return
 
-    cache.delete_many(list(FIXED_KEYS))
+    try:
+        cache.delete_many(list(FIXED_KEYS))
+    except Exception:
+        logger.warning("Cache key eviction failed")
     if reason:
         logger.info("Catalog cache invalidated: %s (version=%s)", reason, catalog_version())
 
