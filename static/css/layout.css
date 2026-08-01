@@ -73,10 +73,13 @@
 }
 
 .site-header__logo {
-  width: clamp(4.5rem, 7.5vw, 5.75rem);
+  width: clamp(5rem, 8vw, 6.25rem);
   height: auto;
   display: block;
-  filter: drop-shadow(0 2px 3px rgba(28, 23, 21, 0.12));
+  filter:
+    contrast(1.55)
+    saturate(1.2)
+    drop-shadow(0 2px 3px rgba(28, 23, 21, 0.16));
 }
 
 .site-header__logo--dark {
@@ -89,6 +92,10 @@
 
 [data-theme="dark"] .site-header__logo--dark {
   display: block;
+  filter:
+    contrast(1.2)
+    saturate(1.25)
+    drop-shadow(0 2px 4px rgba(0, 0, 0, 0.35));
 }
 
 .site-header__identity {
@@ -306,14 +313,10 @@
   }
 
   .site-header__logo {
-    width: clamp(3.5rem, 14vw, 4.5rem);
+    width: clamp(4.75rem, 18vw, 5.75rem);
   }
 
-  .site-header__wordmark {
-    font-size: clamp(0.95rem, 4vw, 1.15rem);
-  }
-
-  .site-header__tagline {
+  .site-header__identity {
     display: none;
   }
 
