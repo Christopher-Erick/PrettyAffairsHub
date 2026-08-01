@@ -99,14 +99,21 @@ class InternalCatalogDataTests(TestCase):
 class CategoryRuleTests(SimpleTestCase):
     """A product's form decides its category; a shared scent line never does."""
 
-    def test_body_care_from_a_fragrance_line_is_not_a_perfume(self):
-        for title in (
-            "Jeanne En Provence Rose Envoutante Body Lotion 200ml",
-            "Jeanne En Provence Jasmin Secret Hand Cream 75ml",
-            "Jeanne En Provence Orange Blossom Shower Oil 250ml",
-        ):
+    def test_body_lotions_are_skipped(self):
+        self.assertIsNone(
+            feed_b_category("Jeanne En Provence Rose Envoutante Body Lotion 200ml")
+        )
+
+    def test_hand_cream_and_body_wash_resolve_to_body_care(self):
+        cases = {
+            "Jeanne En Provence Jasmin Secret Hand Cream 75ml": "Body & Hand Care",
+            "Jeanne En Provence Orange Blossom Shower Oil 250ml": "Body & Hand Care",
+            "eos Shea Better Cashmere Body Wash Vanilla Cashmere": "Body & Hand Care",
+            "Dove Shea Butter Warm Vanilla Body Wash 500ml": "Body & Hand Care",
+        }
+        for title, expected in cases.items():
             with self.subTest(title=title):
-                self.assertEqual(feed_b_category(title), "Body & Hand Care")
+                self.assertEqual(feed_b_category(title), expected)
 
     def test_fragrance_forms_still_resolve(self):
         cases = {

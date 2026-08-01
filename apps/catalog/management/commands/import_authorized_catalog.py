@@ -87,15 +87,11 @@ CATEGORY_RULES = {
     "Jewellery Boxes": ("jewellery box", "jewelry box"),
     "Boob Tape": ("boob tape", "breast tape"),
     "Acrylic Bangles": ("acrylic bangle", "acrylic bracelet"),
+    # Body lotions/creams are intentionally excluded from the assortment.
     "Body & Hand Care": (
-        "body lotion",
-        "body milk",
-        "body cream",
-        "body butter",
         "body scrub",
         "body wash",
         "hand cream",
-        "hand lotion",
         "hand balm",
         "shower oil",
         "shower gel",
@@ -256,11 +252,23 @@ def category_for(title: str, allowed: set[str] | None = None) -> str | None:
     return None
 
 
+# Forms we never stock — skip the title entirely rather than misfiling it.
+SKIP_FORMS = (
+    "body lotion",
+    "body milk",
+    "body cream",
+    "body butter",
+    "hand lotion",
+)
+
+
 def feed_b_category(title: str) -> str | None:
+    lowered = title.lower()
+    if any(form in lowered for form in SKIP_FORMS):
+        return None
     matched = category_for(title, FEED_B_CATEGORIES)
     if matched:
         return matched
-    lowered = title.lower()
     makeup_blockers = (
         "mascara",
         "concealer",
