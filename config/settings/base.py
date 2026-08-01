@@ -167,11 +167,13 @@ if REDIS_URL:
             "LOCATION": REDIS_URL,
             "TIMEOUT": None,
             "KEY_PREFIX": "pah",
+            # Fail fast instead of stalling a request when Redis is unreachable.
+            "OPTIONS": {
+                "socket_connect_timeout": 2,
+                "socket_timeout": 2,
+            },
         }
     }
-    # Sessions in Redis avoid a Supabase round-trip on every request.
-    SESSION_ENGINE = "django.contrib.sessions.backends.cache"
-    SESSION_CACHE_ALIAS = "default"
 else:
     CACHES = {
         "default": {
@@ -183,6 +185,11 @@ else:
 
 # Bust static/media browser caches on each Render deploy when available.
 ASSET_VERSION = env("RENDER_GIT_COMMIT", default=env("ASSET_VERSION", default="1"))[:12]
+
+# Read sessions through the cache, but always persist them in Postgres so a
+# cache outage cannot break sign-in. See apps.core.sessions.
+SESSION_ENGINE = "apps.core.sessions"
+SESSION_CACHE_ALIAS = "default"
 SESSION_SAVE_EVERY_REQUEST = False
 
 # Supabase project metadata (DB connection uses DATABASE_URL / SUPABASE_DB_URL above)

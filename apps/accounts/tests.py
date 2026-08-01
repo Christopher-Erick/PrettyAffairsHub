@@ -54,14 +54,14 @@ class AccountAccessTests(TestCase):
         response = self.client.get(reverse("accounts:profile"))
         self.assertEqual(response.status_code, 200)
         self.assertNotContains(response, "Store admin")
-        self.assertNotContains(response, reverse("admin:index"))
+        self.assertNotContains(response, reverse("desk:home"))
 
-    def test_admin_profile_shows_store_admin(self):
+    def test_admin_profile_shows_store_manager(self):
         self.client.login(username="adminuser", password="PrettyAdmin2026!")
         response = self.client.get(reverse("accounts:profile"))
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "Store admin")
-        self.assertContains(response, reverse("admin:index"))
+        self.assertContains(response, "Store Manager")
+        self.assertContains(response, reverse("desk:home"))
 
     def test_admin_route_still_protected(self):
         anon = Client()

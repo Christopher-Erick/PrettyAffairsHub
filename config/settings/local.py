@@ -1,5 +1,7 @@
 """Local development settings."""
 
+import sys
+
 from .base import *  # noqa: F401, F403
 
 DEBUG = True
@@ -16,3 +18,8 @@ STORAGES = {
 }
 
 EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
+
+# The test runner creates and drops whole databases, so it must never reach
+# Supabase even when DATABASE_URL is present in .env.
+if "test" in sys.argv:
+    DATABASES = {"default": {"ENGINE": "django.db.backends.sqlite3", "NAME": ":memory:"}}

@@ -1,4 +1,7 @@
-from django.core.cache import cache
+from unittest import mock
+
+from django.contrib.auth.models import User
+from django.core.cache import cache, caches
 from django.test import RequestFactory, SimpleTestCase, TestCase
 from django.urls import reverse
 
@@ -32,6 +35,37 @@ class SmartCacheTests(TestCase):
         invalidate_catalog_cache(reason="test")
         second = versioned_key("catalog:product_list", "q=rose")
         self.assertNotEqual(first, second)
+
+
+class SessionResilienceTests(TestCase):
+    """A dead Redis must degrade to database sessions, never a 500."""
+
+    def setUp(self):
+        User.objects.create_superuser("deskadmin", "desk@example.com", "PrettyAdmin2026!")
+
+    @staticmethod
+    def _dead_cache():
+        def boom(*args, **kwargs):
+            raise ConnectionError("cache unreachable")
+
+        backend = caches["default"]
+        return mock.patch.multiple(
+            backend, get=boom, set=boom, delete=boom, has_key=boom, create=True
+        )
+
+    def test_admin_login_survives_a_dead_cache(self):
+        with self._dead_cache():
+            response = self.client.post(
+                reverse("admin:login"),
+                {"username": "deskadmin", "password": "PrettyAdmin2026!", "next": "/admin/"},
+            )
+        self.assertEqual(response.status_code, 302)
+        self.assertIn("_auth_user_id", self.client.session)
+
+    def test_authenticated_page_survives_a_dead_cache(self):
+        self.client.login(username="deskadmin", password="PrettyAdmin2026!")
+        with self._dead_cache():
+            self.assertEqual(self.client.get(reverse("admin:index")).status_code, 200)
 
 
 class CloudflareCacheMiddlewareTests(SimpleTestCase):
