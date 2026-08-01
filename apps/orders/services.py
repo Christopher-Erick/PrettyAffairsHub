@@ -3,8 +3,12 @@ from decimal import Decimal
 from django.conf import settings
 from django.core.mail import send_mail
 from django.db import transaction
+from django.db.models import F
 
+from apps.accounts.roles import is_store_admin
 from apps.cart.services import cart_totals, get_or_create_cart
+from apps.catalog.models import Product, ProductVariant
+from apps.core.smart_cache import invalidate_catalog_cache
 from apps.discounts.models import Coupon
 from apps.orders.models import Order, OrderEvent, OrderItem
 
@@ -12,6 +16,33 @@ from apps.orders.models import Order, OrderEvent, OrderItem
 DEFAULT_SHIPPING = Decimal("300.00")
 FREE_SHIPPING_THRESHOLD = Decimal("5000.00")
 TAX_RATE = Decimal("0")  # configurable later
+ORDER_CONFIRMATION_SESSION_KEY = "viewable_order_numbers"
+
+
+def grant_order_confirmation_access(request, order_number: str) -> None:
+    """Allow this browser session to open the confirmation page for order_number."""
+    session = getattr(request, "session", None)
+    if session is None:
+        return
+    viewed = list(session.get(ORDER_CONFIRMATION_SESSION_KEY, []))
+    if order_number not in viewed:
+        viewed.append(order_number)
+        session[ORDER_CONFIRMATION_SESSION_KEY] = viewed[-30:]
+        session.modified = True
+
+
+def can_view_order_confirmation(request, order: Order) -> bool:
+    """Confirmation shows PII — only the buyer (or store staff) may open it."""
+    user = getattr(request, "user", None)
+    if user is not None and user.is_authenticated:
+        if order.user_id and order.user_id == user.id:
+            return True
+        if is_store_admin(user):
+            return True
+    session = getattr(request, "session", None)
+    if session is None:
+        return False
+    return order.order_number in (session.get(ORDER_CONFIRMATION_SESSION_KEY) or [])
 
 
 @transaction.atomic
@@ -21,20 +52,32 @@ def create_order_from_cart(request, cleaned_data):
     if not items:
         raise ValueError("Your cart is empty.")
 
+    product_ids = {item.product_id for item in items}
+    variant_ids = {item.variant_id for item in items if item.variant_id}
+    products = {
+        p.id: p for p in Product.objects.select_for_update().filter(id__in=product_ids)
+    }
+    variants = {
+        v.id: v for v in ProductVariant.objects.select_for_update().filter(id__in=variant_ids)
+    }
+
     for item in items:
-        available = item.variant.stock if item.variant else item.product.stock
-        if item.quantity > available:
+        available_obj = variants.get(item.variant_id) if item.variant_id else products[item.product_id]
+        if item.quantity > available_obj.stock:
             raise ValueError(f"Insufficient stock for {item.product.name}.")
 
     subtotal = cart.subtotal
     discount_amount = Decimal("0")
     coupon_code = cleaned_data.get("coupon_code") or cart.coupon_code
     if coupon_code:
-        coupon = Coupon.objects.filter(code__iexact=coupon_code).first()
+        coupon = (
+            Coupon.objects.select_for_update()
+            .filter(code__iexact=coupon_code)
+            .first()
+        )
         if coupon and coupon.is_valid(subtotal):
             discount_amount = coupon.calculate_discount(subtotal)
-            coupon.used_count += 1
-            coupon.save(update_fields=["used_count"])
+            Coupon.objects.filter(pk=coupon.pk).update(used_count=F("used_count") + 1)
         else:
             coupon_code = ""
 
@@ -68,7 +111,7 @@ def create_order_from_cart(request, cleaned_data):
     OrderEvent.objects.create(order=order, status=Order.STATUS_PENDING, note="Order placed")
 
     for item in items:
-        available_obj = item.variant or item.product
+        available_obj = variants.get(item.variant_id) if item.variant_id else products[item.product_id]
         available_obj.stock = max(0, available_obj.stock - item.quantity)
         available_obj.save(update_fields=["stock"])
         OrderItem.objects.create(
@@ -86,6 +129,8 @@ def create_order_from_cart(request, cleaned_data):
     cart.coupon_code = ""
     cart.save(update_fields=["coupon_code"])
 
+    # Stock changed — drop stale "in stock" catalogue payloads.
+    invalidate_catalog_cache(reason="order placed")
     send_order_confirmation(order)
     return order
 

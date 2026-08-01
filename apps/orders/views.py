@@ -9,7 +9,13 @@ from apps.cart.services import cart_totals, get_or_create_cart
 from apps.discounts.models import Coupon
 from apps.orders.forms import CheckoutForm, KENYA_CITIES
 from apps.orders.models import Order
-from apps.orders.services import DEFAULT_SHIPPING, FREE_SHIPPING_THRESHOLD, create_order_from_cart
+from apps.orders.services import (
+    DEFAULT_SHIPPING,
+    FREE_SHIPPING_THRESHOLD,
+    can_view_order_confirmation,
+    create_order_from_cart,
+    grant_order_confirmation_access,
+)
 
 
 def _checkout_shipping_name(user):
@@ -63,6 +69,7 @@ def checkout(request):
     if request.method == "POST" and form.is_valid():
         try:
             order = create_order_from_cart(request, form.cleaned_data)
+            grant_order_confirmation_access(request, order.order_number)
             messages.success(request, f"Order {order.order_number} placed successfully.")
             return redirect("orders:confirmation", order_number=order.order_number)
         except ValueError as exc:
@@ -95,9 +102,9 @@ def checkout(request):
 
 def order_confirmation(request, order_number):
     order = get_object_or_404(Order, order_number=order_number)
-    if request.user.is_authenticated and order.user_id and order.user_id != request.user.id:
+    if not can_view_order_confirmation(request, order):
         messages.error(request, "You cannot view that order.")
-        return redirect("content:home")
+        return redirect("orders:track")
     return render(request, "orders/confirmation.html", {"order": order})
 
 
@@ -120,6 +127,8 @@ def track_order(request):
         number = request.POST.get("order_number", "").strip()
         email = request.POST.get("email", "").strip()
         order = Order.objects.filter(order_number__iexact=number, email__iexact=email).first()
-        if not order:
+        if order:
+            grant_order_confirmation_access(request, order.order_number)
+        else:
             error = "No order found with that number and email."
     return render(request, "orders/track.html", {"order": order, "error": error})

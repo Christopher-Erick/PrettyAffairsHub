@@ -75,17 +75,17 @@ class CloudflareCacheMiddlewareTests(SimpleTestCase):
         def get_response(request):
             from django.http import HttpResponse
 
-            return HttpResponse("ok")
+            return HttpResponse("ok")  # text/html — must stay private (CSRF tokens)
 
         self.middleware = CloudflareCacheMiddleware(get_response)
 
-    def test_public_shop_gets_edge_cache_headers(self):
+    def test_html_pages_are_never_edge_cached(self):
         request = self.factory.get("/shop/")
         request.user = type("Anon", (), {"is_authenticated": False})()
         request.session = {}
         response = self.middleware(request)
-        self.assertIn("s-maxage=86400", response["Cache-Control"])
-        self.assertEqual(response["CDN-Cache-Control"], "public, max-age=86400")
+        self.assertEqual(response["Cache-Control"], "private, no-store")
+        self.assertEqual(response["CDN-Cache-Control"], "private, no-store")
 
     def test_cart_stays_private(self):
         request = self.factory.get("/cart/")

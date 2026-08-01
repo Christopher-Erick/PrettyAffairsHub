@@ -19,7 +19,10 @@
       {% if is_store_admin %}
       <a href="{% url 'desk:home' %}">Store Manager</a>
       {% endif %}
-      <a href="{% url 'accounts:logout' %}">Sign out</a>
+      <form class="inline-form" method="post" action="{% url 'accounts:logout' %}">
+        {% csrf_token %}
+        <button class="text-link" type="submit">Sign out</button>
+      </form>
     </nav>
   </div>
 

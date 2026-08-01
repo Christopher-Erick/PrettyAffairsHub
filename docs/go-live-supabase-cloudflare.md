@@ -71,11 +71,13 @@ Set at least:
 DJANGO_SETTINGS_MODULE=config.settings.production
 DEBUG=False
 SECRET_KEY=…long random…
-ALLOWED_HOSTS=prettyaffairshub.com,www.prettyaffairshub.com
+ALLOWED_HOSTS=prettyaffairshub.onrender.com,prettyaffairshub.com,www.prettyaffairshub.com
 DATABASE_URL=…from Supabase…
 REDIS_URL=…optional but recommended…
-CSRF_TRUSTED_ORIGINS=https://prettyaffairshub.com,https://www.prettyaffairshub.com
+CSRF_TRUSTED_ORIGINS=https://prettyaffairshub.onrender.com,https://prettyaffairshub.com,https://www.prettyaffairshub.com
 ```
+
+On Render, `RENDER=true` is set automatically and `config.wsgi` selects production settings even if `DJANGO_SETTINGS_MODULE` is omitted — still set it explicitly so management commands match.
 
 Start with Gunicorn, e.g. `gunicorn config.wsgi:application --bind 0.0.0.0:$PORT`.
 
@@ -88,8 +90,8 @@ Serve media via the host or Cloudflare R2 (Phase 2).
 3. SSL/TLS mode: **Full (strict)**.
 4. Always Use HTTPS: on.
 5. Caching:
-   - Cache Rules: cache everything under `/static/` aggressively.
-   - Honour origin `Cache-Control` / `CDN-Cache-Control` for HTML (already set by middleware).
+   - Cache Rules: cache everything under `/static/` and `/media/` aggressively.
+   - Do **not** cache HTML at the edge — storefront pages embed CSRF tokens; shared HTML would break add-to-cart. Speed comes from Redis smart cache + static/media CDN.
 6. Optional purge API:
    - Create an API token with Zone → Cache Purge.
    - Set `CLOUDFLARE_ZONE_ID` and `CLOUDFLARE_API_TOKEN` on the app.

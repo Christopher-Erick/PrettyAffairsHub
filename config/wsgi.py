@@ -11,6 +11,10 @@ import os
 
 from django.core.wsgi import get_wsgi_application
 
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'config.settings')
+# Render sets RENDER=true. Never boot the local/DEBUG settings package there.
+if os.environ.get("RENDER"):
+    os.environ.setdefault("DJANGO_SETTINGS_MODULE", "config.settings.production")
+else:
+    os.environ.setdefault("DJANGO_SETTINGS_MODULE", "config.settings")
 
 application = get_wsgi_application()

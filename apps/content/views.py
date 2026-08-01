@@ -139,6 +139,8 @@ def contact(request):
 
 
 def newsletter_subscribe(request):
+    from apps.core.http import safe_redirect
+
     if request.method == "POST":
         form = NewsletterForm(request.POST)
         if form.is_valid():
@@ -148,7 +150,7 @@ def newsletter_subscribe(request):
             messages.success(request, "You are subscribed.")
         else:
             messages.error(request, "That email could not be subscribed.")
-    return redirect(request.META.get("HTTP_REFERER", "/"))
+    return safe_redirect(request, request.META.get("HTTP_REFERER"), fallback="/")
 
 
 def gift_cards(request):

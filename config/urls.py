@@ -17,7 +17,7 @@ def robots_txt(request):
         "Disallow: /manage/",
         "Disallow: /accounts/",
         "Disallow: /cart/",
-        "Disallow: /orders/checkout/",
+        "Disallow: /orders/",
         f"Sitemap: {request.build_absolute_uri('/sitemap.xml')}",
     ]
     return HttpResponse("\n".join(lines), content_type="text/plain")

@@ -40,7 +40,10 @@
       <a href="{% url 'desk:content_hub' %}">Site content</a>
       <a href="{% url 'desk:message_list' %}">Messages</a>
       <a href="{% url 'content:home' %}">View shop</a>
-      <a href="{% url 'accounts:logout' %}">Sign out</a>
+      <form class="desk-nav__logout" method="post" action="{% url 'accounts:logout' %}">
+        {% csrf_token %}
+        <button type="submit">Sign out</button>
+      </form>
     </nav>
   </header>
 

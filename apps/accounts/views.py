@@ -11,7 +11,9 @@ from apps.accounts.forms import AddressForm, ProfileForm, RegisterForm
 from apps.accounts.models import Address, CustomerProfile
 from apps.accounts.roles import is_store_admin
 from apps.accounts.services import get_or_create_wishlist, toggle_wishlist
+from apps.cart.services import get_or_create_cart
 from apps.catalog.models import Product
+from apps.core.http import safe_redirect
 from apps.orders.models import Order
 
 
@@ -24,6 +26,7 @@ class RegisterView(CreateView):
         response = super().form_valid(form)
         CustomerProfile.objects.get_or_create(user=self.object)
         login(self.request, self.object)
+        get_or_create_cart(self.request)
         messages.success(self.request, "Welcome to Pretty Affairs Hub.")
         return response
 
@@ -34,6 +37,8 @@ class UserLoginView(LoginView):
 
     def form_valid(self, form):
         response = super().form_valid(form)
+        # Fold any guest cart into the signed-in shopper's cart.
+        get_or_create_cart(self.request)
         if is_store_admin(self.request.user):
             messages.info(
                 self.request,
@@ -111,5 +116,4 @@ def wishlist_toggle(request, slug):
     product = get_object_or_404(Product, slug=slug, is_active=True)
     added = toggle_wishlist(request.user, product)
     messages.success(request, "Added to wishlist." if added else "Removed from wishlist.")
-    next_url = request.POST.get("next") or product.get_absolute_url()
-    return redirect(next_url)
+    return safe_redirect(request, request.POST.get("next"), fallback=product.get_absolute_url())

@@ -17,33 +17,23 @@ class SecurityHeadersMiddleware:
         return response
 
 
-# Paths that are safe to cache at the edge for anonymous visitors.
-PUBLIC_PREFIXES = (
-    "/",
-    "/shop/",
-    "/about/",
-    "/faq/",
-    "/blog/",
-    "/contact/",
-)
-
 # Never edge-cache these (auth, cart, checkout, admin).
 PRIVATE_PREFIXES = (
     "/admin/",
     "/manage/",
     "/accounts/",
     "/cart/",
-    "/checkout/",
     "/orders/",
-    "/wishlist/",
 )
 
 
 class CloudflareCacheMiddleware:
-    """Set Cache-Control so Cloudflare's edge can hold public HTML.
+    """Keep HTML private at the CDN; speed comes from Redis + static/media.
 
-    Authenticated or cart-bearing sessions stay private. Catalogue writes
-    bump the app cache and optionally purge Cloudflare (see smart_cache).
+    Every storefront page embeds a CSRF token (footer newsletter and shop forms).
+    Caching that HTML at Cloudflare would serve Visitor A's token to Visitor B and
+    break add-to-cart / newsletter posts. Catalogue speed is handled by
+    apps.core.smart_cache; Cloudflare should cache /static/ and /media/ only.
     """
 
     def __init__(self, get_response):
@@ -55,18 +45,15 @@ class CloudflareCacheMiddleware:
             return response
         if response.status_code != 200:
             return response
-        if self._is_private(request):
+
+        content_type = (response.get("Content-Type") or "").lower()
+        if content_type.startswith("text/html") or self._is_private(request):
             response["Cache-Control"] = "private, no-store"
-            return response
-        if not self._is_public_path(request.path):
+            response["CDN-Cache-Control"] = "private, no-store"
             return response
 
-        # Browser: 5 minutes for anonymous HTML. Edge (s-maxage): 1 day when Cloudflare proxies.
-        response["Cache-Control"] = (
-            "public, max-age=300, s-maxage=86400, stale-while-revalidate=600"
-        )
-        response["CDN-Cache-Control"] = "public, max-age=86400"
-        # Only vary on encoding for anonymous HTML — Cookie would kill edge/browser reuse.
+        # Non-HTML public responses (robots, sitemap XML) may be shared briefly.
+        response["Cache-Control"] = "public, max-age=300"
         response["Vary"] = "Accept-Encoding"
         return response
 
@@ -84,8 +71,3 @@ class CloudflareCacheMiddleware:
                 if get("_auth_user_id") or (get("cart_item_count") or 0) > 0:
                     return True
         return False
-
-    def _is_public_path(self, path: str) -> bool:
-        if path in {"/", ""}:
-            return True
-        return any(path.startswith(prefix) for prefix in PUBLIC_PREFIXES if prefix != "/")

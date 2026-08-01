@@ -11,6 +11,7 @@ from apps.cart.services import (
     remove_cart_item,
     update_cart_item,
 )
+from apps.core.http import safe_redirect
 from apps.discounts.models import Coupon
 from apps.orders.services import DEFAULT_SHIPPING, FREE_SHIPPING_THRESHOLD
 
@@ -58,10 +59,7 @@ def cart_add(request):
         messages.success(request, "Added to cart.")
     except Exception as exc:
         messages.error(request, str(exc))
-    next_url = request.POST.get("next") or "cart:detail"
-    if next_url == "cart:detail":
-        return redirect("cart:detail")
-    return redirect(next_url)
+    return safe_redirect(request, request.POST.get("next"), fallback="cart:detail")
 
 
 @require_POST
@@ -79,10 +77,7 @@ def cart_add_many(request):
         messages.success(request, f"Added {added} ritual piece{'s' if added != 1 else ''} to your cart.")
     for err in errors[:2]:
         messages.error(request, err)
-    next_url = request.POST.get("next") or "cart:detail"
-    if next_url == "cart:detail":
-        return redirect("cart:detail")
-    return redirect(next_url)
+    return safe_redirect(request, request.POST.get("next"), fallback="cart:detail")
 
 
 @require_POST

@@ -70,6 +70,27 @@
   color: var(--color-burgundy);
 }
 
+.desk-nav__logout {
+  display: inline;
+  margin: 0;
+}
+
+.desk-nav__logout button {
+  appearance: none;
+  border: 0;
+  background: none;
+  padding: 0;
+  cursor: pointer;
+  font: inherit;
+  color: var(--text-secondary);
+  font-size: 0.92rem;
+  font-weight: 500;
+}
+
+.desk-nav__logout button:hover {
+  color: var(--color-burgundy);
+}
+
 .desk-main {
   max-width: 960px;
   margin: 0 auto;
