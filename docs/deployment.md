@@ -5,24 +5,16 @@
 | Env | Settings module | Database |
 |-----|-----------------|----------|
 | Local | `config.settings.local` | SQLite (default) |
-| Production | `config.settings.production` | PostgreSQL required |
+| Production | `config.settings.production` | Supabase PostgreSQL (`DATABASE_URL`) |
 
 ## Production checklist
 
-1. Set strong `SECRET_KEY`
-2. Set `ALLOWED_HOSTS` and `DEBUG=False`
-3. Configure PostgreSQL credentials
-4. Run `collectstatic`
-5. Serve behind HTTPS (Cloudflare)
-6. Configure email backend
-7. Rotate secrets via host env vars — never bake into images
+1. Create a Supabase project and copy the **pooler** `DATABASE_URL`
+2. Set strong `SECRET_KEY`, `ALLOWED_HOSTS`, `DEBUG=False`
+3. Set `REDIS_URL` (recommended) for shared smart cache across workers
+4. Run `migrate`, `createsuperuser`, `collectstatic`
+5. Deploy Django (Gunicorn) on Railway / Render / Fly / VPS
+6. Put the domain on **Cloudflare** (proxied DNS, Full strict SSL)
+7. Optional: `CLOUDFLARE_ZONE_ID` + `CLOUDFLARE_API_TOKEN` for purge-on-write
 
-## Cloudflare (free tier)
-
-- Proxy DNS through Cloudflare
-- Enable HTTPS / Always Use HTTPS
-- Cache static assets aggressively
-- Consider R2 for media later
-
-Full phased plan (Firebase data options, admin story, Workers/Pages): see
-[`docs/firebase-cloudflare-migration.md`](firebase-cloudflare-migration.md).
+Step-by-step: [`docs/go-live-supabase-cloudflare.md`](go-live-supabase-cloudflare.md).

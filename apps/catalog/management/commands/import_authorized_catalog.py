@@ -17,11 +17,12 @@ from pathlib import Path
 from urllib.parse import urlparse
 from urllib.request import Request, urlopen
 
-from django.core.cache import cache
 from django.core.files.base import ContentFile
 from django.core.management.base import BaseCommand, CommandError
 from django.db import transaction
 from django.utils.text import slugify
+
+from apps.core.smart_cache import invalidate_catalog_cache
 
 from apps.catalog.models import (
     Brand,
@@ -451,13 +452,7 @@ class Command(BaseCommand):
                 ],
                 source_name="",
             ).update(is_active=False)
-            cache.delete_many(
-                [
-                    "catalog:category_tree",
-                    "catalog:categories_active",
-                    "catalog:collections_active",
-                ]
-            )
+            invalidate_catalog_cache(reason="authorized catalog import")
 
         self.stdout.write(self.style.SUCCESS(f"Imported {imported_total} authorized products."))
         for category in Category.objects.filter(is_active=True, parent__isnull=False).order_by(

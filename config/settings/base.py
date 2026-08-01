@@ -1,6 +1,7 @@
 """Base settings shared by all environments."""
 
 from pathlib import Path
+from urllib.parse import unquote, urlparse
 
 import environ
 
@@ -51,6 +52,7 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "apps.core.middleware.SecurityHeadersMiddleware",
+    "apps.core.middleware.CloudflareCacheMiddleware",
 ]
 
 ROOT_URLCONF = "config.urls"
@@ -78,7 +80,28 @@ LOGOUT_REDIRECT_URL = "content:home"
 
 WSGI_APPLICATION = "config.wsgi.application"
 
-if env("USE_POSTGRES"):
+
+def _database_from_url(url: str) -> dict:
+    parsed = urlparse(url)
+    return {
+        "ENGINE": "django.db.backends.postgresql",
+        "NAME": (parsed.path.lstrip("/") or "postgres"),
+        "USER": unquote(parsed.username or "postgres"),
+        # Passwords in DATABASE_URL are percent-encoded when they contain @, !, %, etc.
+        "PASSWORD": unquote(parsed.password or ""),
+        "HOST": parsed.hostname or "localhost",
+        "PORT": str(parsed.port or 5432),
+        "CONN_MAX_AGE": 60,
+        "OPTIONS": {"sslmode": env("POSTGRES_SSLMODE", default="require")},
+    }
+
+
+# Prefer Supabase / DATABASE_URL. Fall back to discrete POSTGRES_* or local SQLite.
+DATABASE_URL = env("DATABASE_URL", default="")
+SUPABASE_DB_URL = env("SUPABASE_DB_URL", default="")
+if DATABASE_URL or SUPABASE_DB_URL:
+    DATABASES = {"default": _database_from_url(DATABASE_URL or SUPABASE_DB_URL)}
+elif env("USE_POSTGRES"):
     DATABASES = {
         "default": {
             "ENGINE": "django.db.backends.postgresql",
@@ -88,6 +111,7 @@ if env("USE_POSTGRES"):
             "HOST": env("POSTGRES_HOST", default="localhost"),
             "PORT": env("POSTGRES_PORT", default="5432"),
             "CONN_MAX_AGE": 60,
+            "OPTIONS": {"sslmode": env("POSTGRES_SSLMODE", default="prefer")},
         }
     }
 else:
@@ -127,19 +151,35 @@ MEDIA_ROOT = BASE_DIR / "media"
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
-CACHES = {
-    "default": {
-        "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
-        "LOCATION": "pretty-affairs-hub",
-        "TIMEOUT": 120,
+# Smart cache: Redis in production when REDIS_URL is set; LocMem for local.
+# Catalogue entries live until writes invalidate them (see apps.core.smart_cache).
+REDIS_URL = env("REDIS_URL", default="")
+if REDIS_URL:
+    CACHES = {
+        "default": {
+            "BACKEND": "django.core.cache.backends.redis.RedisCache",
+            "LOCATION": REDIS_URL,
+            "TIMEOUT": None,
+            "KEY_PREFIX": "pah",
+        }
     }
-}
+else:
+    CACHES = {
+        "default": {
+            "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+            "LOCATION": "pretty-affairs-hub",
+            "TIMEOUT": None,
+        }
+    }
 
-# Optional Firebase / Cloudflare scaffolding (unused until credentials are set)
-FIREBASE_PROJECT_ID = env("FIREBASE_PROJECT_ID", default="")
-FIREBASE_STORAGE_BUCKET = env("FIREBASE_STORAGE_BUCKET", default="")
-FIREBASE_CREDENTIALS = env("FIREBASE_CREDENTIALS", default="")
+# Supabase project metadata (DB connection uses DATABASE_URL / SUPABASE_DB_URL above)
+SUPABASE_URL = env("SUPABASE_URL", default="")
+SUPABASE_ANON_KEY = env("SUPABASE_ANON_KEY", default="")
+
+# Cloudflare — edge cache purge after catalogue writes
 CLOUDFLARE_ACCOUNT_ID = env("CLOUDFLARE_ACCOUNT_ID", default="")
+CLOUDFLARE_ZONE_ID = env("CLOUDFLARE_ZONE_ID", default="")
+CLOUDFLARE_API_TOKEN = env("CLOUDFLARE_API_TOKEN", default="")
 CLOUDFLARE_R2_BUCKET = env("CLOUDFLARE_R2_BUCKET", default="")
 
 SESSION_COOKIE_HTTPONLY = True

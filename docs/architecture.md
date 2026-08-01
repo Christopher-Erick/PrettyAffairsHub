@@ -8,27 +8,26 @@ Pretty Affairs Hub is a server-rendered Django e-commerce platform with a modula
 
 | App | Responsibility |
 |-----|----------------|
-| `core` | Security headers, site context, shared utilities |
+| `core` | Security headers, smart cache, Cloudflare edge headers, site context |
 | `catalog` | Products, categories, collections, search/filters |
 | `content` | Homepage, blog, FAQs, about, CMS blocks |
-| `accounts` | Customers, addresses, wishlist (upcoming) |
+| `accounts` | Customers, addresses, wishlist |
+| `cart` / `orders` / `discounts` / `reviews` | Commerce flows |
 
-Future apps: `cart`, `orders`, `payments`, `discounts`, `reviews`, `marketing`, `inventory`, `search`.
+## Data & cache
+
+- **Local:** SQLite + LocMem cache
+- **Production:** [Supabase PostgreSQL](https://supabase.com) via `DATABASE_URL`
+- **Smart cache:** catalogue pages served from cache until a write invalidates (see `apps.core.smart_cache`)
+- **Edge:** Cloudflare caches anonymous HTML/static when DNS is proxied
 
 ## Settings
 
 - `config.settings.local` — development (default)
-- `config.settings.production` — PostgreSQL + secure cookies/HSTS
-- Toggle DB with `USE_POSTGRES` / production env vars
+- `config.settings.production` — Supabase Postgres + secure cookies/HSTS
 
-## Frontend
+## Deployment
 
-Templates under `templates/` compose reusable partials and components.  
-Tokens live in `static/css/tokens.css`. Brand logo: `static/img/logo.png`.
+App host (Railway / Render / Fly / VPS) + Supabase + Cloudflare.
 
-## Deployment target
-
-App host (Railway / Render / VPS) + Cloudflare (DNS, TLS, caching, optional R2/Images).
-
-Firebase is optional and phased — see [`docs/firebase-cloudflare-migration.md`](firebase-cloudflare-migration.md).
-Keep Django admin for catalogue ops until a deliberate cutover.
+Full go-live steps: [`docs/go-live-supabase-cloudflare.md`](go-live-supabase-cloudflare.md).

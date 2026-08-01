@@ -7,10 +7,12 @@ Luxury beauty & cosmetics e-commerce platform built with Django.
 
 ## Stack
 
-- Django 6 + PostgreSQL (SQLite for local by default)
+- Django 6 + **Supabase PostgreSQL** (SQLite locally)
+- Smart catalogue cache (DB only after writes) + Cloudflare edge headers
 - HTML / CSS design system / progressive JavaScript
 - WhiteNoise for static files
-- Cloudflare-ready deployment path
+
+Go-live guide: [`docs/go-live-supabase-cloudflare.md`](docs/go-live-supabase-cloudflare.md)
 
 ## Quick start
 

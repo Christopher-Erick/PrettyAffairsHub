@@ -2,17 +2,21 @@
 
 ## Current
 
-Default local database: SQLite (`db.sqlite3`).  
-Production: PostgreSQL via environment variables.
+| Environment | Engine |
+|-------------|--------|
+| Local | SQLite (`db.sqlite3`) |
+| Production | **Supabase PostgreSQL** via `DATABASE_URL` / `SUPABASE_DB_URL` |
 
-## Upcoming models (Phase 2+)
+Discrete `POSTGRES_*` vars remain as a fallback when no URL is set and `USE_POSTGRES=True`.
 
-- Brand, Category, Collection
-- Product, ProductImage, ProductVariant
-- InventoryLevel
-- Cart / CartItem
-- Order / OrderItem / Address
-- Coupon, GiftCard, Review
-- BlogPost, FAQ, HomepageSection
+## Caching contract
 
-Schema diagrams and ERD will be added when catalog models land.
+Catalogue reads (home rails, shop filters, product lists, PDPs) are served from
+the smart cache. Saving or deleting catalogue rows bumps the cache version so
+the next request rebuilds from Supabase. Cart, checkout, and admin always use
+the database.
+
+## Models
+
+Brand, Category, Collection, Product, ProductImage, ProductVariant, cart/order
+models, CMS (blog, FAQ, homepage sections), reviews, discounts.

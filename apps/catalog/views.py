@@ -1,20 +1,25 @@
 from django.contrib import messages
-from django.core.cache import cache
-from django.db.models import Count, Prefetch, Q
+from django.db.models import Count, Q
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_POST
 from django.views.generic import DetailView, ListView
 from django.conf import settings
 
-from apps.catalog.models import Bundle, Category, Collection, Product, ProductVariant
+from apps.catalog.cache import (
+    cached_active_categories,
+    cached_active_collections,
+    cached_category_tree,
+    cached_discovery_categories,
+    cached_product_detail,
+    cached_product_list,
+    cached_shade_studio,
+    shop_product_qs,
+)
+from apps.catalog.models import Bundle, Category, Collection, Product
 from apps.catalog.services import get_recently_viewed_ids, track_product_view
+from apps.core.smart_cache import get_or_set
 from apps.reviews.forms import ReviewForm
 from apps.reviews.models import Review
-
-ACTIVE_VARIANTS = Prefetch(
-    "variants",
-    queryset=ProductVariant.objects.filter(is_active=True).order_by("id"),
-)
 
 
 def products_for_category_slug(qs, slug):
@@ -26,11 +31,7 @@ def products_for_category_slug(qs, slug):
 
 
 def _shop_product_qs():
-    return (
-        Product.objects.published()
-        .select_related("brand")
-        .prefetch_related("images", "categories", ACTIVE_VARIANTS)
-    )
+    return shop_product_qs()
 
 
 class ProductListView(ListView):
@@ -39,7 +40,20 @@ class ProductListView(ListView):
     context_object_name = "products"
     paginate_by = 24
 
-    def get_queryset(self):
+    def _filter_fingerprint(self) -> str:
+        get = self.request.GET
+        keys = (
+            "q",
+            "category",
+            "collection",
+            "sort",
+            "min_price",
+            "max_price",
+            "flag",
+        )
+        return "&".join(f"{key}={get.get(key, '')}" for key in keys)
+
+    def _build_queryset(self):
         qs = _shop_product_qs()
         q = self.request.GET.get("q", "").strip()
         category = self.request.GET.get("category")
@@ -85,90 +99,38 @@ class ProductListView(ListView):
         }
         return qs.order_by(sort_map.get(sort, "-created_at")).distinct()
 
+    def get_queryset(self):
+        fingerprint = self._filter_fingerprint()
+        return cached_product_list(fingerprint, lambda: list(self._build_queryset()))
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context["category_tree"] = cache.get_or_set(
-            "catalog:category_tree",
-            lambda: list(Category.tree_for_filters()),
-            120,
-        )
-        context["categories"] = cache.get_or_set(
-            "catalog:categories_active",
-            lambda: list(Category.objects.filter(is_active=True)),
-            120,
-        )
-        context["collections"] = cache.get_or_set(
-            "catalog:collections_active",
-            lambda: list(Collection.objects.filter(is_active=True)),
-            120,
-        )
+        context["category_tree"] = cached_category_tree()
+        context["categories"] = cached_active_categories()
+        context["collections"] = cached_active_collections()
         context["current_filters"] = self.request.GET
         page_obj = context.get("page_obj")
-        context["result_count"] = page_obj.paginator.count if page_obj is not None else len(context["products"])
-        context["top_seller"] = (
-            _shop_product_qs()
-            .filter(is_bestseller=True)
-            .order_by("-average_rating", "-review_count")
-            .first()
-            or _shop_product_qs().order_by("-average_rating", "-review_count").first()
+        context["result_count"] = (
+            page_obj.paginator.count if page_obj is not None else len(context["products"])
         )
-
-        leaf_categories = list(
-            Category.objects.filter(is_active=True, parent__isnull=False)
-            .select_related("parent")
-            .annotate(
-                product_count=Count(
-                    "products",
-                    filter=Q(products__is_active=True),
-                    distinct=True,
-                )
-            )
-            .filter(product_count__gt=0)
-            .order_by("parent__sort_order", "sort_order", "name")
+        context["top_seller"] = get_or_set(
+            "catalog:top_seller",
+            lambda: (
+                shop_product_qs()
+                .filter(is_bestseller=True)
+                .order_by("-average_rating", "-review_count")
+                .first()
+                or shop_product_qs().order_by("-average_rating", "-review_count").first()
+            ),
         )
-        leaf_ids = {c.id for c in leaf_categories}
-        samples_by_category: dict[int, Product] = {}
-        if leaf_ids:
-            for product in (
-                _shop_product_qs()
-                .filter(categories__id__in=leaf_ids)
-                .order_by("-is_featured", "-average_rating", "-created_at")
-                .distinct()
-            ):
-                for category in product.categories.all():
-                    if category.id in leaf_ids and category.id not in samples_by_category:
-                        samples_by_category[category.id] = product
-                if len(samples_by_category) >= len(leaf_ids):
-                    break
-
-        discovery = []
-        for category in leaf_categories:
-            sample = samples_by_category.get(category.id)
-            swatches = list(sample.variants.all()[:5]) if sample else []
-            discovery.append(
-                {
-                    "category": category,
-                    "count": category.product_count,
-                    "sample": sample,
-                    "swatches": swatches,
-                }
-            )
-        context["discovery_categories"] = discovery
+        context["discovery_categories"] = cached_discovery_categories()
 
         filters = self.request.GET
         show_shade_studio = not any(
-            filters.get(key) for key in ("category", "collection", "flag", "q", "min_price", "max_price")
+            filters.get(key)
+            for key in ("category", "collection", "flag", "q", "min_price", "max_price")
         )
-        context["shade_studio"] = (
-            _shop_product_qs()
-            .annotate(
-                shade_count=Count("variants", filter=Q(variants__is_active=True), distinct=True)
-            )
-            .filter(shade_count__gte=3)
-            .order_by("-shade_count", "-average_rating", "-review_count")[:6]
-            if show_shade_studio
-            else []
-        )
+        context["shade_studio"] = cached_shade_studio() if show_shade_studio else []
         return context
 
 
@@ -192,7 +154,10 @@ class CollectionDetailView(ProductListView):
         self.collection = get_object_or_404(
             Collection, slug=self.kwargs["slug"], is_active=True
         )
-        return super().get_queryset().filter(collections=self.collection)
+        params = self.request.GET.copy()
+        params["collection"] = self.collection.slug
+        self.request.GET = params
+        return super().get_queryset()
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -208,6 +173,8 @@ class ProductDetailView(DetailView):
     slug_field = "slug"
 
     def get_queryset(self):
+        from apps.catalog.cache import ACTIVE_VARIANTS
+
         return (
             Product.objects.published()
             .select_related("brand")
@@ -220,7 +187,13 @@ class ProductDetailView(DetailView):
         )
 
     def get_object(self, queryset=None):
-        obj = super().get_object(queryset)
+        slug = self.kwargs.get(self.slug_url_kwarg)
+
+        def producer():
+            qs = queryset if queryset is not None else self.get_queryset()
+            return get_object_or_404(qs, slug=slug)
+
+        obj = cached_product_detail(slug, producer)
         track_product_view(self.request, obj.pk)
         return obj
 
