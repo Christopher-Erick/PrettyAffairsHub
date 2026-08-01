@@ -1,0 +1,35 @@
+# Keep the Render free-tier web service warm.
+# Free instances sleep after ~15 minutes idle; pinging every 10 minutes
+# avoids most cold starts for shoppers.
+#
+# Note: Render may change free-tier rules. A paid "always on" instance is
+# the durable fix if traffic grows.
+
+name: Keep Render awake
+
+on:
+  schedule:
+    # Every 10 minutes (UTC). GitHub can delay cron by a few minutes.
+    - cron: "*/10 * * * *"
+  workflow_dispatch: # manual "Run workflow" button for testing
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - name: Ping storefront
+        env:
+          SITE_URL: https://prettyaffairshub.onrender.com/
+        run: |
+          set -euo pipefail
+          code=$(curl -sS -o /dev/null -w "%{http_code}" \
+            --connect-timeout 30 \
+            --max-time 90 \
+            -A "PrettyAffairsHub-KeepAlive/1.0 (+github-actions)" \
+            -L "$SITE_URL")
+          echo "HTTP $code from $SITE_URL"
+          case "$code" in
+            200|301|302|304) exit 0 ;;
+            *) echo "Unexpected status $code"; exit 1 ;;
+          esac
