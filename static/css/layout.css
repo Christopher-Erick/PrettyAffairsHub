@@ -38,12 +38,11 @@
   grid-template-columns: auto 1fr auto;
   align-items: center;
   gap: var(--space-3);
-  width: min(var(--container-max), 100%);
+  width: var(--container);
   max-width: 100%;
   margin: 0 auto;
   min-height: var(--header-h);
-  padding: 0.35rem var(--page-gutter);
-  box-sizing: border-box;
+  padding: 0.35rem 0;
 }
 
 .site-header__start {
@@ -775,11 +774,10 @@
 }
 
 .section {
-  width: min(var(--container-max), 100%);
+  width: var(--container);
   max-width: 100%;
   margin: 0 auto;
-  padding: var(--space-9) var(--page-gutter);
-  box-sizing: border-box;
+  padding: var(--space-9) 0;
 }
 
 .section--tight {
@@ -792,12 +790,11 @@
   margin: 0;
   padding: var(--space-9) var(--page-gutter);
   background: var(--bg-soft-band);
-  box-sizing: border-box;
 }
 
 .section--soft > .section__inner {
-  width: 100%;
-  max-width: var(--container-max);
+  width: var(--container);
+  max-width: 100%;
   margin: 0 auto;
 }
 
@@ -917,12 +914,11 @@
   margin: 0;
   padding: var(--space-9) var(--page-gutter);
   background: var(--bg-band);
-  box-sizing: border-box;
 }
 
 .band__inner {
-  width: 100%;
-  max-width: var(--container-max);
+  width: var(--container);
+  max-width: 100%;
   margin: 0 auto;
   text-align: center;
 }
@@ -939,11 +935,10 @@
 }
 
 .page-hero {
-  width: min(42rem, 100%);
+  width: min(42rem, var(--container));
   max-width: 100%;
   margin: 0 auto;
-  padding: var(--space-9) var(--page-gutter);
-  box-sizing: border-box;
+  padding: var(--space-9) 0;
   text-align: center;
 }
 
@@ -961,12 +956,11 @@
   border-top: 0;
   background: var(--bg-footer);
   padding: var(--space-8) var(--page-gutter) calc(var(--space-5) + var(--whatsapp-fab-space));
-  box-sizing: border-box;
 }
 
 .site-footer__grid {
-  width: 100%;
-  max-width: var(--container-max);
+  width: var(--container);
+  max-width: 100%;
   margin: 0 auto;
   display: grid;
   gap: var(--space-6);
@@ -1078,8 +1072,8 @@
 }
 
 .site-footer__bottom {
-  width: 100%;
-  max-width: var(--container-max);
+  width: var(--container);
+  max-width: 100%;
   margin: var(--space-7) auto 0;
   padding-top: var(--space-4);
   border-top: 1px solid var(--hairline);
