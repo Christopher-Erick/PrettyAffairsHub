@@ -420,7 +420,7 @@ def message_detail(request, pk):
                         reply_form.cleaned_data["reply_body"],
                         staff_user=request.user,
                     )
-                except (BadHeaderError, SMTPException, OSError, ValueError) as exc:
+                except (BadHeaderError, SMTPException, OSError, ValueError, RuntimeError) as exc:
                     messages.error(
                         request,
                         f"Could not send the reply email. {exc}",

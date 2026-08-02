@@ -219,16 +219,22 @@ EMAIL_BACKEND = env(
     "EMAIL_BACKEND",
     default="django.core.mail.backends.console.EmailBackend",
 )
-DEFAULT_FROM_EMAIL = env("DEFAULT_FROM_EMAIL", default="hello@prettyaffairshub.com")
+DEFAULT_FROM_EMAIL = env(
+    "DEFAULT_FROM_EMAIL",
+    default="Pretty Affairs Hub <onboarding@resend.dev>",
+)
 EMAIL_HOST = env("EMAIL_HOST", default="")
 EMAIL_PORT = env.int("EMAIL_PORT", default=587)
 EMAIL_HOST_USER = env("EMAIL_HOST_USER", default="")
 EMAIL_HOST_PASSWORD = env("EMAIL_HOST_PASSWORD", default="")
 EMAIL_USE_TLS = env.bool("EMAIL_USE_TLS", default=True)
 EMAIL_USE_SSL = env.bool("EMAIL_USE_SSL", default=False)
-# When SMTP host is configured (e.g. Resend on Render), prefer SMTP unless an
-# explicit EMAIL_BACKEND override is already set in the environment.
-if EMAIL_HOST and env("EMAIL_BACKEND", default="") == "":
+# Resend HTTPS API (works on Render free tier). SMTP ports 25/465/587 are blocked
+# on free web services, so prefer API whenever a Resend key is present.
+RESEND_API_KEY = env("RESEND_API_KEY", default="") or EMAIL_HOST_PASSWORD
+if RESEND_API_KEY and env("EMAIL_BACKEND", default="") == "":
+    EMAIL_BACKEND = "apps.core.resend_backend.ResendAPIEmailBackend"
+elif EMAIL_HOST and env("EMAIL_BACKEND", default="") == "":
     EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
 
 # Tax rate percent (0 = disabled / inclusive pricing)

@@ -94,7 +94,14 @@ class UserPasswordResetView(PasswordResetView):
         from django.conf import settings
 
         self.extra_email_context = {"site_name": settings.SITE_NAME}
-        return super().form_valid(form)
+        try:
+            return super().form_valid(form)
+        except Exception:
+            messages.error(
+                self.request,
+                "We could not send the reset email right now. Please try again shortly.",
+            )
+            return self.form_invalid(form)
 
 
 class UserPasswordResetDoneView(PasswordResetDoneView):
