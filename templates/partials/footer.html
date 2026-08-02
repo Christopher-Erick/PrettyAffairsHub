@@ -5,16 +5,45 @@
       <p class="site-footer__tagline">{{ SITE_TAGLINE }}</p>
       {% if SITE_PHONE or WHATSAPP_NUMBER or SITE_EMAIL or SITE_INSTAGRAM or SITE_TIKTOK %}
       <ul class="site-footer__contact">
-        {% if SITE_PHONE %}<li><a href="tel:{{ SITE_PHONE }}">{{ SITE_PHONE }}</a></li>{% endif %}
-        {% if WHATSAPP_NUMBER %}
-        <li><a href="https://wa.me/{{ WHATSAPP_NUMBER }}" target="_blank" rel="noopener noreferrer">WhatsApp us</a></li>
+        {% if SITE_PHONE %}
+        <li>
+          <a href="tel:{{ SITE_PHONE }}">
+            <span class="contact-mark" aria-hidden="true">{% include "partials/contact_mark.html" with kind="phone" %}</span>
+            <span>{{ SITE_PHONE }}</span>
+          </a>
+        </li>
         {% endif %}
-        {% if SITE_EMAIL %}<li><a href="mailto:{{ SITE_EMAIL }}">{{ SITE_EMAIL }}</a></li>{% endif %}
+        {% if WHATSAPP_NUMBER %}
+        <li>
+          <a href="https://wa.me/{{ WHATSAPP_NUMBER }}" target="_blank" rel="noopener noreferrer">
+            <span class="contact-mark" aria-hidden="true">{% include "partials/contact_mark.html" with kind="whatsapp" %}</span>
+            <span>WhatsApp us</span>
+          </a>
+        </li>
+        {% endif %}
+        {% if SITE_EMAIL %}
+        <li>
+          <a href="mailto:{{ SITE_EMAIL }}">
+            <span class="contact-mark" aria-hidden="true">{% include "partials/contact_mark.html" with kind="email" %}</span>
+            <span>{{ SITE_EMAIL }}</span>
+          </a>
+        </li>
+        {% endif %}
         {% if SITE_INSTAGRAM %}
-        <li><a href="https://instagram.com/{{ SITE_INSTAGRAM }}" target="_blank" rel="noopener noreferrer">Instagram @{{ SITE_INSTAGRAM }}</a></li>
+        <li>
+          <a href="https://instagram.com/{{ SITE_INSTAGRAM }}" target="_blank" rel="noopener noreferrer">
+            <span class="contact-mark" aria-hidden="true">{% include "partials/contact_mark.html" with kind="instagram" %}</span>
+            <span>@{{ SITE_INSTAGRAM }}</span>
+          </a>
+        </li>
         {% endif %}
         {% if SITE_TIKTOK %}
-        <li><a href="https://www.tiktok.com/@{{ SITE_TIKTOK }}" target="_blank" rel="noopener noreferrer">TikTok @{{ SITE_TIKTOK }}</a></li>
+        <li>
+          <a href="https://www.tiktok.com/@{{ SITE_TIKTOK }}" target="_blank" rel="noopener noreferrer">
+            <span class="contact-mark" aria-hidden="true">{% include "partials/contact_mark.html" with kind="tiktok" %}</span>
+            <span>@{{ SITE_TIKTOK }}</span>
+          </a>
+        </li>
         {% endif %}
       </ul>
       {% endif %}

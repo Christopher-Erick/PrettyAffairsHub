@@ -1201,6 +1201,186 @@
   margin-bottom: 0.2rem;
 }
 
+.contact-channel {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  text-decoration: none;
+  color: inherit;
+  min-height: 2.75rem;
+}
+
+.contact-channel--static {
+  cursor: default;
+}
+
+.contact-channel__value {
+  display: block;
+  font-size: var(--fs-sm);
+  word-break: break-word;
+}
+
+.contact-channel .contact-mark {
+  width: 2.2rem;
+  height: 2.2rem;
+}
+
+.contact-channel .contact-mark__svg {
+  width: 1.05rem;
+  height: 1.05rem;
+}
+
+.btn--with-mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.btn__mark {
+  display: inline-grid;
+  place-items: center;
+  width: 1.1rem;
+  height: 1.1rem;
+}
+
+.btn__mark .contact-mark__svg {
+  width: 1.05rem;
+  height: 1.05rem;
+}
+
+/* Gift cards page only */
+.gift-page .gift-page__intro {
+  max-width: 36rem;
+  margin-bottom: var(--space-5);
+}
+
+.gift-denoms {
+  list-style: none;
+  margin: 0 0 var(--space-6);
+  padding: 0;
+  display: grid;
+  gap: 0.85rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+@media (min-width: 800px) {
+  .gift-denoms {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+.gift-denom {
+  padding: 1.15rem 1rem;
+  background: color-mix(in srgb, var(--bg-panel) 88%, var(--color-glow) 12%);
+  box-shadow: inset 0 0 0 1px var(--hairline);
+}
+
+.gift-denom__amount {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: clamp(1.35rem, 1.1rem + 1vw, 1.7rem);
+}
+
+.gift-denom__label {
+  margin: 0.2rem 0 0;
+  font-size: var(--fs-xs);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+
+.gift-denom__note {
+  margin: 0.55rem 0 0;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+.gift-page__steps {
+  margin-bottom: var(--space-5);
+}
+
+.gift-steps {
+  margin: 0;
+  padding-left: 1.2rem;
+  display: grid;
+  gap: 0.55rem;
+  color: var(--text-secondary);
+}
+
+.gift-page__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.gift-page__actions .btn {
+  flex: 1 1 14rem;
+}
+
+/* Journal page only */
+.journal-page__intro {
+  margin-bottom: var(--space-5);
+}
+
+.journal-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: var(--space-3);
+}
+
+.journal-filters__chip {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.25rem;
+  padding: 0.3rem 0.85rem;
+  text-decoration: none;
+  color: var(--text-secondary);
+  font-size: var(--fs-xs);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  box-shadow: inset 0 0 0 1px var(--hairline);
+}
+
+.journal-filters__chip.is-active,
+.journal-filters__chip:hover {
+  color: var(--text-primary);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--color-burgundy) 45%, var(--hairline));
+}
+
+.journal-grid {
+  display: grid;
+  gap: var(--space-5);
+}
+
+@media (min-width: 700px) {
+  .journal-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.journal-card {
+  padding: var(--space-4) 0;
+  box-shadow: 0 -1px 0 var(--hairline);
+}
+
+.journal-card__title {
+  margin: 0 0 var(--space-2);
+  font-family: var(--font-display);
+  font-size: var(--fs-md);
+}
+
+.journal-card__title a {
+  text-decoration: none;
+  color: inherit;
+}
+
+.journal-card__excerpt {
+  margin: 0;
+  color: var(--text-secondary);
+}
+
 .trust-page__cta {
   margin-top: var(--space-7);
   padding: var(--space-5);

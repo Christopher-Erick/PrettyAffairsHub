@@ -11,43 +11,78 @@
     <ul class="contact-channels">
       {% if WHATSAPP_NUMBER %}
       <li>
-        <span class="contact-channels__label">WhatsApp</span>
-        <a href="https://wa.me/{{ WHATSAPP_NUMBER }}" target="_blank" rel="noopener noreferrer">Chat with the team</a>
+        <a class="contact-channel" href="https://wa.me/{{ WHATSAPP_NUMBER }}" target="_blank" rel="noopener noreferrer">
+          <span class="contact-mark" aria-hidden="true">{% include "partials/contact_mark.html" with kind="whatsapp" %}</span>
+          <span>
+            <span class="contact-channels__label">WhatsApp</span>
+            <span class="contact-channel__value">Chat with the team</span>
+          </span>
+        </a>
       </li>
       {% endif %}
       {% if SITE_PHONE %}
       <li>
-        <span class="contact-channels__label">Phone</span>
-        <a href="tel:{{ SITE_PHONE }}">{{ SITE_PHONE }}</a>
+        <a class="contact-channel" href="tel:{{ SITE_PHONE }}">
+          <span class="contact-mark" aria-hidden="true">{% include "partials/contact_mark.html" with kind="phone" %}</span>
+          <span>
+            <span class="contact-channels__label">Phone</span>
+            <span class="contact-channel__value">{{ SITE_PHONE }}</span>
+          </span>
+        </a>
       </li>
       {% endif %}
       {% if SITE_EMAIL %}
       <li>
-        <span class="contact-channels__label">Email</span>
-        <a href="mailto:{{ SITE_EMAIL }}">{{ SITE_EMAIL }}</a>
+        <a class="contact-channel" href="mailto:{{ SITE_EMAIL }}">
+          <span class="contact-mark" aria-hidden="true">{% include "partials/contact_mark.html" with kind="email" %}</span>
+          <span>
+            <span class="contact-channels__label">Email</span>
+            <span class="contact-channel__value">{{ SITE_EMAIL }}</span>
+          </span>
+        </a>
       </li>
       {% endif %}
       {% if SITE_INSTAGRAM %}
       <li>
-        <span class="contact-channels__label">Instagram</span>
-        <a href="https://instagram.com/{{ SITE_INSTAGRAM }}" target="_blank" rel="noopener noreferrer">@{{ SITE_INSTAGRAM }}</a>
+        <a class="contact-channel" href="https://instagram.com/{{ SITE_INSTAGRAM }}" target="_blank" rel="noopener noreferrer">
+          <span class="contact-mark" aria-hidden="true">{% include "partials/contact_mark.html" with kind="instagram" %}</span>
+          <span>
+            <span class="contact-channels__label">Instagram</span>
+            <span class="contact-channel__value">@{{ SITE_INSTAGRAM }}</span>
+          </span>
+        </a>
       </li>
       {% endif %}
       {% if SITE_TIKTOK %}
       <li>
-        <span class="contact-channels__label">TikTok</span>
-        <a href="https://www.tiktok.com/@{{ SITE_TIKTOK }}" target="_blank" rel="noopener noreferrer">@{{ SITE_TIKTOK }}</a>
+        <a class="contact-channel" href="https://www.tiktok.com/@{{ SITE_TIKTOK }}" target="_blank" rel="noopener noreferrer">
+          <span class="contact-mark" aria-hidden="true">{% include "partials/contact_mark.html" with kind="tiktok" %}</span>
+          <span>
+            <span class="contact-channels__label">TikTok</span>
+            <span class="contact-channel__value">@{{ SITE_TIKTOK }}</span>
+          </span>
+        </a>
       </li>
       {% endif %}
       {% if SITE_CITY %}
       <li>
-        <span class="contact-channels__label">Based in</span>
-        <span>{{ SITE_CITY }}</span>
+        <div class="contact-channel contact-channel--static">
+          <span class="contact-mark" aria-hidden="true">{% include "partials/contact_mark.html" with kind="pin" %}</span>
+          <span>
+            <span class="contact-channels__label">Based in</span>
+            <span class="contact-channel__value">{{ SITE_CITY }}</span>
+          </span>
+        </div>
       </li>
       {% endif %}
       <li>
-        <span class="contact-channels__label">Orders</span>
-        <a href="{% url 'orders:track' %}">Track an order</a>
+        <a class="contact-channel" href="{% url 'orders:track' %}">
+          <span class="contact-mark" aria-hidden="true">{% include "partials/contact_mark.html" with kind="track" %}</span>
+          <span>
+            <span class="contact-channels__label">Orders</span>
+            <span class="contact-channel__value">Track an order</span>
+          </span>
+        </a>
       </li>
     </ul>
 

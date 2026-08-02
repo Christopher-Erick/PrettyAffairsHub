@@ -1,17 +1,25 @@
 {% extends "base.html" %}
 {% block title %}Journal — {{ SITE_NAME }}{% endblock %}
 {% block content %}
-<section class="section">
-  <h1 class="section__title">Beauty journal</h1>
-  <p><a href="?tutorials=1">Tutorials</a> · <a href="{% url 'content:blog' %}">All posts</a></p>
-  <div class="post-grid">
+<section class="section journal-page">
+  <header class="journal-page__intro">
+    <h1 class="section__title">Beauty journal</h1>
+    <nav class="journal-filters" aria-label="Journal filters">
+      <a class="journal-filters__chip{% if request.GET.tutorials %} is-active{% endif %}" href="?tutorials=1">Tutorials</a>
+      <a class="journal-filters__chip{% if not request.GET.tutorials %} is-active{% endif %}" href="{% url 'content:blog' %}">All posts</a>
+    </nav>
+  </header>
+
+  <div class="journal-grid">
     {% for post in posts %}
-    <article class="post-card">
+    <article class="journal-card">
       <p class="eyebrow">{% if post.is_tutorial %}Tutorial{% else %}Article{% endif %}</p>
-      <h2><a href="{{ post.get_absolute_url }}">{{ post.title }}</a></h2>
-      <p>{{ post.excerpt }}</p>
+      <h2 class="journal-card__title"><a href="{{ post.get_absolute_url }}">{{ post.title }}</a></h2>
+      <p class="journal-card__excerpt">{{ post.excerpt }}</p>
     </article>
-    {% empty %}<p>No posts yet.</p>{% endfor %}
+    {% empty %}
+    <p>No posts yet.</p>
+    {% endfor %}
   </div>
 </section>
 {% endblock %}
