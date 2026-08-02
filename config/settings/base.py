@@ -42,7 +42,7 @@ INSTALLED_APPS = [
     "apps.core",
     "apps.catalog",
     "apps.content",
-    "apps.accounts",
+    "apps.accounts.apps.AccountsConfig",
     "apps.cart",
     "apps.orders",
     "apps.discounts",
@@ -59,6 +59,7 @@ MIDDLEWARE = [
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
+    "apps.accounts.middleware.ClientSessionPolicyMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "apps.core.middleware.SecurityHeadersMiddleware",
     "apps.core.middleware.CloudflareCacheMiddleware",
@@ -77,6 +78,7 @@ TEMPLATES = [
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
                 "apps.core.context_processors.site_settings",
+                "apps.accounts.context_processors.account_session",
                 "apps.cart.context_processors.cart_context",
             ],
         },
@@ -198,6 +200,8 @@ ASSET_VERSION = env("RENDER_GIT_COMMIT", default=env("ASSET_VERSION", default="1
 SESSION_ENGINE = "apps.core.sessions"
 SESSION_CACHE_ALIAS = "default"
 SESSION_SAVE_EVERY_REQUEST = False
+# Client shoppers only — admins are exempt (see apps.accounts.session_policy).
+CLIENT_IDLE_TIMEOUT_SECONDS = env.int("CLIENT_IDLE_TIMEOUT_SECONDS", default=20 * 60)
 
 # Supabase project metadata (DB connection uses DATABASE_URL / SUPABASE_DB_URL above)
 SUPABASE_URL = env("SUPABASE_URL", default="")

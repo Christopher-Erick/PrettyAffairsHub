@@ -137,3 +137,67 @@ class AccountAccessTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertNotContains(response, "Staff accounts")
         self.assertFalse(response.wsgi_request.user.is_authenticated)
+
+
+class ClientSessionPolicyTests(TestCase):
+    def setUp(self):
+        Group.objects.get_or_create(name=CLIENTS_GROUP)
+        Group.objects.get_or_create(name=ADMINS_GROUP)
+        self.client_user = User.objects.create_user(
+            "shopper",
+            email="shopper@example.com",
+            password="PrettyClient2026!",
+        )
+        self.client_user.groups.add(Group.objects.get(name=CLIENTS_GROUP))
+        self.admin_user = User.objects.create_superuser(
+            "deskadmin", "desk@example.com", "PrettyAdmin2026!"
+        )
+        assign_admin_role(self.admin_user, superuser=True)
+
+    def test_second_client_login_signs_out_earlier_device(self):
+        first = Client()
+        second = Client()
+        self.assertTrue(first.login(username="shopper", password="PrettyClient2026!"))
+        self.assertEqual(first.get(reverse("accounts:profile")).status_code, 200)
+
+        self.assertTrue(second.login(username="shopper", password="PrettyClient2026!"))
+        self.assertEqual(second.get(reverse("accounts:profile")).status_code, 200)
+
+        kicked = first.get(reverse("accounts:profile"))
+        self.assertEqual(kicked.status_code, 302)
+        self.assertIn(reverse("accounts:login"), kicked.url)
+
+    def test_admin_may_stay_signed_in_on_two_devices(self):
+        first = Client()
+        second = Client()
+        self.assertTrue(first.login(username="deskadmin", password="PrettyAdmin2026!"))
+        self.assertTrue(second.login(username="deskadmin", password="PrettyAdmin2026!"))
+        self.assertEqual(first.get(reverse("accounts:profile")).status_code, 200)
+        self.assertEqual(second.get(reverse("accounts:profile")).status_code, 200)
+
+    def test_client_idle_timeout_signs_out(self):
+        import time
+
+        from django.test import override_settings
+
+        with override_settings(CLIENT_IDLE_TIMEOUT_SECONDS=30):
+            self.assertTrue(self.client.login(username="shopper", password="PrettyClient2026!"))
+            session = self.client.session
+            session["client_last_activity"] = time.time() - 120
+            session.save()
+            response = self.client.get(reverse("accounts:profile"))
+            self.assertEqual(response.status_code, 302)
+            self.assertIn(reverse("accounts:login"), response.url)
+
+    def test_admin_ignores_idle_timeout(self):
+        import time
+
+        from django.test import override_settings
+
+        with override_settings(CLIENT_IDLE_TIMEOUT_SECONDS=30):
+            self.assertTrue(self.client.login(username="deskadmin", password="PrettyAdmin2026!"))
+            session = self.client.session
+            session["client_last_activity"] = time.time() - 120
+            session.save()
+            response = self.client.get(reverse("accounts:profile"))
+            self.assertEqual(response.status_code, 200)

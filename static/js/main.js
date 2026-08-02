@@ -382,4 +382,23 @@
       toggle.setAttribute("aria-label", showing ? "Show password" : "Hide password");
     });
   });
+
+  const idleMs = Number(document.body.dataset.clientIdleMs || 0);
+  const idleLogoutForm = document.getElementById("client-idle-logout");
+  if (idleMs > 0 && idleLogoutForm) {
+    let idleTimer = null;
+    const armIdleLogout = () => {
+      window.clearTimeout(idleTimer);
+      idleTimer = window.setTimeout(() => {
+        idleLogoutForm.submit();
+      }, idleMs);
+    };
+    ["pointerdown", "keydown", "mousemove", "scroll", "touchstart", "wheel"].forEach((eventName) => {
+      window.addEventListener(eventName, armIdleLogout, { passive: true });
+    });
+    document.addEventListener("visibilitychange", () => {
+      if (document.visibilityState === "visible") armIdleLogout();
+    });
+    armIdleLogout();
+  }
 })();

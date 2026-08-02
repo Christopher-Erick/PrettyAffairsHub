@@ -7,6 +7,12 @@ class CustomerProfile(models.Model):
         settings.AUTH_USER_MODEL, related_name="profile", on_delete=models.CASCADE
     )
     phone = models.CharField(max_length=32, blank=True)
+    active_session_key = models.CharField(
+        max_length=40,
+        blank=True,
+        default="",
+        help_text="Exclusive client session key; empty for signed-out or admin users.",
+    )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

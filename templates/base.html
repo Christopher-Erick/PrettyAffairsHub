@@ -44,7 +44,7 @@
   </noscript>
   {% block extra_head %}{% endblock %}
 </head>
-<body>
+<body{% if CLIENT_IDLE_ENABLED %} data-client-idle-ms="{{ CLIENT_IDLE_TIMEOUT_MS }}"{% endif %}>
   <a class="skip-link" href="#main">Skip to content</a>
   {% include "partials/announcement.html" %}
   {% include "partials/header.html" %}
@@ -53,6 +53,11 @@
   </main>
   {% include "partials/footer.html" %}
   {% include "partials/whatsapp.html" %}
+  {% if CLIENT_IDLE_ENABLED %}
+  <form id="client-idle-logout" method="post" action="{% url 'accounts:logout' %}" hidden>
+    {% csrf_token %}
+  </form>
+  {% endif %}
   <script src="{% static 'js/main.js' %}?v={{ ASSET_VERSION }}" defer></script>
   {% block extra_js %}{% endblock %}
 </body>
