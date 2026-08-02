@@ -13,10 +13,11 @@
 
 /* Shop — full fluid width */
 .shop-layout {
-  width: var(--container);
+  width: min(var(--container-max), 100%);
   max-width: 100%;
   margin: 0 auto;
-  padding: var(--space-6) 0 var(--space-9);
+  padding: var(--space-6) var(--page-gutter) var(--space-9);
+  box-sizing: border-box;
   display: grid;
   gap: var(--space-5);
 }
@@ -949,10 +950,11 @@
 
 /* Product detail */
 .pdp {
-  width: var(--container);
+  width: min(var(--container-max), 100%);
   max-width: 100%;
   margin: 0 auto;
-  padding: var(--space-7) 0;
+  padding: var(--space-7) var(--page-gutter);
+  box-sizing: border-box;
   display: grid;
   gap: clamp(1.5rem, 3vw, 3rem);
 }
