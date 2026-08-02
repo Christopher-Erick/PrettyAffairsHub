@@ -88,7 +88,11 @@ if product:
     check("block external next", response.status_code == 302 and response.url == "/cart/")
 
     response = c.get("/orders/checkout/")
-    check("GET /orders/checkout/ with cart", response.status_code == 200)
+    check(
+        "GET /orders/checkout/ requires login",
+        response.status_code == 302 and "/accounts/login" in (response.url or ""),
+        f"status={response.status_code} url={response.url}",
+    )
 
 # --- Auth walls ---
 response = c.get("/accounts/profile/")

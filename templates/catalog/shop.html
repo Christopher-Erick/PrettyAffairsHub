@@ -101,7 +101,11 @@
         <span class="shop-top-seller__badge">Customer favourite</span>
       </a>
       <h3 class="shop-top-seller__name"><a href="{{ top_seller.get_absolute_url }}">{{ top_seller.name }}</a></h3>
+      {% if top_seller.review_count %}
       <p class="shop-top-seller__rating">★ {{ top_seller.average_rating|floatformat:1 }} <span>({{ top_seller.review_count }})</span></p>
+      {% else %}
+      <p class="shop-top-seller__rating shop-top-seller__rating--empty">Be the first to review</p>
+      {% endif %}
       <p class="shop-top-seller__price">{{ SITE_CURRENCY_SYMBOL }} {{ top_seller.price|floatformat:0 }}</p>
       <a class="btn btn--ghost btn--full" href="{{ top_seller.get_absolute_url }}">See why it’s loved</a>
     </aside>

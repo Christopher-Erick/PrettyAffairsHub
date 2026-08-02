@@ -401,4 +401,42 @@
     });
     armIdleLogout();
   }
+
+  document.querySelectorAll("[data-toast]").forEach((toast) => {
+    const ms = Number(toast.dataset.toastMs || 4000);
+    const dismiss = () => {
+      if (toast.classList.contains("is-leaving")) return;
+      toast.classList.add("is-leaving");
+      window.setTimeout(() => toast.remove(), 280);
+    };
+    const closeBtn = toast.querySelector("[data-toast-close]");
+    if (closeBtn) closeBtn.addEventListener("click", dismiss);
+    window.setTimeout(dismiss, Math.max(1200, ms));
+  });
+
+  document.querySelectorAll("[data-cart-qty-form]").forEach((form) => {
+    const input = form.querySelector("[data-cart-qty]");
+    if (!input) return;
+    let timer = null;
+    const row = form.closest("[data-cart-row]");
+    const lineTotal = row ? row.querySelector("[data-cart-line-total]") : null;
+    const unitPrice = row ? Number(row.dataset.unitPrice || 0) : 0;
+    const currency = input.dataset.currency || "";
+
+    const previewLine = () => {
+      if (!lineTotal || !Number.isFinite(unitPrice)) return;
+      const qty = Math.max(0, Number(input.value || 0));
+      const total = (unitPrice * qty).toFixed(2).replace(/\.00$/, "");
+      lineTotal.textContent = `${currency} ${total}`.replace(/\s+/g, " ").trim();
+    };
+
+    const submitSoon = () => {
+      window.clearTimeout(timer);
+      previewLine();
+      timer = window.setTimeout(() => form.requestSubmit(), 450);
+    };
+
+    input.addEventListener("change", submitSoon);
+    input.addEventListener("input", previewLine);
+  });
 })();

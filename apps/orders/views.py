@@ -32,6 +32,12 @@ def _checkout_shipping_name(user):
 
 
 def checkout(request):
+    if not request.user.is_authenticated:
+        messages.info(request, "Please sign in to checkout securely.")
+        from django.contrib.auth.views import redirect_to_login
+
+        return redirect_to_login(request.get_full_path(), login_url="accounts:login")
+
     cart = get_or_create_cart(request)
     items = cart.items.select_related("product", "variant")
     if not items.exists():

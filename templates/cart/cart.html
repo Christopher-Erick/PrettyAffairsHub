@@ -27,7 +27,7 @@
   <div class="cart-layout">
     <div class="cart-table">
       {% for item in items %}
-      <article class="cart-row">
+      <article class="cart-row" data-cart-row data-unit-price="{{ item.unit_price }}">
         <a class="cart-row__media" href="{{ item.product.get_absolute_url }}">
           {% if item.variant and item.variant.image %}
             <img src="{{ item.variant.image.url }}" alt="" loading="lazy" width="96" height="120">
@@ -47,21 +47,34 @@
             Shade: {{ item.variant.name }}
           </p>
           {% endif %}
-          <p class="cart-row__price">{{ SITE_CURRENCY_SYMBOL }} {{ item.unit_price }}</p>
+          <p class="cart-row__price">{{ SITE_CURRENCY_SYMBOL }} {{ item.unit_price }} each</p>
           <div class="cart-row__actions">
-            <form action="{% url 'cart:update' item.id %}" method="post" class="inline-form">
+            <form action="{% url 'cart:update' item.id %}" method="post" class="cart-qty-form" data-cart-qty-form>
               {% csrf_token %}
               <label class="visually-hidden" for="qty-{{ item.id }}">Quantity</label>
-              <input class="field field--sm" id="qty-{{ item.id }}" type="number" name="quantity" value="{{ item.quantity }}" min="0">
-              <button class="btn btn--ghost" type="submit">Update</button>
+              <input
+                class="field field--sm cart-qty-form__input"
+                id="qty-{{ item.id }}"
+                type="number"
+                name="quantity"
+                value="{{ item.quantity }}"
+                min="0"
+                inputmode="numeric"
+                data-cart-qty
+                data-currency="{{ SITE_CURRENCY_SYMBOL }}"
+              >
+              <span class="cart-qty-form__hint">Updates total automatically</span>
             </form>
-            <form action="{% url 'cart:remove' item.id %}" method="post">
+            <form action="{% url 'cart:remove' item.id %}" method="post" class="cart-remove-form">
               {% csrf_token %}
-              <button class="text-link" type="submit">Remove</button>
+              <button class="cart-remove" type="submit" aria-label="Remove {{ item.product.name }} from cart">
+                <span class="cart-remove__icon" aria-hidden="true">×</span>
+                <span>Remove</span>
+              </button>
             </form>
           </div>
         </div>
-        <p class="cart-row__line">{{ SITE_CURRENCY_SYMBOL }} {{ item.line_total }}</p>
+        <p class="cart-row__line" data-cart-line-total>{{ SITE_CURRENCY_SYMBOL }} {{ item.line_total }}</p>
       </article>
       {% endfor %}
     </div>
@@ -76,12 +89,17 @@
           <button class="btn btn--ghost" type="submit">Apply</button>
         </form>
         <dl class="totals__list">
-          <div><dt>Subtotal</dt><dd>{{ SITE_CURRENCY_SYMBOL }} {{ totals.subtotal }}</dd></div>
+          <div><dt>Subtotal</dt><dd data-cart-subtotal>{{ SITE_CURRENCY_SYMBOL }} {{ totals.subtotal }}</dd></div>
           <div><dt>Discount</dt><dd>− {{ SITE_CURRENCY_SYMBOL }} {{ totals.discount_amount }}</dd></div>
           <div><dt>Shipping</dt><dd>{% if totals.shipping_amount == 0 %}Free{% else %}{{ SITE_CURRENCY_SYMBOL }} {{ totals.shipping_amount }}{% endif %}</dd></div>
-          <div class="totals__total"><dt>Total</dt><dd>{{ SITE_CURRENCY_SYMBOL }} {{ totals.total }}</dd></div>
+          <div class="totals__total"><dt>Total</dt><dd data-cart-total>{{ SITE_CURRENCY_SYMBOL }} {{ totals.total }}</dd></div>
         </dl>
+        {% if user.is_authenticated %}
         <a class="btn btn--primary btn--full" href="{% url 'orders:checkout' %}">Checkout securely</a>
+        {% else %}
+        <a class="btn btn--primary btn--full" href="{% url 'accounts:login' %}?next={% url 'orders:checkout' %}">Sign in to checkout</a>
+        <p class="cart-aside__note">Create an account or sign in to place your order securely.</p>
+        {% endif %}
         <a class="btn btn--ghost btn--full" href="{% url 'catalog:shop' %}">Continue shopping</a>
       </div>
       <aside class="trust-inline trust-inline--panel">

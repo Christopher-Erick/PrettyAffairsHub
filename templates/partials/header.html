@@ -202,9 +202,18 @@
   </div>
 </header>
 {% if messages %}
-<div class="flash-messages" role="status">
+<div class="site-toasts" aria-live="polite" aria-relevant="additions">
   {% for message in messages %}
-  <p class="alert {% if message.tags %}alert--{{ message.tags }}{% endif %}">{{ message }}</p>
+  <div
+    class="site-toast {% if 'error' in message.tags %}site-toast--error{% elif 'success' in message.tags %}site-toast--success{% elif 'warning' in message.tags %}site-toast--warning{% else %}site-toast--info{% endif %}"
+    data-toast
+    data-toast-ms="{% if 'error' in message.tags %}2000{% elif 'toast-fast' in message.tags %}1800{% else %}4000{% endif %}"
+    role="{% if 'error' in message.tags %}alert{% else %}status{% endif %}"
+  >
+    <span class="site-toast__mark" aria-hidden="true"></span>
+    <p class="site-toast__text">{{ message }}</p>
+    <button class="site-toast__close" type="button" data-toast-close aria-label="Dismiss">×</button>
+  </div>
   {% endfor %}
 </div>
 {% endif %}

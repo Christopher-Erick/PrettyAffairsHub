@@ -7,6 +7,24 @@ from apps.cart.models import Cart, CartItem
 from apps.cart.context_processors import refresh_cart_item_count
 
 
+class InsufficientStockError(ValueError):
+    """Raised when requested qty exceeds remaining stock."""
+
+    def __init__(self, available: int, product_name: str = ""):
+        self.available = max(0, int(available))
+        self.product_name = product_name or "This item"
+        if self.available <= 0:
+            message = f"{self.product_name} is out of stock."
+        elif self.available == 1:
+            message = f"Only 1 left of {self.product_name} — reduce your quantity."
+        else:
+            message = (
+                f"Only {self.available} left of {self.product_name} — "
+                f"you can’t add more than that."
+            )
+        super().__init__(message)
+
+
 def _ensure_session(request):
     if not request.session.session_key:
         request.session.create()
@@ -29,15 +47,31 @@ def get_or_create_cart(request):
 
 
 def _merge_carts(source, target):
-    for item in source.items.all():
+    for item in source.items.select_related("product", "variant"):
+        available = _stock_for(item.product, item.variant)
         existing = target.items.filter(product=item.product, variant=item.variant).first()
         if existing:
-            existing.quantity += item.quantity
-            existing.save(update_fields=["quantity"])
+            merged = min(existing.quantity + item.quantity, max(available, 0))
+            if merged <= 0:
+                existing.delete()
+            else:
+                existing.quantity = merged
+                existing.save(update_fields=["quantity"])
+            item.delete()
         else:
+            if available <= 0:
+                item.delete()
+                continue
+            item.quantity = min(item.quantity, available)
             item.cart = target
-            item.save(update_fields=["cart"])
+            item.save(update_fields=["cart", "quantity"])
     source.delete()
+
+
+def _stock_for(product, variant):
+    if variant is not None:
+        return int(variant.stock)
+    return int(product.stock)
 
 
 @transaction.atomic
@@ -46,15 +80,14 @@ def add_to_cart(request, product_id, quantity=1, variant_id=None):
     variant = None
     if variant_id:
         variant = ProductVariant.objects.get(pk=variant_id, product=product, is_active=True)
-        available = variant.stock
         unit_price = variant.price
     else:
-        available = product.stock
         unit_price = product.price
 
     quantity = max(1, int(quantity))
+    available = _stock_for(product, variant)
     if available < quantity:
-        raise ValueError("Not enough stock available.")
+        raise InsufficientStockError(available, product.name)
 
     cart = get_or_create_cart(request)
     item, created = CartItem.objects.get_or_create(
@@ -66,12 +99,12 @@ def add_to_cart(request, product_id, quantity=1, variant_id=None):
     if not created:
         new_qty = item.quantity + quantity
         if new_qty > available:
-            raise ValueError("Not enough stock available.")
+            raise InsufficientStockError(available, product.name)
         item.quantity = new_qty
         item.unit_price = unit_price
         item.save(update_fields=["quantity", "unit_price"])
     refresh_cart_item_count(request, cart)
-    return item
+    return item, quantity
 
 
 def update_cart_item(request, item_id, quantity):
@@ -82,9 +115,9 @@ def update_cart_item(request, item_id, quantity):
         item.delete()
         refresh_cart_item_count(request, cart)
         return None
-    available = item.variant.stock if item.variant else item.product.stock
+    available = _stock_for(item.product, item.variant)
     if quantity > available:
-        raise ValueError("Not enough stock available.")
+        raise InsufficientStockError(available, item.product.name)
     item.quantity = quantity
     item.save(update_fields=["quantity"])
     refresh_cart_item_count(request, cart)

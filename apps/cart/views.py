@@ -5,6 +5,7 @@ from django.shortcuts import redirect, render
 from django.views.decorators.http import require_POST
 
 from apps.cart.services import (
+    InsufficientStockError,
     add_to_cart,
     cart_totals,
     get_or_create_cart,
@@ -50,15 +51,24 @@ def cart_detail(request):
 @require_POST
 def cart_add(request):
     try:
-        add_to_cart(
+        quantity = max(1, int(request.POST.get("quantity", 1) or 1))
+    except (TypeError, ValueError):
+        quantity = 1
+    try:
+        _item, added = add_to_cart(
             request,
             product_id=request.POST.get("product_id"),
-            quantity=request.POST.get("quantity", 1),
+            quantity=quantity,
             variant_id=request.POST.get("variant_id") or None,
         )
-        messages.success(request, "Added to cart.")
+        if added == 1:
+            messages.success(request, "Added 1 item to your cart.")
+        else:
+            messages.success(request, f"Added {added} items to your cart.")
+    except InsufficientStockError as exc:
+        messages.error(request, str(exc), extra_tags="toast-fast")
     except Exception as exc:
-        messages.error(request, str(exc))
+        messages.error(request, str(exc), extra_tags="toast-fast")
     return safe_redirect(request, request.POST.get("next"), fallback="cart:detail")
 
 
@@ -66,17 +76,18 @@ def cart_add(request):
 def cart_add_many(request):
     ids = request.POST.getlist("product_id")
     added = 0
-    errors = []
     for product_id in ids:
         try:
             add_to_cart(request, product_id=product_id, quantity=1)
             added += 1
+        except InsufficientStockError as exc:
+            messages.error(request, str(exc), extra_tags="toast-fast")
         except Exception as exc:
-            errors.append(str(exc))
-    if added:
-        messages.success(request, f"Added {added} ritual piece{'s' if added != 1 else ''} to your cart.")
-    for err in errors[:2]:
-        messages.error(request, err)
+            messages.error(request, str(exc), extra_tags="toast-fast")
+    if added == 1:
+        messages.success(request, "Added 1 ritual piece to your cart.")
+    elif added > 1:
+        messages.success(request, f"Added {added} ritual pieces to your cart.")
     return safe_redirect(request, request.POST.get("next"), fallback="cart:detail")
 
 
@@ -84,16 +95,18 @@ def cart_add_many(request):
 def cart_update(request, item_id):
     try:
         update_cart_item(request, item_id, request.POST.get("quantity", 1))
-        messages.success(request, "Cart updated.")
+        messages.success(request, "Cart totals updated.")
+    except InsufficientStockError as exc:
+        messages.error(request, str(exc), extra_tags="toast-fast")
     except Exception as exc:
-        messages.error(request, str(exc))
+        messages.error(request, str(exc), extra_tags="toast-fast")
     return redirect("cart:detail")
 
 
 @require_POST
 def cart_remove(request, item_id):
     remove_cart_item(request, item_id)
-    messages.success(request, "Item removed.")
+    messages.success(request, "Item removed from your cart.")
     return redirect("cart:detail")
 
 

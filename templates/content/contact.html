@@ -6,7 +6,7 @@
   <div>
     <p class="eyebrow">We’re here</p>
     <h1 class="section__title">Contact us</h1>
-    <p class="section__text">Questions about shades, delivery, or an order? Send a message — or reach us faster on WhatsApp.</p>
+    <p class="section__text">Questions about shades, delivery, or an order? Send a message — or reach us faster on WhatsApp. We aim to reply within one business day.</p>
 
     <ul class="contact-channels">
       {% if WHATSAPP_NUMBER %}
@@ -94,6 +94,7 @@
   <form method="post" class="stack-form">
     {% csrf_token %}
     {{ form.as_p }}
+    <p class="auth-form__help">We read every message. For the fastest reply about an order, use WhatsApp with your order number.</p>
     <button class="btn btn--primary" type="submit">Send message</button>
   </form>
 </section>
