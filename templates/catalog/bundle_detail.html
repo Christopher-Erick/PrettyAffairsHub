@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% block title %}{{ bundle.name }} — {{ SITE_NAME }}{% endblock %}
 {% block content %}
-<section class="section">
+<section class="section bundles-page">
   <h1 class="section__title">{{ bundle.name }}</h1>
   <p class="pdp__price">{{ SITE_CURRENCY_SYMBOL }} {{ bundle.price }}
     {% if bundle.compare_at_price %}<span class="price-compare">{{ SITE_CURRENCY_SYMBOL }} {{ bundle.compare_at_price }}</span>{% endif %}

@@ -60,6 +60,27 @@
   background: var(--bg-panel);
 }
 
+.shop-filters .page-hero__title {
+  font-family: var(--font-sans);
+  font-size: var(--fs-md);
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  line-height: var(--lh-snug);
+  margin: 0 0 var(--space-4);
+}
+
+.shop-filters .filter-select__trigger,
+.shop-filters .filter-select__value,
+.shop-filters .filter-select__option,
+.shop-filters .filter-select__group-label {
+  font-family: var(--font-sans);
+  font-size: var(--fs-sm);
+}
+
+.shop-filters .filter-select__group-label {
+  font-size: var(--fs-xs);
+}
+
 .filter-control {
   display: grid;
   gap: 0.45rem;
@@ -1247,6 +1268,17 @@
 .btn__mark .contact-mark__svg {
   width: 1.05rem;
   height: 1.05rem;
+}
+
+/* Edge inset — gift cards, journal, homepage journal, bundles only */
+.section.gift-page,
+.section.journal-page,
+.section.home-journal,
+.section.bundles-page {
+  --page-gutter: clamp(1.5rem, 1rem + 3.5vw, 3rem);
+  width: calc(100% - (var(--page-gutter) * 2));
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 /* Gift cards page only */

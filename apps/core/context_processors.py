@@ -24,6 +24,33 @@ def _asset_version():
     return value
 
 
+def _nav_active(request):
+    """Which primary nav item matches the current page (for tracking bar)."""
+    match = getattr(request, "resolver_match", None)
+    if not match:
+        return {}
+    ns = match.namespace or ""
+    name = match.url_name or ""
+    flag = request.GET.get("flag", "")
+    return {
+        "home": ns == "content" and name == "home",
+        "shop": ns == "catalog"
+        and (
+            (name == "shop" and flag not in {"new", "bestsellers"})
+            or name in {"product_detail", "category", "collection"}
+        ),
+        "new": ns == "catalog" and name == "shop" and flag == "new",
+        "bestsellers": ns == "catalog" and name == "shop" and flag == "bestsellers",
+        "bundles": ns == "catalog" and name in {"bundles", "bundle_detail"},
+        "ritual": ns == "catalog" and name == "ritual_builder",
+        "gifts": ns == "content" and name == "gift_cards",
+        "journal": ns == "content" and name in {"blog", "blog_detail"},
+        "about": ns == "content" and name == "about",
+        "contact": ns == "content" and name == "contact",
+        "account": ns == "accounts" and name in {"profile", "login"},
+    }
+
+
 def site_settings(request):
     return {
         "ASSET_VERSION": _asset_version(),
@@ -40,4 +67,5 @@ def site_settings(request):
         "ANNOUNCEMENT_TEXT": (
             "Free delivery on orders over KSh 5,000 · Easy returns on sealed items · Chat on WhatsApp"
         ),
+        "NAV_ACTIVE": _nav_active(request),
     }
