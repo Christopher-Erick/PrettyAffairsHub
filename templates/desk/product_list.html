@@ -2,6 +2,7 @@
 {% block title %}Products — Store Manager{% endblock %}
 {% block content %}
 <section class="desk-hero">
+  <p class="desk-eyebrow">Catalogue</p>
   <h1>Products</h1>
   <p>Everything listed here can appear on the shop when “Show on the shop” is on.</p>
 </section>
@@ -19,6 +20,7 @@
   <a class="btn btn--primary" href="{% url 'desk:product_create' %}">Add product</a>
 </div>
 
+<div class="desk-table-wrap">
 <table class="desk-table">
   <thead>
     <tr>
@@ -55,4 +57,5 @@
     {% endfor %}
   </tbody>
 </table>
+</div>
 {% endblock %}

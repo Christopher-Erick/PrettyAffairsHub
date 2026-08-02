@@ -2224,23 +2224,155 @@ article.narrow {
   box-sizing: border-box;
 }
 
-.account-shell__hero {
+.account-hero {
+  position: relative;
   margin-bottom: var(--space-6);
-  max-width: 40rem;
+  padding: clamp(1.35rem, 3vw, 2.1rem);
+  overflow: hidden;
+  background:
+    radial-gradient(ellipse 70% 90% at 100% 0%, color-mix(in srgb, var(--color-rose) 28%, transparent), transparent 55%),
+    radial-gradient(ellipse 50% 70% at 0% 100%, color-mix(in srgb, var(--color-burgundy) 10%, transparent), transparent 50%),
+    linear-gradient(165deg, color-mix(in srgb, var(--bg-panel) 88%, var(--color-blush)), var(--bg-panel));
+  box-shadow: inset 0 0 0 1px var(--hairline);
+  animation: fade-up 0.85s var(--ease-out) both;
 }
 
-.account-shell__title {
-  margin: 0 0 var(--space-3);
+.account-hero--compact {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.account-hero__identity {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-4);
+  align-items: flex-start;
+  margin-bottom: var(--space-5);
+}
+
+.account-hero__monogram {
+  display: grid;
+  place-items: center;
+  width: 4.25rem;
+  height: 4.25rem;
+  flex-shrink: 0;
+  border-radius: 50%;
   font-family: var(--font-display);
-  font-size: clamp(2rem, 1.4rem + 2.2vw, 3.1rem);
+  font-size: 1.85rem;
+  font-weight: 600;
+  color: var(--text-inverse);
+  background:
+    radial-gradient(circle at 30% 25%, color-mix(in srgb, var(--color-rose) 55%, transparent), transparent 45%),
+    linear-gradient(155deg, var(--color-burgundy), var(--color-burgundy-deep));
+  box-shadow: 0 10px 28px rgba(107, 53, 49, 0.18);
+}
+
+.account-hero__copy {
+  min-width: min(100%, 18rem);
+  flex: 1;
+}
+
+.account-hero__title {
+  margin: 0 0 var(--space-2);
+  font-family: var(--font-display);
+  font-size: clamp(2rem, 1.35rem + 2.4vw, 3.2rem);
   font-weight: 400;
   line-height: 1.05;
 }
 
-.account-shell__lede {
-  margin: 0 0 var(--space-4);
+.account-hero__lede {
+  margin: 0 0 var(--space-3);
+  max-width: 36rem;
   color: var(--text-secondary);
   line-height: 1.6;
+}
+
+.account-hero__session {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  margin: 0;
+  padding: 0.35rem 0.7rem;
+  font-size: var(--fs-xs);
+  color: var(--color-burgundy-deep);
+  background: color-mix(in srgb, var(--color-blush) 45%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--color-burgundy) 18%, transparent);
+}
+
+.account-shortcuts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(9.5rem, 1fr));
+  gap: 0.65rem;
+}
+
+.account-shortcut {
+  position: relative;
+  display: grid;
+  gap: 0.2rem;
+  padding: 0.9rem 1rem 0.95rem;
+  text-decoration: none;
+  color: inherit;
+  background: color-mix(in srgb, var(--bg-elevated-strong) 88%, transparent);
+  box-shadow: inset 0 0 0 1px var(--hairline);
+  transition:
+    transform var(--duration-fast) var(--ease-out),
+    box-shadow var(--duration-fast) var(--ease-out),
+    background var(--duration-fast) var(--ease-out);
+}
+
+.account-shortcut:hover,
+.account-shortcut:focus-visible {
+  transform: translateY(-2px);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--color-burgundy) 40%, var(--hairline));
+  background: var(--bg-elevated-strong);
+}
+
+.account-shortcut__mark {
+  width: 1.35rem;
+  height: 2px;
+  margin-bottom: 0.35rem;
+  background: linear-gradient(90deg, var(--color-burgundy), var(--color-rose));
+}
+
+.account-shortcut strong {
+  font-family: var(--font-display);
+  font-size: 1.2rem;
+  font-weight: 500;
+}
+
+.account-shortcut span:last-child {
+  color: var(--text-secondary);
+  font-size: var(--fs-xs);
+  line-height: 1.35;
+}
+
+.account-shortcut--staff {
+  background:
+    linear-gradient(
+      145deg,
+      color-mix(in srgb, var(--color-burgundy) 14%, var(--bg-elevated-strong)),
+      var(--bg-elevated-strong)
+    );
+}
+
+.account-shortcut--action {
+  margin: 0;
+  padding: 0;
+}
+
+.account-shortcut--action button {
+  appearance: none;
+  border: 0;
+  width: 100%;
+  height: 100%;
+  display: grid;
+  gap: 0.2rem;
+  padding: 0.9rem 1rem 0.95rem;
+  text-align: left;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+  background: transparent;
 }
 
 .account-nav {
@@ -2269,21 +2401,6 @@ article.narrow {
   box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--color-burgundy) 45%, var(--hairline));
 }
 
-.account-nav .inline-form {
-  display: inline;
-  margin: 0;
-}
-
-.account-nav__link--action {
-  appearance: none;
-  border: 0;
-  font: inherit;
-  cursor: pointer;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  font-size: var(--fs-xs);
-}
-
 .account-grid {
   display: grid;
   gap: var(--space-4);
@@ -2294,10 +2411,14 @@ article.narrow {
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: var(--space-5);
   }
+
+  .account-panel--wide {
+    grid-column: 1 / -1;
+  }
 }
 
-.account-card {
-  padding: clamp(1.15rem, 2vw, 1.6rem);
+.account-panel {
+  padding: clamp(1.2rem, 2.2vw, 1.75rem);
   background:
     linear-gradient(
       160deg,
@@ -2305,37 +2426,34 @@ article.narrow {
       var(--bg-panel)
     );
   box-shadow: inset 0 0 0 1px var(--hairline);
+  animation: fade-up 0.9s var(--ease-out) both;
+  animation-delay: 0.08s;
 }
 
-.account-card--accent {
-  background:
-    linear-gradient(
-      145deg,
-      color-mix(in srgb, var(--color-burgundy) 16%, var(--bg-panel)),
-      var(--bg-panel)
-    );
+.account-panel__head {
+  margin-bottom: var(--space-4);
 }
 
-.account-card__head {
+.account-panel__head--row {
   display: flex;
   flex-wrap: wrap;
   align-items: flex-start;
   justify-content: space-between;
   gap: var(--space-3);
-  margin-bottom: var(--space-3);
 }
 
-.account-card__title {
-  margin: 0 0 var(--space-2);
+.account-panel__title {
+  margin: 0;
   font-family: var(--font-display);
   font-size: var(--fs-md);
   font-weight: 500;
 }
 
-.account-card__text {
-  margin: 0 0 var(--space-4);
+.account-panel__hint {
+  margin: 0.45rem 0 0;
   color: var(--text-secondary);
-  line-height: 1.55;
+  font-size: var(--fs-xs);
+  line-height: 1.45;
 }
 
 .account-form {
@@ -2387,6 +2505,11 @@ article.narrow {
   gap: var(--space-3);
 }
 
+.account-list__order {
+  display: grid;
+  gap: 0.15rem;
+}
+
 .account-list__item a {
   color: var(--color-burgundy);
   text-decoration: underline;
@@ -2400,9 +2523,63 @@ article.narrow {
   text-transform: uppercase;
 }
 
+.account-list__soft {
+  color: var(--text-secondary);
+  font-size: var(--fs-xs);
+}
+
+.account-list__tag {
+  justify-self: start;
+  margin-top: 0.25rem;
+  padding: 0.12rem 0.45rem;
+  font-size: 0.65rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--color-burgundy-deep);
+  background: color-mix(in srgb, var(--color-burgundy) 12%, transparent);
+}
+
 .account-list__empty {
+  display: grid;
+  gap: 0.55rem;
+  justify-items: start;
   color: var(--text-secondary);
   font-size: var(--fs-sm);
+}
+
+.account-empty {
+  display: grid;
+  gap: var(--space-3);
+  justify-items: start;
+  padding: clamp(1.5rem, 3vw, 2.25rem);
+  background:
+    radial-gradient(circle at 12% 0%, color-mix(in srgb, var(--color-glow) 55%, transparent), transparent 42%),
+    var(--bg-panel);
+  box-shadow: inset 0 0 0 1px var(--hairline);
+}
+
+.account-empty__title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: var(--fs-md);
+  font-weight: 500;
+}
+
+.account-empty__text {
+  margin: 0;
+  color: var(--text-secondary);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .account-hero,
+  .account-panel {
+    animation: none;
+  }
+
+  .account-shortcut:hover,
+  .account-shortcut:focus-visible {
+    transform: none;
+  }
 }
 
 .btn--sm {

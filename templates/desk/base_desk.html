@@ -27,25 +27,45 @@
   <link rel="stylesheet" href="{% static 'css/desk.css' %}?v={{ ASSET_VERSION }}">
 </head>
 <body class="desk-body">
+  {% with name=request.resolver_match.url_name %}
   <header class="desk-top">
     <a class="desk-top__brand" href="{% url 'desk:home' %}">
       <img src="{% static 'img/logo-mark.png' %}" alt="{{ SITE_NAME }}" width="140" height="82" class="desk-top__logo desk-top__logo--light">
       <img src="{% static 'img/logo-light.png' %}" alt="" width="140" height="82" class="desk-top__logo desk-top__logo--dark" aria-hidden="true">
-      <span class="desk-top__label">Store Manager</span>
+      <span class="desk-top__brand-text">
+        <span class="desk-top__label">Store Manager</span>
+        <span class="desk-top__sub">Pretty Affairs Hub desk</span>
+      </span>
     </a>
+
     <nav class="desk-nav" aria-label="Store Manager">
-      <a href="{% url 'desk:home' %}">Home</a>
-      <a href="{% url 'desk:product_list' %}">Products</a>
-      <a href="{% url 'desk:order_list' %}">Orders</a>
-      <a href="{% url 'desk:content_hub' %}">Site content</a>
-      <a href="{% url 'desk:message_list' %}">Messages</a>
-      <a href="{% url 'content:home' %}">View shop</a>
+      <a class="desk-nav__link{% if name == 'home' %} is-active{% endif %}" href="{% url 'desk:home' %}">Home</a>
+      <a class="desk-nav__link{% if name == 'product_list' or name == 'product_create' or name == 'product_edit' or name == 'variant_add' %} is-active{% endif %}" href="{% url 'desk:product_list' %}">Products</a>
+      <a class="desk-nav__link{% if name == 'order_list' or name == 'order_detail' %} is-active{% endif %}" href="{% url 'desk:order_list' %}">Orders</a>
+      <a class="desk-nav__link{% if name == 'content_hub' or name|slice:':8' == 'section_' or name|slice:':5' == 'blog_' or name|slice:':4' == 'faq_' or name|slice:':12' == 'testimonial_' or name|slice:':5' == 'page_' or name|slice:':6' == 'flash_' %} is-active{% endif %}" href="{% url 'desk:content_hub' %}">Content</a>
+      <a class="desk-nav__link{% if name == 'message_list' or name == 'message_detail' %} is-active{% endif %}" href="{% url 'desk:message_list' %}">Messages</a>
+      <a class="desk-nav__link desk-nav__link--soft" href="{% url 'content:home' %}">View shop</a>
+    </nav>
+
+    <div class="desk-top__utils">
+      <button class="desk-theme" type="button" data-theme-toggle aria-label="Switch theme">
+        <span class="desk-theme__moon" aria-hidden="true">Night</span>
+        <span class="desk-theme__sun" aria-hidden="true">Day</span>
+      </button>
+      <span class="desk-session" title="Signed in for this session">
+        <span class="desk-session__dot" aria-hidden="true"></span>
+        <span class="desk-session__text">
+          <span class="desk-session__label">Signed in</span>
+          <span class="desk-session__name">{{ user.first_name|default:user.username }}</span>
+        </span>
+      </span>
       <form class="desk-nav__logout" method="post" action="{% url 'accounts:logout' %}">
         {% csrf_token %}
         <button type="submit">Sign out</button>
       </form>
-    </nav>
+    </div>
   </header>
+  {% endwith %}
 
   <main class="desk-main">
     {% if messages %}
@@ -60,7 +80,8 @@
 
   <footer class="desk-foot">
     <a href="{% url 'admin:index' %}">Advanced tools</a>
-    <span>Plain English desk for running the shop</span>
+    <span>A calm desk for running Pretty Affairs Hub</span>
   </footer>
+  <script src="{% static 'js/main.js' %}?v={{ ASSET_VERSION }}" defer></script>
 </body>
 </html>

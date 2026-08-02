@@ -2,34 +2,41 @@
 {% block title %}Site content — Store Manager{% endblock %}
 {% block content %}
 <section class="desk-hero">
+  <p class="desk-eyebrow">Words &amp; pages</p>
   <h1>Site content</h1>
-  <p>Edit what customers read on the homepage, journal, and info pages.</p>
+  <p>Edit what customers read on the homepage, journal, and info pages — in plain English.</p>
 </section>
 
-<div class="desk-actions">
+<div class="desk-actions desk-actions--content">
   <a class="desk-action" href="{% url 'desk:section_list' %}">
+    <span class="desk-action__index" aria-hidden="true">01</span>
     <strong>Homepage sections</strong>
-    <span>{{ sections }} sections</span>
+    <span>{{ sections }} sections shaping the first impression</span>
   </a>
   <a class="desk-action" href="{% url 'desk:blog_list' %}">
+    <span class="desk-action__index" aria-hidden="true">02</span>
     <strong>Journal</strong>
-    <span>{{ posts }} posts</span>
+    <span>{{ posts }} posts for the beauty diary</span>
   </a>
   <a class="desk-action" href="{% url 'desk:faq_list' %}">
+    <span class="desk-action__index" aria-hidden="true">03</span>
     <strong>FAQs</strong>
-    <span>{{ faqs }} questions</span>
+    <span>{{ faqs }} answers shoppers look for</span>
   </a>
   <a class="desk-action" href="{% url 'desk:testimonial_list' %}">
+    <span class="desk-action__index" aria-hidden="true">04</span>
     <strong>Customer quotes</strong>
-    <span>{{ testimonials }} quotes</span>
+    <span>{{ testimonials }} voices on the site</span>
   </a>
   <a class="desk-action" href="{% url 'desk:page_list' %}">
+    <span class="desk-action__index" aria-hidden="true">05</span>
     <strong>Site pages</strong>
-    <span>{{ pages }} pages (About, etc.)</span>
+    <span>{{ pages }} pages (About, policies, and more)</span>
   </a>
   <a class="desk-action" href="{% url 'desk:flash_list' %}">
+    <span class="desk-action__index" aria-hidden="true">06</span>
     <strong>Flash sales</strong>
-    <span>{{ flash_sales }} promos</span>
+    <span>{{ flash_sales }} timed promos</span>
   </a>
 </div>
 {% endblock %}

@@ -1,33 +1,62 @@
 {% extends "desk/base_desk.html" %}
 {% block content %}
 <section class="desk-hero">
-  <h1>Store Manager</h1>
-  <p>Update products, orders, and site content. Changes here are what customers see on the shop.</p>
+  <p class="desk-eyebrow">Today at the desk</p>
+  <h1>
+    {% if user.first_name %}
+      Welcome back, {{ user.first_name }}
+    {% else %}
+      Welcome back
+    {% endif %}
+  </h1>
+  <p>Update products, orders, and site content. What you change here is what customers see on the shop.</p>
 </section>
 
 <div class="desk-stats">
-  <div class="desk-stat"><span class="desk-stat__n">{{ pending_orders }}</span><span class="desk-stat__l">Orders to handle</span></div>
-  <div class="desk-stat"><span class="desk-stat__n">{{ live_products }}</span><span class="desk-stat__l">Products live</span></div>
-  <div class="desk-stat"><span class="desk-stat__n">{{ low_stock }}</span><span class="desk-stat__l">Low stock</span></div>
-  <div class="desk-stat"><span class="desk-stat__n">{{ unread_messages }}</span><span class="desk-stat__l">New messages</span></div>
+  <a class="desk-stat{% if pending_orders %} desk-stat--alert{% endif %}" href="{% url 'desk:order_list' %}">
+    <span class="desk-stat__n">{{ pending_orders }}</span>
+    <span class="desk-stat__l">Orders to handle</span>
+  </a>
+  <a class="desk-stat" href="{% url 'desk:product_list' %}">
+    <span class="desk-stat__n">{{ live_products }}</span>
+    <span class="desk-stat__l">Products live</span>
+  </a>
+  <a class="desk-stat{% if low_stock %} desk-stat--warn{% endif %}" href="{% url 'desk:product_list' %}?show=live">
+    <span class="desk-stat__n">{{ low_stock }}</span>
+    <span class="desk-stat__l">Low stock</span>
+  </a>
+  <a class="desk-stat{% if unread_messages %} desk-stat--alert{% endif %}" href="{% url 'desk:message_list' %}">
+    <span class="desk-stat__n">{{ unread_messages }}</span>
+    <span class="desk-stat__l">New messages</span>
+  </a>
 </div>
 
-<div class="desk-actions">
-  <a class="desk-action" href="{% url 'desk:product_list' %}">
-    <strong>Products</strong>
-    <span>Add, edit, hide, or update photos and shades</span>
-  </a>
-  <a class="desk-action" href="{% url 'desk:order_list' %}">
-    <strong>Orders</strong>
-    <span>Update status and tracking</span>
-  </a>
-  <a class="desk-action" href="{% url 'desk:content_hub' %}">
-    <strong>Site content</strong>
-    <span>Homepage, journal, FAQs, quotes, pages</span>
-  </a>
-  <a class="desk-action" href="{% url 'desk:message_list' %}">
-    <strong>Messages</strong>
-    <span>Contact form inbox</span>
-  </a>
-</div>
+<section class="desk-section" aria-labelledby="desk-actions-heading">
+  <header class="desk-section__head">
+    <h2 id="desk-actions-heading">Where to next?</h2>
+    <p>Jump into the work that keeps the shop feeling alive.</p>
+  </header>
+  <div class="desk-actions">
+    <a class="desk-action" href="{% url 'desk:product_list' %}">
+      <span class="desk-action__index" aria-hidden="true">01</span>
+      <strong>Products</strong>
+      <span>Add, edit, hide, or update photos and shades</span>
+    </a>
+    <a class="desk-action" href="{% url 'desk:order_list' %}">
+      <span class="desk-action__index" aria-hidden="true">02</span>
+      <strong>Orders</strong>
+      <span>Update status and tracking for every purchase</span>
+    </a>
+    <a class="desk-action" href="{% url 'desk:content_hub' %}">
+      <span class="desk-action__index" aria-hidden="true">03</span>
+      <strong>Site content</strong>
+      <span>Homepage, journal, FAQs, quotes, and pages</span>
+    </a>
+    <a class="desk-action" href="{% url 'desk:message_list' %}">
+      <span class="desk-action__index" aria-hidden="true">04</span>
+      <strong>Messages</strong>
+      <span>Reply to the contact form inbox</span>
+    </a>
+  </div>
+</section>
 {% endblock %}

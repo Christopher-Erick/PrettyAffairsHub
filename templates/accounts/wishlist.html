@@ -1,10 +1,32 @@
 {% extends "base.html" %}
 {% block title %}Wishlist — {{ SITE_NAME }}{% endblock %}
 {% block content %}
-<section class="section">
-  <h1 class="section__title">Wishlist</h1>
+<section class="account-shell">
+  <header class="account-hero account-hero--compact">
+    <div class="account-hero__copy">
+      <p class="eyebrow">Saved for later</p>
+      <h1 class="account-hero__title">Wishlist</h1>
+      <p class="account-hero__lede">Pieces you’ve set aside — come back whenever you’re ready.</p>
+    </div>
+    <nav class="account-nav" aria-label="Account">
+      <a class="account-nav__link" href="{% url 'accounts:profile' %}">Account</a>
+      <a class="account-nav__link" href="{% url 'orders:history' %}">Orders</a>
+      <a class="account-nav__link" href="{% url 'catalog:shop' %}">Continue shopping</a>
+    </nav>
+  </header>
+
+  {% if products %}
   <div class="product-grid">
-    {% for product in products %}{% include "components/product_card.html" %}{% empty %}<p>Your wishlist is empty.</p>{% endfor %}
+    {% for product in products %}
+      {% include "components/product_card.html" %}
+    {% endfor %}
   </div>
+  {% else %}
+  <div class="account-empty">
+    <p class="account-empty__title">Your wishlist is waiting</p>
+    <p class="account-empty__text">Tap the heart on a product to save it here.</p>
+    <a class="btn btn--primary" href="{% url 'catalog:shop' %}">Explore the shop</a>
+  </div>
+  {% endif %}
 </section>
 {% endblock %}

@@ -47,7 +47,19 @@ def _nav_active(request):
         "journal": ns == "content" and name in {"blog", "blog_detail"},
         "about": ns == "content" and name == "about",
         "contact": ns == "content" and name == "contact",
-        "account": ns == "accounts" and name in {"profile", "login"},
+        "account": ns == "accounts"
+        and name
+        in {
+            "profile",
+            "login",
+            "register",
+            "wishlist",
+            "address_create",
+            "password_reset",
+            "password_reset_done",
+            "password_reset_confirm",
+            "password_reset_complete",
+        },
     }
 
 
