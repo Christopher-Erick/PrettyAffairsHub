@@ -3,7 +3,7 @@
 {% block content %}
 <section class="desk-hero">
   <h1>Messages</h1>
-  <p>Messages sent from the contact form.</p>
+  <p>Contact form inbox — admins and store managers can reply or leave messages not handled.</p>
 </section>
 
 <ul class="desk-list">
@@ -11,7 +11,13 @@
   <li>
     <a href="{% url 'desk:message_detail' item.pk %}">
       {{ item.name }} — {{ item.subject|default:"Contact" }}
-      {% if not item.is_handled %}<span class="desk-badge">New</span>{% endif %}
+      {% if not item.is_handled %}
+        <span class="desk-badge">Not handled</span>
+      {% elif item.has_reply %}
+        <span class="desk-badge desk-badge--off">Replied</span>
+      {% else %}
+        <span class="desk-badge desk-badge--off">Handled</span>
+      {% endif %}
     </a>
     <span class="desk-muted">{{ item.created_at|date:"d M Y" }}</span>
   </li>

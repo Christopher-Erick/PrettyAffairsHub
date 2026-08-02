@@ -207,8 +207,14 @@ class FlashSaleForm(forms.ModelForm):
                 field.widget.attrs["class"] = "field"
 
 
-class ContactHandledForm(forms.ModelForm):
-    class Meta:
-        model = ContactMessage
-        fields = ["is_handled"]
-        labels = {"is_handled": "Marked as handled"}
+class ContactReplyForm(forms.Form):
+    reply_body = forms.CharField(
+        label="Your reply",
+        widget=forms.Textarea(
+            attrs={
+                "class": "field",
+                "rows": 8,
+                "placeholder": "Write a reply the customer will receive by email…",
+            }
+        ),
+    )

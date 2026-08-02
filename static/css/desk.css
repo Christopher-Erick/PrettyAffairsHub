@@ -309,6 +309,90 @@
   margin: 0 0 0.5rem;
 }
 
+.desk-choice {
+  display: grid;
+  gap: 0.85rem;
+  margin-top: 1rem;
+}
+
+@media (min-width: 700px) {
+  .desk-choice {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.desk-choice__card {
+  display: grid;
+  gap: 0.45rem;
+  align-content: start;
+  padding: 1rem 1.1rem;
+  text-decoration: none;
+  color: inherit;
+  background: var(--bg-panel, rgba(255, 252, 250, 0.72));
+  box-shadow: inset 0 0 0 1px var(--hairline, rgba(28, 23, 21, 0.08));
+  transition:
+    box-shadow var(--duration-fast, 200ms) ease,
+    background var(--duration-fast, 200ms) ease;
+}
+
+.desk-choice__card:hover,
+.desk-choice__card.is-active {
+  box-shadow: inset 0 0 0 1px var(--color-burgundy);
+  background: color-mix(in srgb, var(--color-burgundy) 8%, transparent);
+}
+
+.desk-choice__card--form {
+  margin: 0;
+}
+
+.desk-choice__title {
+  font-family: var(--font-display);
+  font-size: 1.25rem;
+}
+
+.desk-choice__text {
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  line-height: 1.45;
+}
+
+.desk-choice__card--form .btn {
+  justify-self: start;
+  margin-top: 0.35rem;
+}
+
+.desk-message {
+  margin: 1.25rem 0;
+  padding: 1rem 1.1rem;
+  background: var(--bg-panel, rgba(255, 252, 250, 0.72));
+  box-shadow: inset 0 0 0 1px var(--hairline, rgba(28, 23, 21, 0.08));
+}
+
+.desk-message--reply {
+  background: color-mix(in srgb, var(--color-burgundy) 8%, transparent);
+}
+
+.desk-message__label {
+  margin: 0 0 0.55rem;
+  font-family: var(--font-sans);
+  font-size: 0.75rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+
+.desk-message__body {
+  margin: 0;
+  white-space: pre-wrap;
+  line-height: 1.55;
+}
+
+.desk-form--inline {
+  margin-top: 1.75rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--color-border);
+}
+
 .desk-muted {
   color: var(--text-secondary);
   font-size: 0.9rem;

@@ -16,7 +16,7 @@ from apps.content.models import (
 from apps.desk.decorators import store_manager_required
 from apps.desk.forms import (
     BlogPostForm,
-    ContactHandledForm,
+    ContactReplyForm,
     FAQForm,
     FlashSaleForm,
     HomepageSectionForm,
@@ -397,10 +397,55 @@ def message_list(request):
 
 @store_manager_required
 def message_detail(request, pk):
+    """Admins / store managers: Reply (email + handled) or Not reply (unhandled)."""
     obj = get_object_or_404(ContactMessage, pk=pk)
-    form = ContactHandledForm(request.POST or None, instance=obj)
-    if request.method == "POST" and form.is_valid():
-        form.save()
-        messages.success(request, "Message updated.")
-        return redirect("desk:message_list")
-    return render(request, "desk/message_detail.html", {"item": obj, "form": form})
+    reply_form = ContactReplyForm(initial={"reply_body": obj.reply_body})
+    show_reply_form = request.GET.get("mode") == "reply"
+
+    if request.method == "POST":
+        action = request.POST.get("action", "")
+        if action == "reply":
+            show_reply_form = True
+            reply_form = ContactReplyForm(request.POST)
+            if reply_form.is_valid():
+                from smtplib import SMTPException
+
+                from django.core.mail import BadHeaderError
+
+                from apps.content.services import send_contact_reply
+
+                try:
+                    send_contact_reply(
+                        obj,
+                        reply_form.cleaned_data["reply_body"],
+                        staff_user=request.user,
+                    )
+                except (BadHeaderError, SMTPException, OSError, ValueError) as exc:
+                    messages.error(
+                        request,
+                        f"Could not send the reply email. {exc}",
+                    )
+                else:
+                    messages.success(
+                        request,
+                        f"Reply sent to {obj.email}. Marked as handled.",
+                    )
+                    return redirect("desk:message_detail", pk=obj.pk)
+        elif action == "not_reply":
+            obj.is_handled = False
+            obj.save(update_fields=["is_handled"])
+            messages.success(
+                request,
+                "Marked as not handled. No reply was sent.",
+            )
+            return redirect("desk:message_list")
+
+    return render(
+        request,
+        "desk/message_detail.html",
+        {
+            "item": obj,
+            "reply_form": reply_form,
+            "show_reply_form": show_reply_form or bool(reply_form.errors),
+        },
+    )

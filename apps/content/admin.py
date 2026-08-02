@@ -38,8 +38,10 @@ class TestimonialAdmin(admin.ModelAdmin):
 
 @admin.register(ContactMessage)
 class ContactMessageAdmin(admin.ModelAdmin):
-    list_display = ("name", "email", "subject", "is_handled", "created_at")
+    list_display = ("name", "email", "subject", "is_handled", "replied_at", "created_at")
     list_filter = ("is_handled",)
+    readonly_fields = ("replied_at", "replied_by", "created_at")
+    search_fields = ("name", "email", "subject", "message", "reply_body")
 
 
 @admin.register(NewsletterSubscriber)

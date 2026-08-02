@@ -3,17 +3,79 @@
 {% block content %}
 <section class="desk-hero">
   <h1>{{ item.subject|default:"Contact message" }}</h1>
-  <p>{{ item.name }} · {{ item.email }} · {{ item.created_at|date:"d M Y H:i" }}</p>
+  <p>
+    {{ item.name }} ·
+    <a href="mailto:{{ item.email }}">{{ item.email }}</a>
+    · {{ item.created_at|date:"d M Y H:i" }}
+    {% if item.is_handled %}
+      <span class="desk-badge">Handled</span>
+    {% else %}
+      <span class="desk-badge">Not handled</span>
+    {% endif %}
+  </p>
+  <p class="desk-muted">Only admins and store managers can reply or update message status.</p>
 </section>
 
-<p style="white-space:pre-wrap">{{ item.message }}</p>
+<article class="desk-message">
+  <h2 class="desk-message__label">Customer message</h2>
+  <p class="desk-message__body">{{ item.message }}</p>
+</article>
 
-<form class="desk-form" method="post" style="margin-top:1.5rem">
-  {% csrf_token %}
-  <label>{{ form.is_handled }} Marked as handled</label>
-  <div class="desk-form-actions">
-    <button class="btn btn--primary" type="submit">Save</button>
-    <a class="btn btn--ghost" href="{% url 'desk:message_list' %}">Back</a>
+{% if item.has_reply %}
+<article class="desk-message desk-message--reply">
+  <h2 class="desk-message__label">
+    Previous reply
+    {% if item.replied_at %}· {{ item.replied_at|date:"d M Y H:i" }}{% endif %}
+    {% if item.replied_by %}· {{ item.replied_by.get_username }}{% endif %}
+  </h2>
+  <p class="desk-message__body">{{ item.reply_body }}</p>
+</article>
+{% endif %}
+
+<section class="desk-panel" aria-labelledby="decision-heading">
+  <h2 id="decision-heading">What do you want to do?</h2>
+  <p class="desk-muted">Choose one action for this customer message.</p>
+
+  <div class="desk-choice">
+    <a
+      class="desk-choice__card{% if show_reply_form %} is-active{% endif %}"
+      href="{% url 'desk:message_detail' item.pk %}?mode=reply"
+    >
+      <span class="desk-choice__title">Reply</span>
+      <span class="desk-choice__text">Write an email reply. When you send it, this message is marked handled.</span>
+    </a>
+
+    <form class="desk-choice__card desk-choice__card--form" method="post">
+      {% csrf_token %}
+      <input type="hidden" name="action" value="not_reply">
+      <span class="desk-choice__title">Not reply</span>
+      <span class="desk-choice__text">Do not email the customer. Marks this message as not handled.</span>
+      <button class="btn btn--ghost" type="submit">Mark not handled</button>
+    </form>
   </div>
-</form>
+</section>
+
+{% if show_reply_form %}
+<section class="desk-panel" aria-labelledby="reply-heading" id="reply-composer">
+  <h2 id="reply-heading">Write reply</h2>
+  <p class="desk-muted">Sends an email to <strong>{{ item.email }}</strong>, then marks the message as handled.</p>
+  <form class="desk-form" method="post">
+    {% csrf_token %}
+    <input type="hidden" name="action" value="reply">
+    <label class="field-label" for="id_reply_body">{{ reply_form.reply_body.label }}</label>
+    {{ reply_form.reply_body }}
+    {% if reply_form.reply_body.errors %}
+    <ul class="errorlist">{% for error in reply_form.reply_body.errors %}<li>{{ error }}</li>{% endfor %}</ul>
+    {% endif %}
+    <div class="desk-form-actions">
+      <button class="btn btn--primary" type="submit">Send reply</button>
+      <a class="btn btn--ghost" href="{% url 'desk:message_detail' item.pk %}">Cancel</a>
+    </div>
+  </form>
+</section>
+{% endif %}
+
+<p class="desk-form-actions" style="margin-top:1.5rem">
+  <a class="btn btn--ghost" href="{% url 'desk:message_list' %}">Back to messages</a>
+</p>
 {% endblock %}
