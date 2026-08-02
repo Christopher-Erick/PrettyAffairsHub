@@ -123,8 +123,8 @@
   --space-8: clamp(2.75rem, 1.8rem + 3vw, 4.5rem);
   --space-9: clamp(3.5rem, 2rem + 5vw, 7rem);
 
-  --page-gutter: clamp(1.25rem, 0.85rem + 2.2vw, 2.75rem);
-  --container: min(72rem, calc(100% - (var(--page-gutter) * 2)));
+  --page-gutter: clamp(0.875rem, 0.55rem + 0.9vw, 1.35rem);
+  --container: calc(100% - (var(--page-gutter) * 2));
   --radius-sm: 1px;
   --radius-md: 4px;
 

@@ -19,15 +19,9 @@
     <p class="trust-page__cta-text">Prefer a quick answer before you order? Reach the team directly.</p>
     <div class="trust-page__actions">
       {% if WHATSAPP_NUMBER %}
-      <a class="btn btn--primary btn--with-mark" href="https://wa.me/{{ WHATSAPP_NUMBER }}" target="_blank" rel="noopener noreferrer">
-        <span class="btn__mark">{% include "partials/contact_mark.html" with kind="whatsapp" %}</span>
-        WhatsApp
-      </a>
+      <a class="btn btn--primary" href="https://wa.me/{{ WHATSAPP_NUMBER }}" target="_blank" rel="noopener noreferrer">WhatsApp</a>
       {% endif %}
-      <a class="btn btn--ghost btn--with-mark" href="{% url 'content:contact' %}">
-        <span class="btn__mark">{% include "partials/contact_mark.html" with kind="chat" %}</span>
-        Contact form
-      </a>
+      <a class="btn btn--ghost" href="{% url 'content:contact' %}">Contact form</a>
       <a class="btn btn--ghost" href="{% url 'content:page' 'shipping' %}">Shipping info</a>
     </div>
   </aside>
