@@ -53,12 +53,58 @@ class RegisterForm(UserCreationForm):
 
 
 class LoginForm(AuthenticationForm):
+    """Clients sign in with email; store admins sign in with username."""
+
     username = forms.CharField(
-        widget=forms.TextInput(attrs={**_FIELD, "autocomplete": "username"})
+        label="Email",
+        widget=forms.TextInput(
+            attrs={
+                **_FIELD,
+                "autocomplete": "username",
+                "placeholder": "you@example.com",
+                "inputmode": "email",
+            }
+        ),
     )
     password = forms.CharField(
-        widget=forms.PasswordInput(attrs={**_FIELD, "autocomplete": "current-password"})
+        label="Password",
+        widget=forms.PasswordInput(attrs={**_FIELD, "autocomplete": "current-password"}),
     )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["username"].help_text = "Customers use email. Staff use their username."
+
+    def clean(self):
+        login_id = (self.cleaned_data.get("username") or "").strip()
+        password = self.cleaned_data.get("password")
+        if login_id and password:
+            self.cleaned_data["username"] = self._resolve_auth_username(login_id)
+        return super().clean()
+
+    def _resolve_auth_username(self, login_id: str) -> str:
+        if "@" in login_id:
+            matches = list(User.objects.filter(email__iexact=login_id, is_active=True))
+            clients = [user for user in matches if not is_store_admin(user)]
+            staff = [user for user in matches if is_store_admin(user)]
+            if clients:
+                return clients[0].username
+            if staff:
+                raise forms.ValidationError(
+                    "Staff accounts sign in with username, not email.",
+                    code="staff_use_username",
+                )
+            return login_id
+
+        user = User.objects.filter(username__iexact=login_id, is_active=True).first()
+        if user and not is_store_admin(user):
+            raise forms.ValidationError(
+                "Please sign in with your email address.",
+                code="client_use_email",
+            )
+        if user:
+            return user.username
+        return login_id
 
 
 class StyledPasswordResetForm(PasswordResetForm):

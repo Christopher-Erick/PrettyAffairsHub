@@ -5,7 +5,7 @@
   <div class="auth-shell__panel">
     <p class="eyebrow">Welcome back</p>
     <h1 class="auth-shell__title">Sign in</h1>
-    <p class="auth-shell__lede">Access your wishlist, orders, and saved details.</p>
+    <p class="auth-shell__lede">Customers sign in with email. Staff use their username.</p>
 
     <form method="post" class="auth-form" novalidate>
       {% csrf_token %}
@@ -14,8 +14,9 @@
       {% endif %}
 
       <div class="auth-form__field">
-        <label class="field-label" for="{{ form.username.id_for_label }}">Username</label>
+        <label class="field-label" for="{{ form.username.id_for_label }}">{{ form.username.label }}</label>
         {{ form.username }}
+        {% if form.username.help_text %}<p class="auth-form__help">{{ form.username.help_text }}</p>{% endif %}
         {% if form.username.errors %}<p class="auth-form__error">{{ form.username.errors|striptags }}</p>{% endif %}
       </div>
 

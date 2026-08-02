@@ -36,7 +36,11 @@ class AccountAccessTests(TestCase):
     def setUp(self):
         Group.objects.get_or_create(name=CLIENTS_GROUP)
         Group.objects.get_or_create(name=ADMINS_GROUP)
-        self.client_user = User.objects.create_user("clientuser", password="PrettyClient2026!")
+        self.client_user = User.objects.create_user(
+            "clientuser",
+            email="client@example.com",
+            password="PrettyClient2026!",
+        )
         self.client_user.groups.add(Group.objects.get(name=CLIENTS_GROUP))
         self.admin_user = User.objects.create_superuser(
             "adminuser", "admin@example.com", "PrettyAdmin2026!"
@@ -104,7 +108,31 @@ class AccountAccessTests(TestCase):
     def test_login_redirects_to_account(self):
         response = self.client.post(
             reverse("accounts:login"),
-            {"username": "clientuser", "password": "PrettyClient2026!"},
+            {"username": "client@example.com", "password": "PrettyClient2026!"},
         )
         self.assertEqual(response.status_code, 302)
         self.assertEqual(response.url, reverse("accounts:profile"))
+
+    def test_client_cannot_login_with_username(self):
+        response = self.client.post(
+            reverse("accounts:login"),
+            {"username": "clientuser", "password": "PrettyClient2026!"},
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Please sign in with your email address.")
+
+    def test_admin_logs_in_with_username_not_email(self):
+        response = self.client.post(
+            reverse("accounts:login"),
+            {"username": "adminuser", "password": "PrettyAdmin2026!"},
+        )
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.url, reverse("accounts:profile"))
+
+        self.client.logout()
+        response = self.client.post(
+            reverse("accounts:login"),
+            {"username": "admin@example.com", "password": "PrettyAdmin2026!"},
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Staff accounts sign in with username")
