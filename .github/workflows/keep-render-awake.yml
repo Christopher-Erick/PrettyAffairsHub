@@ -1,35 +1,61 @@
 # Keep the Render free-tier web service warm.
-# Free instances sleep after ~15 minutes idle; pinging every 12 minutes
-# avoids most cold starts for shoppers.
 #
-# Note: Render may change free-tier rules. A paid "always on" instance is
-# the durable fix if traffic grows.
+# Why this exists:
+# Free Render web services spin down after ~15 minutes with no inbound traffic.
+# The next visitor then waits ~1 minute for a cold start.
+#
+# Important limits:
+# - GitHub "schedule" cron is often delayed (sometimes by many minutes). A delay
+#   longer than Render's idle window means the service still sleeps.
+# - Keeping the service awake 24/7 uses Free instance hours (~720 of the 750
+#   included hours/month). If hours run out, Render suspends Free services
+#   until next month. Paid "always on" is the durable fix.
+# - For a more reliable ping than GitHub cron, also add a free monitor such as
+#   UptimeRobot or cron-job.org hitting https://prettyaffairshub.onrender.com/
+#   every 10 minutes.
+#
+# Check runs: GitHub → Actions → "Keep Render awake"
+# Scheduled runs must show event "schedule" (not only "workflow_dispatch").
 
 name: Keep Render awake
 
 on:
   schedule:
-    # Every 12 minutes (UTC). Under Render's ~15m idle window, with room for cron lag.
-    - cron: "*/12 * * * *"
-  workflow_dispatch: # manual "Run workflow" button for testing
+    # Every 10 minutes (UTC). Explicit minutes are more reliable than */12
+    # under GitHub Actions schedule delays.
+    - cron: "0,10,20,30,40,50 * * * *"
+  workflow_dispatch:
 
 jobs:
   ping:
     runs-on: ubuntu-latest
-    timeout-minutes: 2
+    timeout-minutes: 3
     steps:
       - name: Ping storefront
         env:
           SITE_URL: https://prettyaffairshub.onrender.com/
+          # Lightweight second target — still counts as inbound traffic for Render.
+          HEALTH_URL: https://prettyaffairshub.onrender.com/robots.txt
         run: |
           set -euo pipefail
-          code=$(curl -sS -o /dev/null -w "%{http_code}" \
-            --connect-timeout 30 \
-            --max-time 90 \
-            -A "PrettyAffairsHub-KeepAlive/1.0 (+github-actions)" \
-            -L "$SITE_URL")
-          echo "HTTP $code from $SITE_URL"
-          case "$code" in
-            200|301|302|304) exit 0 ;;
-            *) echo "Unexpected status $code"; exit 1 ;;
-          esac
+          ping_once() {
+            local url="$1"
+            local code
+            code=$(curl -sS -o /dev/null -w "%{http_code}" \
+              --connect-timeout 45 \
+              --max-time 120 \
+              -A "PrettyAffairsHub-KeepAlive/1.1 (+github-actions)" \
+              -L "$url" || true)
+            echo "$(date -u +%Y-%m-%dT%H:%M:%SZ) HTTP $code from $url"
+            case "$code" in
+              200|301|302|304) return 0 ;;
+              *) return 1 ;;
+            esac
+          }
+
+          # Prefer the homepage; fall back to robots.txt if homepage is slow/failing.
+          if ping_once "$SITE_URL"; then
+            exit 0
+          fi
+          echo "Homepage ping failed — trying $HEALTH_URL"
+          ping_once "$HEALTH_URL"
