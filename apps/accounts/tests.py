@@ -105,13 +105,13 @@ class AccountAccessTests(TestCase):
         self.assertEqual(len(users), 1)
         self.assertEqual(users[0].pk, self.client_user.pk)
 
-    def test_login_redirects_to_account(self):
+    def test_login_redirects_to_shop(self):
         response = self.client.post(
             reverse("accounts:login"),
             {"username": "client@example.com", "password": "PrettyClient2026!"},
         )
         self.assertEqual(response.status_code, 302)
-        self.assertEqual(response.url, reverse("accounts:profile"))
+        self.assertEqual(response.url, reverse("catalog:shop"))
 
     def test_client_cannot_login_with_username(self):
         response = self.client.post(
@@ -127,7 +127,7 @@ class AccountAccessTests(TestCase):
             {"username": "adminuser", "password": "PrettyAdmin2026!"},
         )
         self.assertEqual(response.status_code, 302)
-        self.assertEqual(response.url, reverse("accounts:profile"))
+        self.assertEqual(response.url, reverse("catalog:shop"))
 
         self.client.logout()
         response = self.client.post(
@@ -135,4 +135,5 @@ class AccountAccessTests(TestCase):
             {"username": "admin@example.com", "password": "PrettyAdmin2026!"},
         )
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "Staff accounts sign in with username")
+        self.assertNotContains(response, "Staff accounts")
+        self.assertFalse(response.wsgi_request.user.is_authenticated)

@@ -359,4 +359,27 @@
 
     document.querySelectorAll(".reveal-on-scroll").forEach((el) => observer.observe(el));
   }
+
+  document.querySelectorAll(".auth-form input[type='password']").forEach((input) => {
+    if (input.closest(".password-field")) return;
+
+    const wrap = document.createElement("div");
+    wrap.className = "password-field";
+    input.parentNode.insertBefore(wrap, input);
+    wrap.appendChild(input);
+
+    const toggle = document.createElement("button");
+    toggle.type = "button";
+    toggle.className = "password-field__toggle";
+    toggle.setAttribute("aria-label", "Show password");
+    toggle.textContent = "Show";
+    wrap.appendChild(toggle);
+
+    toggle.addEventListener("click", () => {
+      const showing = input.type === "text";
+      input.type = showing ? "password" : "text";
+      toggle.textContent = showing ? "Show" : "Hide";
+      toggle.setAttribute("aria-label", showing ? "Show password" : "Hide password");
+    });
+  });
 })();

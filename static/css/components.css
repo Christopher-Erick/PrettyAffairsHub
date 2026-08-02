@@ -22,6 +22,11 @@
     transform var(--duration-fast) var(--ease-out);
 }
 
+.btn:hover,
+.btn:focus-visible {
+  text-decoration: none;
+}
+
 .btn:active {
   transform: translateY(1px);
 }
@@ -170,6 +175,7 @@
   position: relative;
   display: block;
   text-decoration: none;
+  color: inherit;
   overflow: hidden;
   background: var(--bg-media);
   aspect-ratio: 4 / 5;
@@ -222,8 +228,17 @@
 }
 
 .product-card__title a {
-  text-decoration: none;
+  text-decoration: underline;
+  text-decoration-color: color-mix(in srgb, var(--color-burgundy) 35%, transparent);
+  text-underline-offset: 0.18em;
+  text-decoration-thickness: 1px;
   color: var(--color-burgundy);
+}
+
+.product-card__title a:hover,
+.product-card__title a:focus-visible {
+  color: var(--color-burgundy-deep);
+  text-decoration-color: var(--color-burgundy-deep);
 }
 
 .product-card__price {
@@ -384,5 +399,6 @@
 
 .whatsapp-float:hover {
   color: white;
+  text-decoration: none;
   filter: brightness(1.06);
 }

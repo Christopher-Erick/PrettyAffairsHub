@@ -51,13 +51,17 @@ img {
 }
 
 a {
-  color: inherit;
+  color: var(--color-burgundy);
+  text-decoration: underline;
+  text-decoration-color: color-mix(in srgb, var(--color-burgundy) 45%, transparent);
   text-decoration-thickness: 1px;
   text-underline-offset: 0.22em;
 }
 
-a:hover {
-  color: var(--color-burgundy);
+a:hover,
+a:focus-visible {
+  color: var(--color-burgundy-deep);
+  text-decoration-color: var(--color-burgundy-deep);
 }
 
 :focus-visible {

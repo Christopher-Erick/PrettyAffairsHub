@@ -97,12 +97,17 @@
 
 .desk-nav__link {
   position: relative;
-  text-decoration: none;
+  text-decoration: underline;
+  text-decoration-color: transparent;
+  text-underline-offset: 0.22em;
+  text-decoration-thickness: 1px;
   color: var(--text-secondary);
   font-size: 0.88rem;
   font-weight: 500;
   padding: 0.35rem 0.65rem;
-  transition: color var(--duration-fast, 200ms) ease;
+  transition:
+    color var(--duration-fast, 200ms) ease,
+    text-decoration-color var(--duration-fast, 200ms) ease;
 }
 
 .desk-nav__link::after {
@@ -123,6 +128,7 @@
 .desk-nav__link:hover,
 .desk-nav__link.is-active {
   color: var(--color-burgundy);
+  text-decoration-color: color-mix(in srgb, var(--color-burgundy) 45%, transparent);
 }
 
 .desk-nav__link.is-active::after {

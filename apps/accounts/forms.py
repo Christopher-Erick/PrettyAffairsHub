@@ -53,7 +53,7 @@ class RegisterForm(UserCreationForm):
 
 
 class LoginForm(AuthenticationForm):
-    """Clients sign in with email; store admins sign in with username."""
+    """Public form is email + password. Staff may still use username; that is not advertised."""
 
     username = forms.CharField(
         label="Email",
@@ -73,7 +73,7 @@ class LoginForm(AuthenticationForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields["username"].help_text = "Customers use email. Staff use their username."
+        self.fields["username"].help_text = ""
 
     def clean(self):
         login_id = (self.cleaned_data.get("username") or "").strip()
@@ -86,14 +86,9 @@ class LoginForm(AuthenticationForm):
         if "@" in login_id:
             matches = list(User.objects.filter(email__iexact=login_id, is_active=True))
             clients = [user for user in matches if not is_store_admin(user)]
-            staff = [user for user in matches if is_store_admin(user)]
             if clients:
                 return clients[0].username
-            if staff:
-                raise forms.ValidationError(
-                    "Staff accounts sign in with username, not email.",
-                    code="staff_use_username",
-                )
+            # Staff email (or unknown): do not reveal role — let auth fail normally.
             return login_id
 
         user = User.objects.filter(username__iexact=login_id, is_active=True).first()
