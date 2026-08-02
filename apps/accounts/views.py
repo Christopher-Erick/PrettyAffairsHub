@@ -1,13 +1,27 @@
 from django.contrib import messages
 from django.contrib.auth import login
 from django.contrib.auth.decorators import login_required
-from django.contrib.auth.views import LoginView, LogoutView
+from django.contrib.auth.views import (
+    LoginView,
+    LogoutView,
+    PasswordResetCompleteView,
+    PasswordResetConfirmView,
+    PasswordResetDoneView,
+    PasswordResetView,
+)
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse_lazy
 from django.views.decorators.http import require_POST
 from django.views.generic import CreateView
 
-from apps.accounts.forms import AddressForm, ProfileForm, RegisterForm
+from apps.accounts.forms import (
+    AddressForm,
+    LoginForm,
+    ProfileForm,
+    RegisterForm,
+    StyledPasswordResetForm,
+    StyledSetPasswordForm,
+)
 from apps.accounts.models import Address, CustomerProfile
 from apps.accounts.roles import is_store_admin
 from apps.accounts.services import get_or_create_wishlist, toggle_wishlist
@@ -32,6 +46,7 @@ class RegisterView(CreateView):
 
 
 class UserLoginView(LoginView):
+    form_class = LoginForm
     template_name = "accounts/login.html"
     redirect_authenticated_user = True
 
@@ -44,7 +59,6 @@ class UserLoginView(LoginView):
 
     def form_valid(self, form):
         response = super().form_valid(form)
-        # Fold any guest cart into the signed-in shopper's cart.
         get_or_create_cart(self.request)
         if is_store_admin(self.request.user):
             messages.info(
@@ -54,12 +68,47 @@ class UserLoginView(LoginView):
         return response
 
     def get_success_url(self):
-        # Clients and admins both land on Account; admins see the Store admin CTA there.
         return self.get_redirect_url() or reverse_lazy("accounts:profile")
 
 
 class UserLogoutView(LogoutView):
     next_page = reverse_lazy("content:home")
+
+
+class UserPasswordResetView(PasswordResetView):
+    form_class = StyledPasswordResetForm
+    template_name = "accounts/password_reset.html"
+    email_template_name = "accounts/password_reset_email.txt"
+    subject_template_name = "accounts/password_reset_subject.txt"
+    success_url = reverse_lazy("accounts:password_reset_done")
+    extra_email_context = None
+
+    def post(self, request, *args, **kwargs):
+        from apps.core.ratelimit import rate_limit_exceeded, too_many_requests
+
+        if rate_limit_exceeded(request, scope="password_reset", limit=6, window_seconds=600):
+            return too_many_requests("Too many reset attempts. Please wait and try again.")
+        return super().post(request, *args, **kwargs)
+
+    def form_valid(self, form):
+        from django.conf import settings
+
+        self.extra_email_context = {"site_name": settings.SITE_NAME}
+        return super().form_valid(form)
+
+
+class UserPasswordResetDoneView(PasswordResetDoneView):
+    template_name = "accounts/password_reset_done.html"
+
+
+class UserPasswordResetConfirmView(PasswordResetConfirmView):
+    form_class = StyledSetPasswordForm
+    template_name = "accounts/password_reset_confirm.html"
+    success_url = reverse_lazy("accounts:password_reset_complete")
+
+
+class UserPasswordResetCompleteView(PasswordResetCompleteView):
+    template_name = "accounts/password_reset_complete.html"
 
 
 @login_required

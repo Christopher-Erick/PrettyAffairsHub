@@ -1,12 +1,29 @@
 {% extends "base.html" %}
 {% block title %}Add address — {{ SITE_NAME }}{% endblock %}
 {% block content %}
-<section class="section narrow">
-  <h1 class="section__title">Add address</h1>
-  <form method="post" class="stack-form">
-    {% csrf_token %}
-    {{ form.as_p }}
-    <button class="btn btn--primary" type="submit">Save</button>
-  </form>
+<section class="auth-shell">
+  <div class="auth-shell__panel">
+    <p class="eyebrow">Delivery</p>
+    <h1 class="auth-shell__title">Add address</h1>
+    <p class="auth-shell__lede">Saved for faster checkout next time.</p>
+    <form method="post" class="auth-form">
+      {% csrf_token %}
+      {% for field in form %}
+      <div class="auth-form__field">
+        {% if field.name == "is_default" %}
+        <label class="auth-form__check">{{ field }} {{ field.label }}</label>
+        {% else %}
+        <label class="field-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+        {{ field }}
+        {% endif %}
+        {% if field.errors %}<p class="auth-form__error">{{ field.errors|striptags }}</p>{% endif %}
+      </div>
+      {% endfor %}
+      <button class="btn btn--primary btn--full" type="submit">Save address</button>
+    </form>
+    <p class="auth-shell__footer">
+      <a href="{% url 'accounts:profile' %}">Back to account</a>
+    </p>
+  </div>
 </section>
 {% endblock %}

@@ -1,19 +1,41 @@
 from django import forms
-from django.contrib.auth.forms import AuthenticationForm, UserCreationForm
+from django.contrib.auth.forms import (
+    AuthenticationForm,
+    PasswordResetForm,
+    SetPasswordForm,
+    UserCreationForm,
+)
 from django.contrib.auth.models import User
 
 from .models import Address, CustomerProfile
-from .roles import assign_client_role
+from .roles import assign_client_role, is_store_admin
+
+_FIELD = {"class": "field"}
 
 
 class RegisterForm(UserCreationForm):
-    email = forms.EmailField(required=True)
-    first_name = forms.CharField(required=False)
-    last_name = forms.CharField(required=False)
+    email = forms.EmailField(
+        required=True,
+        widget=forms.EmailInput(attrs={**_FIELD, "autocomplete": "email"}),
+    )
+    first_name = forms.CharField(
+        required=False,
+        widget=forms.TextInput(attrs={**_FIELD, "autocomplete": "given-name"}),
+    )
+    last_name = forms.CharField(
+        required=False,
+        widget=forms.TextInput(attrs={**_FIELD, "autocomplete": "family-name"}),
+    )
 
     class Meta:
         model = User
         fields = ("username", "email", "first_name", "last_name", "password1", "password2")
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["username"].widget.attrs.update({**_FIELD, "autocomplete": "username"})
+        self.fields["password1"].widget.attrs.update({**_FIELD, "autocomplete": "new-password"})
+        self.fields["password2"].widget.attrs.update({**_FIELD, "autocomplete": "new-password"})
 
     def save(self, commit=True):
         user = super().save(commit=False)
@@ -31,21 +53,56 @@ class RegisterForm(UserCreationForm):
 
 
 class LoginForm(AuthenticationForm):
-    username = forms.CharField(widget=forms.TextInput(attrs={"class": "field", "autocomplete": "username"}))
+    username = forms.CharField(
+        widget=forms.TextInput(attrs={**_FIELD, "autocomplete": "username"})
+    )
     password = forms.CharField(
-        widget=forms.PasswordInput(attrs={"class": "field", "autocomplete": "current-password"})
+        widget=forms.PasswordInput(attrs={**_FIELD, "autocomplete": "current-password"})
     )
 
 
+class StyledPasswordResetForm(PasswordResetForm):
+    """Public reset is for client shoppers only — never staff / store admins."""
+
+    email = forms.EmailField(
+        label="Email",
+        max_length=254,
+        widget=forms.EmailInput(
+            attrs={
+                **_FIELD,
+                "autocomplete": "email",
+                "placeholder": "you@example.com",
+            }
+        ),
+    )
+
+    def get_users(self, email):
+        for user in super().get_users(email):
+            if is_store_admin(user):
+                continue
+            yield user
+
+
+class StyledSetPasswordForm(SetPasswordForm):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["new_password1"].widget.attrs.update(
+            {**_FIELD, "autocomplete": "new-password"}
+        )
+        self.fields["new_password2"].widget.attrs.update(
+            {**_FIELD, "autocomplete": "new-password"}
+        )
+
+
 class ProfileForm(forms.ModelForm):
-    first_name = forms.CharField(required=False, widget=forms.TextInput(attrs={"class": "field"}))
-    last_name = forms.CharField(required=False, widget=forms.TextInput(attrs={"class": "field"}))
-    email = forms.EmailField(required=True, widget=forms.EmailInput(attrs={"class": "field"}))
+    first_name = forms.CharField(required=False, widget=forms.TextInput(attrs=_FIELD))
+    last_name = forms.CharField(required=False, widget=forms.TextInput(attrs=_FIELD))
+    email = forms.EmailField(required=True, widget=forms.EmailInput(attrs=_FIELD))
 
     class Meta:
         model = CustomerProfile
         fields = ("phone",)
-        widgets = {"phone": forms.TextInput(attrs={"class": "field"})}
+        widgets = {"phone": forms.TextInput(attrs={**_FIELD, "autocomplete": "tel"})}
 
 
 class AddressForm(forms.ModelForm):
@@ -63,12 +120,12 @@ class AddressForm(forms.ModelForm):
             "is_default",
         )
         widgets = {
-            "full_name": forms.TextInput(attrs={"class": "field"}),
-            "phone": forms.TextInput(attrs={"class": "field"}),
-            "line1": forms.TextInput(attrs={"class": "field"}),
-            "line2": forms.TextInput(attrs={"class": "field"}),
-            "city": forms.TextInput(attrs={"class": "field"}),
-            "county": forms.TextInput(attrs={"class": "field"}),
-            "postal_code": forms.TextInput(attrs={"class": "field"}),
-            "country": forms.TextInput(attrs={"class": "field"}),
+            "full_name": forms.TextInput(attrs=_FIELD),
+            "phone": forms.TextInput(attrs=_FIELD),
+            "line1": forms.TextInput(attrs=_FIELD),
+            "line2": forms.TextInput(attrs=_FIELD),
+            "city": forms.TextInput(attrs=_FIELD),
+            "county": forms.TextInput(attrs=_FIELD),
+            "postal_code": forms.TextInput(attrs=_FIELD),
+            "country": forms.TextInput(attrs=_FIELD),
         }

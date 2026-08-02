@@ -1,13 +1,40 @@
 {% extends "base.html" %}
 {% block title %}Sign in — {{ SITE_NAME }}{% endblock %}
 {% block content %}
-<section class="section narrow">
-  <h1 class="section__title">Sign in</h1>
-  <form method="post" class="stack-form">
-    {% csrf_token %}
-    {{ form.as_p }}
-    <button class="btn btn--primary" type="submit">Sign in</button>
-  </form>
-  <p><a href="{% url 'accounts:register' %}">Create an account</a></p>
+<section class="auth-shell">
+  <div class="auth-shell__panel">
+    <p class="eyebrow">Welcome back</p>
+    <h1 class="auth-shell__title">Sign in</h1>
+    <p class="auth-shell__lede">Access your wishlist, orders, and saved details.</p>
+
+    <form method="post" class="auth-form" novalidate>
+      {% csrf_token %}
+      {% if form.non_field_errors %}
+      <div class="auth-form__alert" role="alert">{{ form.non_field_errors }}</div>
+      {% endif %}
+
+      <div class="auth-form__field">
+        <label class="field-label" for="{{ form.username.id_for_label }}">Username</label>
+        {{ form.username }}
+        {% if form.username.errors %}<p class="auth-form__error">{{ form.username.errors|striptags }}</p>{% endif %}
+      </div>
+
+      <div class="auth-form__field">
+        <div class="auth-form__label-row">
+          <label class="field-label" for="{{ form.password.id_for_label }}">Password</label>
+          <a class="auth-form__forgot" href="{% url 'accounts:password_reset' %}">Forgot password?</a>
+        </div>
+        {{ form.password }}
+        {% if form.password.errors %}<p class="auth-form__error">{{ form.password.errors|striptags }}</p>{% endif %}
+      </div>
+
+      <button class="btn btn--primary btn--full" type="submit">Sign in</button>
+    </form>
+
+    <p class="auth-shell__footer">
+      New here?
+      <a href="{% url 'accounts:register' %}">Create an account</a>
+    </p>
+  </div>
 </section>
 {% endblock %}

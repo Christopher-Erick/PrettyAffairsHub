@@ -1,56 +1,110 @@
 {% extends "base.html" %}
 {% block title %}Account — {{ SITE_NAME }}{% endblock %}
 {% block content %}
-<section class="section account-page">
-  <div class="account-page__intro">
-    <h1 class="section__title">Your account</h1>
-    <p class="section__text">
+<section class="account-shell">
+  <header class="account-shell__hero">
+    <p class="eyebrow">Account</p>
+    <h1 class="account-shell__title">Your vanity desk</h1>
+    <p class="account-shell__lede">
       {% if is_store_admin %}
-        Signed in as <strong>store staff</strong>. Customers shopping the site never see Store admin.
-        Use a separate client account when you want to test checkout as a buyer.
+        Signed in as <strong>store staff</strong>. Shoppers never see Store Manager tools.
+        Use a separate client account when testing checkout as a buyer.
       {% else %}
-        Orders, wishlist, and profile details — all in one place.
+        Orders, wishlist, and details — kept soft and simple in one place.
       {% endif %}
     </p>
     <nav class="account-nav" aria-label="Account">
-      <a href="{% url 'accounts:wishlist' %}">Wishlist</a>
-      <a href="{% url 'orders:history' %}">Orders</a>
-      <a href="{% url 'orders:track' %}">Track</a>
+      <a class="account-nav__link" href="{% url 'accounts:wishlist' %}">Wishlist</a>
+      <a class="account-nav__link" href="{% url 'orders:history' %}">Orders</a>
+      <a class="account-nav__link" href="{% url 'orders:track' %}">Track</a>
       {% if is_store_admin %}
-      <a href="{% url 'desk:home' %}">Store Manager</a>
+      <a class="account-nav__link" href="{% url 'desk:home' %}">Store Manager</a>
       {% endif %}
       <form class="inline-form" method="post" action="{% url 'accounts:logout' %}">
         {% csrf_token %}
-        <button class="text-link" type="submit">Sign out</button>
+        <button class="account-nav__link account-nav__link--action" type="submit">Sign out</button>
       </form>
     </nav>
+  </header>
+
+  <div class="account-grid">
+    {% if is_store_admin %}
+    <aside class="account-card account-card--accent" aria-labelledby="store-admin-heading">
+      <p class="eyebrow">Staff</p>
+      <h2 class="account-card__title" id="store-admin-heading">Store Manager</h2>
+      <p class="account-card__text">Update products, orders, and what customers read — in plain English.</p>
+      <a class="btn btn--primary" href="{% url 'desk:home' %}">Open Store Manager</a>
+    </aside>
+    {% endif %}
+
+    <section class="account-card" aria-labelledby="profile-heading">
+      <p class="eyebrow">Profile</p>
+      <h2 class="account-card__title" id="profile-heading">Personal details</h2>
+      <form method="post" class="account-form">
+        {% csrf_token %}
+        <div class="account-form__row">
+          <div class="account-form__field">
+            <label class="field-label" for="id_first_name">First name</label>
+            <input class="field" name="first_name" id="id_first_name" value="{{ form.initial.first_name }}" autocomplete="given-name">
+          </div>
+          <div class="account-form__field">
+            <label class="field-label" for="id_last_name">Last name</label>
+            <input class="field" name="last_name" id="id_last_name" value="{{ form.initial.last_name }}" autocomplete="family-name">
+          </div>
+        </div>
+        <div class="account-form__field">
+          <label class="field-label" for="id_email">Email</label>
+          <input class="field" type="email" name="email" id="id_email" value="{{ form.initial.email }}" autocomplete="email" required>
+        </div>
+        <div class="account-form__field">
+          <label class="field-label" for="{{ form.phone.id_for_label }}">Phone</label>
+          {{ form.phone }}
+          {% if form.phone.errors %}<p class="account-form__error">{{ form.phone.errors|striptags }}</p>{% endif %}
+        </div>
+        <button class="btn btn--primary" type="submit">Save profile</button>
+      </form>
+    </section>
+
+    <section class="account-card" aria-labelledby="addresses-heading">
+      <div class="account-card__head">
+        <div>
+          <p class="eyebrow">Delivery</p>
+          <h2 class="account-card__title" id="addresses-heading">Addresses</h2>
+        </div>
+        <a class="btn btn--ghost btn--sm" href="{% url 'accounts:address_create' %}">Add address</a>
+      </div>
+      <ul class="account-list">
+        {% for a in addresses %}
+        <li class="account-list__item">
+          <strong>{{ a.full_name }}</strong>
+          <span>{{ a.line1 }}{% if a.line2 %}, {{ a.line2 }}{% endif %}</span>
+          <span>{{ a.city }}{% if a.county %}, {{ a.county }}{% endif %}</span>
+        </li>
+        {% empty %}
+        <li class="account-list__empty">No addresses yet — add one for faster checkout.</li>
+        {% endfor %}
+      </ul>
+    </section>
+
+    <section class="account-card" aria-labelledby="orders-heading">
+      <div class="account-card__head">
+        <div>
+          <p class="eyebrow">History</p>
+          <h2 class="account-card__title" id="orders-heading">Recent orders</h2>
+        </div>
+        <a class="text-link" href="{% url 'orders:history' %}">View all</a>
+      </div>
+      <ul class="account-list">
+        {% for order in orders %}
+        <li class="account-list__item account-list__item--row">
+          <a href="{% url 'orders:detail' order.order_number %}">{{ order.order_number }}</a>
+          <span class="account-list__meta">{{ order.get_status_display }}</span>
+        </li>
+        {% empty %}
+        <li class="account-list__empty">No orders yet. <a href="{% url 'catalog:shop' %}">Browse the collection</a>.</li>
+        {% endfor %}
+      </ul>
+    </section>
   </div>
-
-  {% if is_store_admin %}
-  <aside class="account-admin" aria-labelledby="store-admin-heading">
-    <h2 class="account-admin__title" id="store-admin-heading">Store Manager</h2>
-    <p class="account-admin__text">Update products, orders, and site content customers see — in plain English.</p>
-    <a class="btn btn--primary" href="{% url 'desk:home' %}">Open Store Manager</a>
-  </aside>
-  {% endif %}
-
-  <form method="post" class="stack-form narrow">
-    {% csrf_token %}
-    <label class="field-label" for="id_first_name">First name</label>
-    <input class="field" name="first_name" id="id_first_name" value="{{ form.initial.first_name }}">
-    <label class="field-label" for="id_last_name">Last name</label>
-    <input class="field" name="last_name" id="id_last_name" value="{{ form.initial.last_name }}">
-    <label class="field-label" for="id_email">Email</label>
-    <input class="field" type="email" name="email" id="id_email" value="{{ form.initial.email }}">
-    {{ form.phone.label_tag }} {{ form.phone }}
-    <button class="btn btn--primary" type="submit">Save profile</button>
-  </form>
-  <h2 class="section__title">Addresses</h2>
-  <ul>{% for a in addresses %}<li>{{ a.full_name }} — {{ a.line1 }}, {{ a.city }}</li>{% empty %}<li>No addresses yet.</li>{% endfor %}</ul>
-  <a class="btn btn--ghost" href="{% url 'accounts:address_create' %}">Add address</a>
-  <h2 class="section__title">Recent orders</h2>
-  {% for order in orders %}
-  <p><a href="{% url 'orders:detail' order.order_number %}">{{ order.order_number }}</a> — {{ order.get_status_display }}</p>
-  {% empty %}<p>No orders yet.</p>{% endfor %}
 </section>
 {% endblock %}

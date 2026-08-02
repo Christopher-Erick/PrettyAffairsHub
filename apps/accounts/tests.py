@@ -77,6 +77,30 @@ class AccountAccessTests(TestCase):
         response = self.client.get("/admin/")
         self.assertEqual(response.status_code, 200)
 
+    def test_login_shows_forgot_password(self):
+        response = self.client.get(reverse("accounts:login"))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Forgot password?")
+        self.assertContains(response, reverse("accounts:password_reset"))
+
+    def test_password_reset_skips_admin_accounts(self):
+        from apps.accounts.forms import StyledPasswordResetForm
+
+        self.client_user.email = "client@example.com"
+        self.client_user.save(update_fields=["email"])
+        self.admin_user.email = "admin@example.com"
+        self.admin_user.save(update_fields=["email"])
+
+        admin_form = StyledPasswordResetForm(data={"email": "admin@example.com"})
+        self.assertTrue(admin_form.is_valid())
+        self.assertEqual(list(admin_form.get_users("admin@example.com")), [])
+
+        client_form = StyledPasswordResetForm(data={"email": "client@example.com"})
+        self.assertTrue(client_form.is_valid())
+        users = list(client_form.get_users("client@example.com"))
+        self.assertEqual(len(users), 1)
+        self.assertEqual(users[0].pk, self.client_user.pk)
+
     def test_login_redirects_to_account(self):
         response = self.client.post(
             reverse("accounts:login"),
