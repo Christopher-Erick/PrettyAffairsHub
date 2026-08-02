@@ -1,5 +1,5 @@
 # Keep the Render free-tier web service warm.
-# Free instances sleep after ~15 minutes idle; pinging every 10 minutes
+# Free instances sleep after ~15 minutes idle; pinging every 12 minutes
 # avoids most cold starts for shoppers.
 #
 # Note: Render may change free-tier rules. A paid "always on" instance is
@@ -9,8 +9,8 @@ name: Keep Render awake
 
 on:
   schedule:
-    # Every 10 minutes (UTC). GitHub can delay cron by a few minutes.
-    - cron: "*/10 * * * *"
+    # Every 12 minutes (UTC). Under Render's ~15m idle window, with room for cron lag.
+    - cron: "*/12 * * * *"
   workflow_dispatch: # manual "Run workflow" button for testing
 
 jobs:
