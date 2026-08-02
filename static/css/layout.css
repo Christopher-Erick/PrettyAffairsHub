@@ -197,8 +197,12 @@
 }
 
 @media (max-width: 640px) {
-  .session-signout {
+  .session-avatar {
     display: none;
+  }
+
+  .session-signout {
+    display: inline;
   }
 }
 
@@ -497,12 +501,6 @@
 @media (max-width: 480px) {
   .site-header__utils .text-link:not(.header-cart) {
     letter-spacing: 0.06em;
-  }
-
-  .session-avatar {
-    width: 2.15rem;
-    height: 2.15rem;
-    font-size: 1rem;
   }
 
   .header-cart {
