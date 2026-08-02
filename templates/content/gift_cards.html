@@ -1,37 +1,56 @@
 {% extends "base.html" %}
 {% block title %}Gift cards — {{ SITE_NAME }}{% endblock %}
+{% block meta_description %}Pretty Affairs Hub gift cards — deliver beauty by email with a unique code, redeemable across the collection.{% endblock %}
 {% block content %}
-<section class="section narrow">
-  <p class="eyebrow">Always the right shade</p>
-  <h1 class="section__title">Gift cards</h1>
-  <p class="section__text">Give the gift of beauty. Redeemable across the Pretty Affairs Hub collection, online and in store.</p>
+<section class="section gift-page">
+  <header class="gift-page__intro">
+    <p class="eyebrow">Always the right shade</p>
+    <h1 class="section__title">Gift cards</h1>
+    <p class="section__text">Give the gift of beauty. Redeemable across the Pretty Affairs Hub collection, online and in store.</p>
+  </header>
 
   {% if denominations %}
-  <div class="product-grid">
+  <ul class="gift-denoms" aria-label="Gift card amounts">
     {% for amount in denominations %}
-    <article class="product-card">
-      <div class="product-card__placeholder" role="img" aria-label="{{ SITE_CURRENCY_SYMBOL }} {{ amount }} gift card"></div>
-      <div class="product-card__body">
-        <h2 class="product-card__title">{{ SITE_CURRENCY_SYMBOL }} {{ amount }} gift card</h2>
-        <p class="product-card__price">Delivered by email with a unique code</p>
-      </div>
-    </article>
+    <li class="gift-denom">
+      <span class="gift-denom__ribbon" aria-hidden="true"></span>
+      <p class="gift-denom__amount">{{ SITE_CURRENCY_SYMBOL }} {{ amount }}</p>
+      <p class="gift-denom__label">Gift card</p>
+      <p class="gift-denom__note">Emailed with a unique code</p>
+    </li>
     {% endfor %}
-  </div>
+  </ul>
   {% endif %}
 
-  <h2 class="section__title">How it works</h2>
-  <ol class="prose">
-    <li>Tell us the amount and who it is for.</li>
-    <li>We send a unique code to you or straight to the recipient.</li>
-    <li>They enter the code at checkout — any unused balance stays on the card.</li>
-  </ol>
+  <div class="gift-page__steps">
+    <h2 class="gift-page__steps-title">How it works</h2>
+    <ol class="gift-steps">
+      <li>
+        <span class="gift-steps__num" aria-hidden="true">01</span>
+        <span>Tell us the amount and who it is for.</span>
+      </li>
+      <li>
+        <span class="gift-steps__num" aria-hidden="true">02</span>
+        <span>We send a unique code to you or straight to the recipient.</span>
+      </li>
+      <li>
+        <span class="gift-steps__num" aria-hidden="true">03</span>
+        <span>They enter the code at checkout — unused balance stays on the card.</span>
+      </li>
+    </ol>
+  </div>
 
-  <div class="confirmation__actions">
+  <div class="gift-page__actions">
     {% if WHATSAPP_NUMBER %}
-    <a class="btn btn--primary" href="https://wa.me/{{ WHATSAPP_NUMBER }}?text=Hi%20Pretty%20Affairs%20Hub%20—%20I%27d%20like%20to%20buy%20a%20gift%20card" target="_blank" rel="noopener">Order a gift card on WhatsApp</a>
+    <a class="btn btn--primary btn--with-mark" href="https://wa.me/{{ WHATSAPP_NUMBER }}?text=Hi%20Pretty%20Affairs%20Hub%20—%20I%27d%20like%20to%20buy%20a%20gift%20card" target="_blank" rel="noopener noreferrer">
+      <span class="btn__mark">{% include "partials/contact_mark.html" with kind="whatsapp" %}</span>
+      Order on WhatsApp
+    </a>
     {% endif %}
-    <a class="btn btn--ghost" href="{% url 'content:contact' %}">Ask us a question</a>
+    <a class="btn btn--ghost btn--with-mark" href="{% url 'content:contact' %}">
+      <span class="btn__mark">{% include "partials/contact_mark.html" with kind="chat" %}</span>
+      Ask a question
+    </a>
   </div>
 </section>
 {% endblock %}

@@ -954,21 +954,47 @@
 
 .site-footer {
   border-top: 0;
-  background: var(--bg-footer);
+  background:
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--bg-footer) 88%, var(--color-glow) 12%) 0%,
+      var(--bg-footer) 42%
+    );
   padding: var(--space-8) var(--page-gutter) calc(var(--space-5) + var(--whatsapp-fab-space));
 }
 
-.site-footer__grid {
+.site-footer__inner {
   width: var(--container);
   max-width: 100%;
   margin: 0 auto;
+}
+
+.site-footer__grid {
   display: grid;
   gap: var(--space-6);
 }
 
-@media (min-width: 900px) {
+@media (min-width: 640px) {
   .site-footer__grid {
-    grid-template-columns: 1.2fr 0.9fr 0.9fr 0.9fr 1.2fr;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .site-footer__brand,
+  .site-footer__newsletter {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (min-width: 980px) {
+  .site-footer__grid {
+    grid-template-columns: 1.35fr 0.85fr 0.85fr 0.85fr 1.2fr;
+    gap: var(--space-5) var(--space-6);
+    align-items: start;
+  }
+
+  .site-footer__brand,
+  .site-footer__newsletter {
+    grid-column: auto;
   }
 }
 
@@ -992,17 +1018,38 @@
   margin: var(--space-4) 0 0;
   padding: 0;
   display: grid;
-  gap: var(--space-2);
+  gap: 0.55rem;
   font-size: var(--fs-sm);
 }
 
 .site-footer__contact a {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
   color: var(--text-secondary);
   text-decoration: none;
+  min-height: 2.25rem;
 }
 
 .site-footer__contact a:hover {
   color: var(--color-burgundy);
+}
+
+.contact-mark {
+  width: 1.55rem;
+  height: 1.55rem;
+  flex-shrink: 0;
+  display: inline-grid;
+  place-items: center;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--color-burgundy) 14%, transparent);
+  color: var(--color-burgundy-deep);
+}
+
+.contact-mark__svg {
+  width: 0.95rem;
+  height: 0.95rem;
+  display: block;
 }
 
 .site-footer__heading {
@@ -1010,7 +1057,7 @@
   font-size: var(--fs-xs);
   letter-spacing: 0.18em;
   text-transform: uppercase;
-  margin-bottom: var(--space-4);
+  margin: 0 0 var(--space-3);
 }
 
 .site-footer__links {
@@ -1018,13 +1065,13 @@
   margin: 0;
   padding: 0;
   display: grid;
-  gap: var(--space-2);
+  gap: 0.15rem;
 }
 
 .site-footer__links a {
   display: inline-flex;
   align-items: center;
-  min-height: 2.5rem;
+  min-height: 2.35rem;
   text-decoration: none;
   color: var(--text-secondary);
   font-size: var(--fs-sm);
@@ -1038,12 +1085,11 @@
   margin: 0 0 var(--space-4);
   color: var(--text-secondary);
   font-size: var(--fs-sm);
+  max-width: 22rem;
 }
 
 .site-footer__bottom {
-  width: var(--container);
-  max-width: 100%;
-  margin: var(--space-7) auto 0;
+  margin-top: var(--space-7);
   padding-top: var(--space-4);
   border-top: 1px solid var(--hairline);
   color: var(--text-secondary);

@@ -1,72 +1,108 @@
 <footer class="site-footer" id="about">
-  <div class="site-footer__grid">
-    <div class="site-footer__brand">
-      <p class="site-footer__name">{{ SITE_NAME }}</p>
-      <p class="site-footer__tagline">{{ SITE_TAGLINE }}</p>
-      {% if SITE_PHONE or WHATSAPP_NUMBER or SITE_EMAIL or SITE_INSTAGRAM or SITE_TIKTOK %}
-      <ul class="site-footer__contact">
-        {% if SITE_PHONE %}<li><a href="tel:{{ SITE_PHONE }}">{{ SITE_PHONE }}</a></li>{% endif %}
-        {% if WHATSAPP_NUMBER %}
-        <li><a href="https://wa.me/{{ WHATSAPP_NUMBER }}" target="_blank" rel="noopener noreferrer">WhatsApp us</a></li>
+  <div class="site-footer__inner">
+    <div class="site-footer__grid">
+      <div class="site-footer__brand">
+        <p class="site-footer__name">{{ SITE_NAME }}</p>
+        <p class="site-footer__tagline">{{ SITE_TAGLINE }}</p>
+        {% if SITE_PHONE or WHATSAPP_NUMBER or SITE_EMAIL or SITE_INSTAGRAM or SITE_TIKTOK %}
+        <ul class="site-footer__contact">
+          {% if SITE_PHONE %}
+          <li>
+            <a href="tel:{{ SITE_PHONE }}">
+              <span class="contact-mark" aria-hidden="true">{% include "partials/contact_mark.html" with kind="phone" %}</span>
+              <span>{{ SITE_PHONE }}</span>
+            </a>
+          </li>
+          {% endif %}
+          {% if WHATSAPP_NUMBER %}
+          <li>
+            <a href="https://wa.me/{{ WHATSAPP_NUMBER }}" target="_blank" rel="noopener noreferrer">
+              <span class="contact-mark" aria-hidden="true">{% include "partials/contact_mark.html" with kind="whatsapp" %}</span>
+              <span>WhatsApp us</span>
+            </a>
+          </li>
+          {% endif %}
+          {% if SITE_EMAIL %}
+          <li>
+            <a href="mailto:{{ SITE_EMAIL }}">
+              <span class="contact-mark" aria-hidden="true">{% include "partials/contact_mark.html" with kind="email" %}</span>
+              <span>{{ SITE_EMAIL }}</span>
+            </a>
+          </li>
+          {% endif %}
+          {% if SITE_INSTAGRAM %}
+          <li>
+            <a href="https://instagram.com/{{ SITE_INSTAGRAM }}" target="_blank" rel="noopener noreferrer">
+              <span class="contact-mark" aria-hidden="true">{% include "partials/contact_mark.html" with kind="instagram" %}</span>
+              <span>@{{ SITE_INSTAGRAM }}</span>
+            </a>
+          </li>
+          {% endif %}
+          {% if SITE_TIKTOK %}
+          <li>
+            <a href="https://www.tiktok.com/@{{ SITE_TIKTOK }}" target="_blank" rel="noopener noreferrer">
+              <span class="contact-mark" aria-hidden="true">{% include "partials/contact_mark.html" with kind="tiktok" %}</span>
+              <span>@{{ SITE_TIKTOK }}</span>
+            </a>
+          </li>
+          {% endif %}
+        </ul>
         {% endif %}
-        {% if SITE_EMAIL %}<li><a href="mailto:{{ SITE_EMAIL }}">{{ SITE_EMAIL }}</a></li>{% endif %}
-        {% if SITE_INSTAGRAM %}
-        <li><a href="https://instagram.com/{{ SITE_INSTAGRAM }}" target="_blank" rel="noopener noreferrer">Instagram @{{ SITE_INSTAGRAM }}</a></li>
-        {% endif %}
-        {% if SITE_TIKTOK %}
-        <li><a href="https://www.tiktok.com/@{{ SITE_TIKTOK }}" target="_blank" rel="noopener noreferrer">TikTok @{{ SITE_TIKTOK }}</a></li>
-        {% endif %}
-      </ul>
-      {% endif %}
+      </div>
+
+      <div class="site-footer__nav-block">
+        <h2 class="site-footer__heading">Explore</h2>
+        <ul class="site-footer__links">
+          <li><a href="{% url 'catalog:shop' %}">Shop all</a></li>
+          <li><a href="{% url 'catalog:bundles' %}">Bundles</a></li>
+          <li><a href="{% url 'content:gift_cards' %}">Gift cards</a></li>
+          <li><a href="{% url 'content:blog' %}">Journal</a></li>
+        </ul>
+      </div>
+
+      <div class="site-footer__nav-block">
+        <h2 class="site-footer__heading">Care</h2>
+        <ul class="site-footer__links">
+          <li><a href="{% url 'content:faq' %}">FAQs</a></li>
+          <li><a href="{% url 'content:contact' %}">Contact</a></li>
+          <li><a href="{% url 'orders:track' %}">Track order</a></li>
+          <li><a href="{% url 'content:about' %}">About</a></li>
+        </ul>
+      </div>
+
+      <div class="site-footer__nav-block">
+        <h2 class="site-footer__heading">Policies</h2>
+        <ul class="site-footer__links">
+          <li><a href="{% url 'content:page' 'shipping' %}">Shipping</a></li>
+          <li><a href="{% url 'content:page' 'returns' %}">Returns</a></li>
+          <li><a href="{% url 'content:page' 'privacy' %}">Privacy</a></li>
+          <li><a href="{% url 'content:page' 'terms' %}">Terms</a></li>
+        </ul>
+      </div>
+
+      <div class="site-footer__newsletter">
+        <h2 class="site-footer__heading">Newsletter</h2>
+        <p class="site-footer__copy">Early access to drops, tutorials, and private offers.</p>
+        <form class="newsletter-form" action="{% url 'content:newsletter' %}" method="post">
+          {% csrf_token %}
+          <label class="visually-hidden" for="newsletter-email">Email address</label>
+          <input class="field" id="newsletter-email" type="email" name="email" placeholder="Your email" required autocomplete="email">
+          <button class="btn btn--primary" type="submit">Subscribe</button>
+        </form>
+      </div>
     </div>
-    <div>
-      <h2 class="site-footer__heading">Explore</h2>
-      <ul class="site-footer__links">
-        <li><a href="{% url 'catalog:shop' %}">Shop all</a></li>
-        <li><a href="{% url 'catalog:bundles' %}">Bundles</a></li>
-        <li><a href="{% url 'content:gift_cards' %}">Gift cards</a></li>
-        <li><a href="{% url 'content:blog' %}">Journal</a></li>
-      </ul>
+
+    <div class="site-footer__bottom">
+      <p>&copy; {% now "Y" %} {{ SITE_NAME }}. All rights reserved.</p>
+      <p class="site-footer__legal">
+        <a href="{% url 'content:page' 'shipping' %}">Shipping</a>
+        ·
+        <a href="{% url 'content:page' 'returns' %}">Returns</a>
+        ·
+        <a href="{% url 'content:page' 'privacy' %}">Privacy</a>
+        ·
+        <a href="{% url 'content:page' 'terms' %}">Terms</a>
+      </p>
     </div>
-    <div>
-      <h2 class="site-footer__heading">Care</h2>
-      <ul class="site-footer__links">
-        <li><a href="{% url 'content:faq' %}">FAQs</a></li>
-        <li><a href="{% url 'content:contact' %}">Contact</a></li>
-        <li><a href="{% url 'orders:track' %}">Track order</a></li>
-        <li><a href="{% url 'content:about' %}">About</a></li>
-      </ul>
-    </div>
-    <div>
-      <h2 class="site-footer__heading">Policies</h2>
-      <ul class="site-footer__links">
-        <li><a href="{% url 'content:page' 'shipping' %}">Shipping</a></li>
-        <li><a href="{% url 'content:page' 'returns' %}">Returns</a></li>
-        <li><a href="{% url 'content:page' 'privacy' %}">Privacy</a></li>
-        <li><a href="{% url 'content:page' 'terms' %}">Terms</a></li>
-      </ul>
-    </div>
-    <div>
-      <h2 class="site-footer__heading">Newsletter</h2>
-      <p class="site-footer__copy">Early access to drops, tutorials, and private offers.</p>
-      <form class="newsletter-form" action="{% url 'content:newsletter' %}" method="post">
-        {% csrf_token %}
-        <label class="visually-hidden" for="newsletter-email">Email address</label>
-        <input class="field" id="newsletter-email" type="email" name="email" placeholder="Your email" required autocomplete="email">
-        <button class="btn btn--primary" type="submit">Subscribe</button>
-      </form>
-    </div>
-  </div>
-  <div class="site-footer__bottom">
-    <p>&copy; {% now "Y" %} {{ SITE_NAME }}. All rights reserved.</p>
-    <p class="site-footer__legal">
-      <a href="{% url 'content:page' 'shipping' %}">Shipping</a>
-      ·
-      <a href="{% url 'content:page' 'returns' %}">Returns</a>
-      ·
-      <a href="{% url 'content:page' 'privacy' %}">Privacy</a>
-      ·
-      <a href="{% url 'content:page' 'terms' %}">Terms</a>
-    </p>
   </div>
 </footer>

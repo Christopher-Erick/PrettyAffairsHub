@@ -1,17 +1,33 @@
 {% extends "base.html" %}
 {% block title %}Journal — {{ SITE_NAME }}{% endblock %}
+{% block meta_description %}Beauty notes, tutorials, and shade stories from Pretty Affairs Hub.{% endblock %}
 {% block content %}
-<section class="section">
-  <h1 class="section__title">Beauty journal</h1>
-  <p><a href="?tutorials=1">Tutorials</a> · <a href="{% url 'content:blog' %}">All posts</a></p>
-  <div class="post-grid">
+<section class="section journal-page">
+  <header class="journal-page__intro">
+    <p class="eyebrow">From the vanity</p>
+    <h1 class="section__title">Beauty journal</h1>
+    <p class="section__text">Tutorials, shade stories, and quiet notes for everyday elegance.</p>
+    <nav class="journal-filters" aria-label="Journal filters">
+      <a class="journal-filters__chip{% if not request.GET.tutorials %} is-active{% endif %}" href="{% url 'content:blog' %}">All posts</a>
+      <a class="journal-filters__chip{% if request.GET.tutorials %} is-active{% endif %}" href="?tutorials=1">Tutorials</a>
+    </nav>
+  </header>
+
+  <div class="journal-grid">
     {% for post in posts %}
-    <article class="post-card">
-      <p class="eyebrow">{% if post.is_tutorial %}Tutorial{% else %}Article{% endif %}</p>
-      <h2><a href="{{ post.get_absolute_url }}">{{ post.title }}</a></h2>
-      <p>{{ post.excerpt }}</p>
+    <article class="journal-card{% if forloop.first %} journal-card--feature{% endif %}">
+      <p class="journal-card__kind">{% if post.is_tutorial %}Tutorial{% else %}Article{% endif %}</p>
+      <h2 class="journal-card__title">
+        <a href="{{ post.get_absolute_url }}">{{ post.title }}</a>
+      </h2>
+      {% if post.excerpt %}
+      <p class="journal-card__excerpt">{{ post.excerpt }}</p>
+      {% endif %}
+      <a class="journal-card__cta" href="{{ post.get_absolute_url }}">Read</a>
     </article>
-    {% empty %}<p>No posts yet.</p>{% endfor %}
+    {% empty %}
+    <p class="journal-page__empty">No posts yet — check back soon for new beauty notes.</p>
+    {% endfor %}
   </div>
 </section>
 {% endblock %}
