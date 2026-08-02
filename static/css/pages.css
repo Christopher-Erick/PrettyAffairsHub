@@ -1270,15 +1270,20 @@
   height: 1.05rem;
 }
 
-/* Edge inset — gift cards, journal, homepage journal, bundles only */
+/* Edge inset — gift cards, journal, homepage journal, bundles, about/policies */
 .section.gift-page,
 .section.journal-page,
 .section.home-journal,
-.section.bundles-page {
+.section.bundles-page,
+.section.trust-page {
   --page-gutter: clamp(1.5rem, 1rem + 3.5vw, 3rem);
   width: calc(100% - (var(--page-gutter) * 2));
   max-width: 100%;
   box-sizing: border-box;
+}
+
+.section.trust-page.narrow {
+  width: min(40rem, calc(100% - (var(--page-gutter) * 2)));
 }
 
 /* Gift cards page only */
@@ -1786,12 +1791,15 @@
 }
 
 .narrow {
-  width: min(36rem, 100%);
+  /* Keep side inset on small screens — bare 100% was flush to the viewport edge */
+  width: min(36rem, calc(100% - (var(--page-gutter) * 2)));
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 @media (min-width: 900px) {
   .narrow {
-    width: min(40rem, 100%);
+    width: min(40rem, calc(100% - (var(--page-gutter) * 2)));
   }
 }
 
