@@ -128,101 +128,69 @@
   min-width: 0;
 }
 
-/* Persistent signed-in marker for the whole browser session */
-.session-chip {
+/* Signed-in: circular avatar + sign out (desktop) */
+.session-bar {
   display: inline-flex;
   align-items: center;
-  gap: 0.45rem;
-  max-width: 12.5rem;
-  min-height: 2.35rem;
-  padding: 0.2rem 0.55rem 0.2rem 0.35rem;
+  gap: 0.65rem;
+}
+
+.session-avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 50%;
   text-decoration: none;
-  color: var(--color-ink);
-  background:
-    linear-gradient(
-      145deg,
-      color-mix(in srgb, var(--color-blush) 55%, var(--bg-elevated-strong)),
-      var(--bg-elevated-strong)
-    );
-  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--color-burgundy) 22%, var(--hairline));
-  transition:
-    color var(--duration-fast) var(--ease-out),
-    box-shadow var(--duration-fast) var(--ease-out),
-    transform var(--duration-fast) var(--ease-out);
-}
-
-.session-chip:hover,
-.session-chip:focus-visible,
-.session-chip.is-active {
-  color: var(--color-burgundy-deep);
-  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--color-burgundy) 55%, transparent);
-}
-
-.session-chip__dot {
-  width: 0.42rem;
-  height: 0.42rem;
-  border-radius: 50%;
-  background: var(--color-burgundy);
-  box-shadow: 0 0 0 0 rgba(138, 69, 64, 0.35);
-  animation: session-pulse 2.4s ease-out infinite;
-  flex-shrink: 0;
-}
-
-.session-chip__avatar {
-  display: grid;
-  place-items: center;
-  width: 1.7rem;
-  height: 1.7rem;
-  flex-shrink: 0;
-  border-radius: 50%;
   font-family: var(--font-display);
   font-size: 0.95rem;
   font-weight: 600;
   line-height: 1;
+  letter-spacing: 0;
   color: var(--text-inverse);
-  background: linear-gradient(145deg, var(--color-burgundy), var(--color-burgundy-deep));
+  background: var(--color-burgundy);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--color-burgundy) 35%, transparent);
+  transition:
+    background var(--duration-fast) var(--ease-out),
+    box-shadow var(--duration-fast) var(--ease-out),
+    transform var(--duration-fast) var(--ease-out);
+  /* Optical center for display-serif capitals */
+  padding: 0.12em 0 0;
+  box-sizing: border-box;
 }
 
-.session-chip__meta {
-  display: grid;
-  gap: 0.05rem;
-  min-width: 0;
+.session-avatar:hover,
+.session-avatar:focus-visible,
+.session-avatar.is-active {
+  background: var(--color-burgundy-deep);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-burgundy) 45%, transparent);
 }
 
-.session-chip__label {
-  font-size: 0.58rem;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--color-burgundy);
-  font-weight: 600;
-  line-height: 1.1;
+.session-avatar--sm {
+  width: 1.55rem;
+  height: 1.55rem;
+  font-size: 0.78rem;
+  pointer-events: none;
 }
 
-.session-chip__name {
-  font-size: 0.72rem;
-  letter-spacing: 0.02em;
-  font-weight: 500;
-  line-height: 1.15;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+.session-signout {
+  display: inline;
+  margin: 0;
 }
 
-@keyframes session-pulse {
-  0% {
-    box-shadow: 0 0 0 0 rgba(138, 69, 64, 0.4);
-  }
-  70% {
-    box-shadow: 0 0 0 6px rgba(138, 69, 64, 0);
-  }
-  100% {
-    box-shadow: 0 0 0 0 rgba(138, 69, 64, 0);
-  }
+.session-signout__btn {
+  appearance: none;
+  border: 0;
+  background: none;
+  padding: 0;
+  cursor: pointer;
+  font: inherit;
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .session-chip__dot {
-    animation: none;
+@media (max-width: 640px) {
+  .session-signout {
+    display: none;
   }
 }
 
@@ -235,7 +203,7 @@
 .mobile-nav__session-label {
   display: flex;
   align-items: center;
-  gap: 0.45rem;
+  gap: 0.55rem;
   margin: 0 0 0.35rem;
   padding: 0.15rem 0;
   color: var(--text-secondary);
@@ -496,20 +464,10 @@
     letter-spacing: 0.06em;
   }
 
-  .session-chip {
-    max-width: none;
-    padding: 0.15rem;
-    gap: 0;
-  }
-
-  .session-chip__meta,
-  .session-chip__dot {
-    display: none;
-  }
-
-  .session-chip__avatar {
-    width: 2rem;
-    height: 2rem;
+  .session-avatar {
+    width: 2.15rem;
+    height: 2.15rem;
+    font-size: 1rem;
   }
 
   .header-cart {

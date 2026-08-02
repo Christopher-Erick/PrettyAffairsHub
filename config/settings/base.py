@@ -84,7 +84,7 @@ TEMPLATES = [
 ]
 
 LOGIN_URL = "accounts:login"
-LOGIN_REDIRECT_URL = "accounts:profile"
+LOGIN_REDIRECT_URL = "catalog:shop"
 LOGOUT_REDIRECT_URL = "content:home"
 
 WSGI_APPLICATION = "config.wsgi.application"

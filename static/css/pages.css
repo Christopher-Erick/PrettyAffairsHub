@@ -2251,20 +2251,24 @@ article.narrow {
 }
 
 .account-hero__monogram {
-  display: grid;
-  place-items: center;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   width: 4.25rem;
   height: 4.25rem;
   flex-shrink: 0;
   border-radius: 50%;
   font-family: var(--font-display);
-  font-size: 1.85rem;
+  font-size: 1.75rem;
   font-weight: 600;
+  line-height: 1;
+  letter-spacing: 0;
   color: var(--text-inverse);
-  background:
-    radial-gradient(circle at 30% 25%, color-mix(in srgb, var(--color-rose) 55%, transparent), transparent 45%),
-    linear-gradient(155deg, var(--color-burgundy), var(--color-burgundy-deep));
-  box-shadow: 0 10px 28px rgba(107, 53, 49, 0.18);
+  background: var(--color-burgundy);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--color-burgundy) 40%, transparent);
+  /* Optical vertical center for Cormorant capitals */
+  padding: 0.14em 0 0;
+  box-sizing: border-box;
 }
 
 .account-hero__copy {
@@ -2297,6 +2301,14 @@ article.narrow {
   color: var(--color-burgundy-deep);
   background: color-mix(in srgb, var(--color-blush) 45%, transparent);
   box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--color-burgundy) 18%, transparent);
+}
+
+.account-hero__session-dot {
+  width: 0.4rem;
+  height: 0.4rem;
+  border-radius: 50%;
+  background: var(--color-burgundy);
+  flex-shrink: 0;
 }
 
 .account-shortcuts {

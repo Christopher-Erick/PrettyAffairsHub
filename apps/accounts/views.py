@@ -68,7 +68,7 @@ class UserLoginView(LoginView):
         return response
 
     def get_success_url(self):
-        return self.get_redirect_url() or reverse_lazy("accounts:profile")
+        return self.get_redirect_url() or reverse_lazy("catalog:shop")
 
 
 class UserLogoutView(LogoutView):
