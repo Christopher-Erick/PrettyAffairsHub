@@ -372,13 +372,25 @@
     toggle.type = "button";
     toggle.className = "password-field__toggle";
     toggle.setAttribute("aria-label", "Show password");
-    toggle.textContent = "Show";
+    toggle.setAttribute("aria-pressed", "false");
+    toggle.innerHTML =
+      '<svg class="password-field__icon password-field__icon--show" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">' +
+      '<path d="M2.5 12s3.5-6.5 9.5-6.5S21.5 12 21.5 12s-3.5 6.5-9.5 6.5S2.5 12 2.5 12Z"/>' +
+      '<circle cx="12" cy="12" r="2.75"/>' +
+      "</svg>" +
+      '<svg class="password-field__icon password-field__icon--hide" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">' +
+      '<path d="M3 3l18 18"/>' +
+      '<path d="M10.7 10.7a2.75 2.75 0 0 0 3.9 3.9"/>' +
+      '<path d="M9.9 5.7A10.4 10.4 0 0 1 12 5.5c6 0 9.5 6.5 9.5 6.5a17.6 17.6 0 0 1-3.3 3.8"/>' +
+      '<path d="M6.6 6.6C4.2 8.2 2.5 12 2.5 12s3.5 6.5 9.5 6.5c1.1 0 2.1-.2 3-.5"/>' +
+      "</svg>";
     wrap.appendChild(toggle);
 
     toggle.addEventListener("click", () => {
       const showing = input.type === "text";
       input.type = showing ? "password" : "text";
-      toggle.textContent = showing ? "Show" : "Hide";
+      toggle.classList.toggle("is-visible", !showing);
+      toggle.setAttribute("aria-pressed", showing ? "false" : "true");
       toggle.setAttribute("aria-label", showing ? "Show password" : "Hide password");
     });
   });
