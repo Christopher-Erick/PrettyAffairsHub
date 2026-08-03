@@ -53,6 +53,7 @@
     let navOpenScrollY = 0;
     let navClosing = false;
     let navCloseTimer = null;
+    let ignoreScrollUntil = 0;
     const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
 
     const finishClose = () => {
@@ -68,7 +69,7 @@
 
     const onCloseTransitionEnd = (event) => {
       if (event.target !== mobileNav) return;
-      if (event.propertyName && event.propertyName !== "grid-template-rows") return;
+      if (event.propertyName && event.propertyName !== "opacity") return;
       finishClose();
     };
 
@@ -86,7 +87,7 @@
       mobileNav.classList.remove("is-open");
       mobileNav.classList.add("is-leaving");
       mobileNav.addEventListener("transitionend", onCloseTransitionEnd);
-      navCloseTimer = window.setTimeout(finishClose, 580);
+      navCloseTimer = window.setTimeout(finishClose, 520);
     };
 
     const openMobileNav = () => {
@@ -100,7 +101,6 @@
 
       mobileNav.removeAttribute("hidden");
       mobileNav.classList.remove("is-open");
-      // Start collapsed, then open on next frame for a soft expand.
       void mobileNav.offsetHeight;
       window.requestAnimationFrame(() => {
         mobileNav.classList.add("is-open");
@@ -108,6 +108,8 @@
 
       toggle.setAttribute("aria-expanded", "true");
       navOpenScrollY = window.scrollY;
+      // Ignore residual scroll / momentum from the gesture that opened the menu.
+      ignoreScrollUntil = performance.now() + 450;
     };
 
     toggle.addEventListener("click", () => {
@@ -115,12 +117,15 @@
       else closeMobileNav();
     });
 
-    // Close the menu once the page is scrolled (small screens).
     window.addEventListener(
       "scroll",
       () => {
         if (mobileNav.hasAttribute("hidden") || navClosing) return;
-        if (Math.abs(window.scrollY - navOpenScrollY) < 10) return;
+        if (performance.now() < ignoreScrollUntil) {
+          navOpenScrollY = window.scrollY;
+          return;
+        }
+        if (Math.abs(window.scrollY - navOpenScrollY) < 12) return;
         closeMobileNav();
       },
       { passive: true }

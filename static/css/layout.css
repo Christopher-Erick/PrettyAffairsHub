@@ -361,23 +361,36 @@
   transform: scaleX(1);
 }
 
-/* Shell collapses real height so page content eases up with the menu. */
+/* Overlay under the sticky header — no page-height change, so scroll stays native. */
 .mobile-nav {
-  display: grid;
-  grid-template-rows: 0fr;
-  width: calc(100% - (var(--page-gutter) * 2));
-  margin: 0 auto;
-  overflow: hidden;
-  transition: grid-template-rows 0.52s var(--ease-out);
+  position: absolute;
+  left: var(--page-gutter);
+  right: var(--page-gutter);
+  top: 100%;
+  z-index: 45;
+  margin: 0;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transform: translateY(-0.55rem);
+  transition:
+    opacity 0.36s var(--ease-out),
+    transform 0.48s var(--ease-out),
+    visibility 0.48s var(--ease-out);
 }
 
 .mobile-nav.is-open {
-  grid-template-rows: 1fr;
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  transform: translateY(0);
 }
 
 .mobile-nav.is-leaving {
-  grid-template-rows: 0fr;
+  opacity: 0;
+  visibility: hidden;
   pointer-events: none;
+  transform: translateY(-0.65rem);
 }
 
 .mobile-nav[hidden] {
@@ -386,25 +399,21 @@
 
 .mobile-nav__panel {
   position: relative;
-  min-height: 0;
-  overflow: hidden;
+  max-height: min(72vh, 32rem);
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
   margin: 0;
   padding: var(--space-3) var(--page-gutter) var(--space-4);
   border: 1px solid rgba(255, 252, 250, 0.45);
   border-top-color: var(--hairline);
   border-radius: 0 0 1.25rem 1.25rem;
-  /* Opaque enough to avoid backdrop-filter ghost layers while closing */
   background:
     linear-gradient(145deg, rgba(250, 246, 243, 0.97), rgba(243, 232, 226, 0.94));
   box-shadow:
     0 18px 36px rgba(28, 23, 21, 0.1),
     inset 0 1px 0 rgba(255, 255, 255, 0.55);
-  opacity: 0;
-  transform: translateY(-0.55rem);
-  transition:
-    opacity 0.38s var(--ease-out),
-    transform 0.52s var(--ease-out),
-    box-shadow 0.4s var(--ease-out);
 }
 
 [data-theme="dark"] .mobile-nav__panel {
@@ -424,17 +433,6 @@
     radial-gradient(circle at 12% 5%, rgba(201, 163, 154, 0.22), transparent 38%),
     radial-gradient(circle at 88% 90%, var(--color-glow), transparent 34%);
   pointer-events: none;
-}
-
-.mobile-nav.is-open .mobile-nav__panel {
-  opacity: 1;
-  transform: translateY(0);
-}
-
-.mobile-nav.is-leaving .mobile-nav__panel {
-  opacity: 0;
-  transform: translateY(-0.7rem);
-  box-shadow: none;
 }
 
 .mobile-nav__panel > nav {
@@ -495,8 +493,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .mobile-nav,
-  .mobile-nav__panel {
+  .mobile-nav {
     transition: none;
   }
 }
