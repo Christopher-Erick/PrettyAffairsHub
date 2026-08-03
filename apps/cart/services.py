@@ -31,13 +31,27 @@ def _ensure_session(request):
     return request.session.session_key
 
 
-def get_or_create_cart(request):
+def get_or_create_cart(request, guest_session_key=None):
+    """Return the active cart, merging a guest cart when signing in.
+
+    Pass ``guest_session_key`` when the browser session was just cycled
+    (Django ``login()``) so the pre-login guest cart can still be found.
+    """
     if request.user.is_authenticated:
         cart, _ = Cart.objects.get_or_create(user=request.user)
-        session_key = _ensure_session(request)
-        guest = Cart.objects.filter(session_key=session_key, user__isnull=True).first()
-        if guest and guest.pk != cart.pk:
-            _merge_carts(guest, cart)
+        keys = []
+        current = _ensure_session(request)
+        if current:
+            keys.append(current)
+        if guest_session_key and guest_session_key not in keys:
+            keys.append(guest_session_key)
+        for key in keys:
+            guest = Cart.objects.filter(session_key=key, user__isnull=True).first()
+            if guest and guest.pk != cart.pk:
+                _merge_carts(guest, cart)
+                refresh_cart_item_count(request, cart)
+                break
+        else:
             refresh_cart_item_count(request, cart)
         return cart
 

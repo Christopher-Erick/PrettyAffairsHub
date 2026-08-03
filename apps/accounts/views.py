@@ -37,10 +37,12 @@ class RegisterView(CreateView):
     success_url = reverse_lazy("accounts:profile")
 
     def form_valid(self, form):
+        # Capture guest session before login() cycles the key.
+        guest_key = self.request.session.session_key
         response = super().form_valid(form)
         CustomerProfile.objects.get_or_create(user=self.object)
         login(self.request, self.object)
-        get_or_create_cart(self.request)
+        get_or_create_cart(self.request, guest_session_key=guest_key)
         messages.success(self.request, "Welcome to Pretty Affairs Hub.")
         return response
 
@@ -58,8 +60,10 @@ class UserLoginView(LoginView):
         return super().post(request, *args, **kwargs)
 
     def form_valid(self, form):
+        # Capture guest session before Django login() cycles the key.
+        guest_key = self.request.session.session_key
         response = super().form_valid(form)
-        get_or_create_cart(self.request)
+        get_or_create_cart(self.request, guest_session_key=guest_key)
         if is_store_admin(self.request.user):
             messages.info(
                 self.request,

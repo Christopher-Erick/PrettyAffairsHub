@@ -61,11 +61,8 @@ def checkout(request):
                     "phone": default_address.phone,
                     "shipping_name": default_address.full_name,
                     "shipping_line1": default_address.line1,
-                    "shipping_line2": default_address.line2,
+                    "shipping_location": default_address.line2 or default_address.county,
                     "shipping_city": city,
-                    "shipping_county": default_address.county,
-                    "shipping_postal_code": default_address.postal_code,
-                    "shipping_country": default_address.country or "Kenya",
                 }
             )
 

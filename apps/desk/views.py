@@ -1,6 +1,7 @@
 from django.contrib import messages
 from django.db.models import Q
 from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse
 from django.utils.text import slugify
 from django.views.decorators.http import require_POST
 
@@ -52,19 +53,42 @@ def home(request):
 
 @store_manager_required
 def product_list(request):
+    from django.core.paginator import Paginator
+
     q = request.GET.get("q", "").strip()
     show = request.GET.get("show", "all")
-    products = Product.objects.prefetch_related("images", "variants").order_by("-updated_at")
+    # Only what the table needs — avoids loading every image/variant relation eagerly.
+    products = (
+        Product.objects.only(
+            "id",
+            "name",
+            "slug",
+            "sku",
+            "price",
+            "stock",
+            "is_active",
+            "updated_at",
+        )
+        .prefetch_related("images", "variants")
+        .order_by("-updated_at")
+    )
     if q:
         products = products.filter(Q(name__icontains=q) | Q(sku__icontains=q))
     if show == "live":
         products = products.filter(is_active=True)
     elif show == "hidden":
         products = products.filter(is_active=False)
+    paginator = Paginator(products, 40)
+    page_obj = paginator.get_page(request.GET.get("page"))
     return render(
         request,
         "desk/product_list.html",
-        {"products": products[:200], "q": q, "show": show},
+        {
+            "products": page_obj,
+            "page_obj": page_obj,
+            "q": q,
+            "show": show,
+        },
     )
 
 
@@ -189,6 +213,7 @@ def section_list(request):
         "label": "Homepage sections",
         "create_url": "desk:section_create",
         "edit_url_name": "desk:section_edit",
+        "delete_url_name": "desk:section_delete",
         "help": "Titles and text blocks on the homepage.",
         "display": "title",
     })
@@ -221,7 +246,27 @@ def section_edit(request, pk):
         form.save()
         messages.success(request, "Homepage section updated.")
         return redirect("desk:section_list")
-    return render(request, "desk/generic_form.html", {"form": form, "label": "Edit homepage section", "back": "desk:section_list"})
+    return render(
+        request,
+        "desk/generic_form.html",
+        {
+            "form": form,
+            "label": "Edit homepage section",
+            "back": "desk:section_list",
+            "delete_url": reverse("desk:section_delete", args=[pk]),
+            "object_name": obj.title,
+        },
+    )
+
+
+@store_manager_required
+@require_POST
+def section_delete(request, pk):
+    obj = get_object_or_404(HomepageSection, pk=pk)
+    title = obj.title
+    obj.delete()
+    messages.success(request, f"Deleted homepage section “{title}”.")
+    return redirect("desk:section_list")
 
 
 @store_manager_required
@@ -231,6 +276,7 @@ def blog_list(request):
         "label": "Journal posts",
         "create_url": "desk:blog_create",
         "edit_url_name": "desk:blog_edit",
+        "delete_url_name": "desk:blog_delete",
         "help": "Articles and tutorials on the Journal page.",
         "display": "title",
     })
@@ -254,7 +300,27 @@ def blog_edit(request, pk):
         form.save()
         messages.success(request, "Journal post updated.")
         return redirect("desk:blog_list")
-    return render(request, "desk/generic_form.html", {"form": form, "label": "Edit journal post", "back": "desk:blog_list"})
+    return render(
+        request,
+        "desk/generic_form.html",
+        {
+            "form": form,
+            "label": "Edit journal post",
+            "back": "desk:blog_list",
+            "delete_url": reverse("desk:blog_delete", args=[pk]),
+            "object_name": obj.title,
+        },
+    )
+
+
+@store_manager_required
+@require_POST
+def blog_delete(request, pk):
+    obj = get_object_or_404(BlogPost, pk=pk)
+    title = obj.title
+    obj.delete()
+    messages.success(request, f"Deleted journal post “{title}”.")
+    return redirect("desk:blog_list")
 
 
 @store_manager_required

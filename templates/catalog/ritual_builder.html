@@ -3,55 +3,87 @@
 {% block meta_description %}Answer a few questions and get a curated 3-piece beauty ritual with bundle pricing.{% endblock %}
 
 {% block content %}
-<section class="page-hero">
-  <p class="eyebrow">Interactive edit</p>
-  <h1 class="page-hero__title">Build your ritual</h1>
-  <p class="page-hero__text">Three soft questions. One tailored trio. Add the set to cart in a single tap.</p>
+<section class="ritual-hero">
+  <div class="ritual-hero__glow" aria-hidden="true"></div>
+  <p class="eyebrow">Your personal edit</p>
+  <h1 class="ritual-hero__title">Build your ritual</h1>
+  <p class="ritual-hero__text">Three moods. One tailored trio. Watch your edit assemble as you choose.</p>
 </section>
 
 <section class="section ritual" data-ritual>
+  <div class="ritual__progress" aria-hidden="true">
+    <div class="ritual__progress-bar" data-ritual-progress style="--ritual-progress: 25%"></div>
+  </div>
+
   <ol class="ritual__steps" data-ritual-steps aria-label="Ritual steps">
-    <li class="is-active" data-step-indicator="1">Occasion</li>
-    <li data-step-indicator="2">Focus</li>
-    <li data-step-indicator="3">Finish</li>
-    <li data-step-indicator="4">Your edit</li>
+    <li class="is-active" data-step-indicator="1"><span>01</span> Occasion</li>
+    <li data-step-indicator="2"><span>02</span> Focus</li>
+    <li data-step-indicator="3"><span>03</span> Finish</li>
+    <li data-step-indicator="4"><span>04</span> Your edit</li>
   </ol>
 
   <div class="ritual__panel is-active" data-ritual-panel="1">
-    <h2 class="section__title">What’s the moment?</h2>
-    <p class="section__text">We’ll tune colour intensity to how you want to show up.</p>
+    <h2 class="ritual__question">What’s the moment?</h2>
+    <p class="ritual__hint">We’ll tune colour intensity to how you want to show up.</p>
     <div class="ritual__choices">
-      <button type="button" class="ritual__choice" data-choice="occasion" data-value="everyday">Everyday soft</button>
-      <button type="button" class="ritual__choice" data-choice="occasion" data-value="evening">Evening glow</button>
-      <button type="button" class="ritual__choice" data-choice="occasion" data-value="bold">Bold statement</button>
+      <button type="button" class="ritual__choice" data-choice="occasion" data-value="everyday">
+        <span class="ritual__choice-label">Everyday soft</span>
+        <span class="ritual__choice-note">Coffee runs, class, errands — low effort, high polish</span>
+      </button>
+      <button type="button" class="ritual__choice" data-choice="occasion" data-value="evening">
+        <span class="ritual__choice-label">Evening glow</span>
+        <span class="ritual__choice-note">Dates, dinners, golden-hour light</span>
+      </button>
+      <button type="button" class="ritual__choice" data-choice="occasion" data-value="bold">
+        <span class="ritual__choice-label">Bold statement</span>
+        <span class="ritual__choice-note">Main-character colour that turns heads</span>
+      </button>
     </div>
   </div>
 
   <div class="ritual__panel" data-ritual-panel="2" hidden>
-    <h2 class="section__title">Where should we focus?</h2>
-    <p class="section__text">Lips, eyes, or a balanced full-face trio.</p>
+    <h2 class="ritual__question">Where should we focus?</h2>
+    <p class="ritual__hint">Lips, eyes, or a balanced full-face trio.</p>
     <div class="ritual__choices">
-      <button type="button" class="ritual__choice" data-choice="focus" data-value="lips">Lips first</button>
-      <button type="button" class="ritual__choice" data-choice="focus" data-value="eyes">Eye story</button>
-      <button type="button" class="ritual__choice" data-choice="focus" data-value="full">Full face</button>
+      <button type="button" class="ritual__choice" data-choice="focus" data-value="lips">
+        <span class="ritual__choice-label">Lips first</span>
+        <span class="ritual__choice-note">Colour that carries the whole look</span>
+      </button>
+      <button type="button" class="ritual__choice" data-choice="focus" data-value="eyes">
+        <span class="ritual__choice-label">Eye story</span>
+        <span class="ritual__choice-note">Shadow, definition, a little drama</span>
+      </button>
+      <button type="button" class="ritual__choice" data-choice="focus" data-value="full">
+        <span class="ritual__choice-label">Full face</span>
+        <span class="ritual__choice-note">Balanced pieces that play together</span>
+      </button>
     </div>
     <button type="button" class="btn btn--ghost" data-ritual-back>Back</button>
   </div>
 
   <div class="ritual__panel" data-ritual-panel="3" hidden>
-    <h2 class="section__title">Preferred finish?</h2>
-    <p class="section__text">Texture changes the whole mood.</p>
+    <h2 class="ritual__question">Preferred finish?</h2>
+    <p class="ritual__hint">Texture changes the whole mood.</p>
     <div class="ritual__choices">
-      <button type="button" class="ritual__choice" data-choice="finish" data-value="matte">Matte</button>
-      <button type="button" class="ritual__choice" data-choice="finish" data-value="gloss">Gloss &amp; shine</button>
-      <button type="button" class="ritual__choice" data-choice="finish" data-value="soft">Soft &amp; nourishing</button>
+      <button type="button" class="ritual__choice" data-choice="finish" data-value="matte">
+        <span class="ritual__choice-label">Matte</span>
+        <span class="ritual__choice-note">Soft-blur, modern, camera-ready</span>
+      </button>
+      <button type="button" class="ritual__choice" data-choice="finish" data-value="gloss">
+        <span class="ritual__choice-label">Gloss &amp; shine</span>
+        <span class="ritual__choice-note">Juicy light, glass-skin energy</span>
+      </button>
+      <button type="button" class="ritual__choice" data-choice="finish" data-value="soft">
+        <span class="ritual__choice-label">Soft &amp; nourishing</span>
+        <span class="ritual__choice-note">Comfort first, pretty second (still pretty)</span>
+      </button>
     </div>
     <button type="button" class="btn btn--ghost" data-ritual-back>Back</button>
   </div>
 
-  <div class="ritual__panel" data-ritual-panel="4" hidden>
-    <h2 class="section__title">Your ritual edit</h2>
-    <p class="section__text" data-ritual-summary></p>
+  <div class="ritual__panel ritual__panel--reveal" data-ritual-panel="4" hidden>
+    <h2 class="ritual__question">Your ritual edit</h2>
+    <p class="ritual__hint" data-ritual-summary></p>
     <div class="ritual__results" data-ritual-results></div>
     <div class="ritual__total">
       <p>Ritual total: <strong data-ritual-total>{{ currency_symbol }} 0</strong></p>
@@ -59,7 +91,7 @@
     </div>
     <form method="post" action="{% url 'cart:add_many' %}" data-ritual-form>
       {% csrf_token %}
-      <input type="hidden" name="next" value="{% url 'cart:detail' %}">
+      <input type="hidden" name="next" value="{% url 'catalog:ritual_builder' %}">
       <div data-ritual-inputs></div>
       <div class="ritual__actions">
         <button class="btn btn--primary" type="submit" data-ritual-add disabled>Add ritual to cart</button>
@@ -81,6 +113,7 @@
   const symbol = "{{ currency_symbol|escapejs }}";
   const answers = { occasion: "", focus: "", finish: "" };
   let step = 1;
+  const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
   const panels = [...root.querySelectorAll("[data-ritual-panel]")];
   const indicators = [...root.querySelectorAll("[data-step-indicator]")];
@@ -90,6 +123,7 @@
   const saveEl = root.querySelector("[data-ritual-save]");
   const summary = root.querySelector("[data-ritual-summary]");
   const addBtn = root.querySelector("[data-ritual-add]");
+  const progress = root.querySelector("[data-ritual-progress]");
 
   const showStep = (n) => {
     step = n;
@@ -97,10 +131,20 @@
       const active = Number(p.dataset.ritualPanel) === n;
       p.hidden = !active;
       p.classList.toggle("is-active", active);
+      if (active && !reduceMotion) {
+        p.classList.remove("is-entering");
+        void p.offsetWidth;
+        p.classList.add("is-entering");
+      }
     });
     indicators.forEach((el) => {
-      el.classList.toggle("is-active", Number(el.dataset.stepIndicator) <= n);
+      const i = Number(el.dataset.stepIndicator);
+      el.classList.toggle("is-active", i <= n);
+      el.classList.toggle("is-current", i === n);
     });
+    if (progress) {
+      progress.style.setProperty("--ritual-progress", `${(n / 4) * 100}%`);
+    }
   };
 
   const scoreProduct = (p) => {
@@ -145,6 +189,13 @@
     return picked.slice(0, 3);
   };
 
+  const escapeHtml = (str) =>
+    String(str)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;");
+
   const renderResults = () => {
     const picked = pickRitual();
     const labels = {
@@ -158,7 +209,7 @@
       gloss: "glossy",
       soft: "nourishing",
     };
-    summary.textContent = `A ${labels[answers.occasion]} · ${labels[answers.focus]} · ${labels[answers.finish]} ritual.`;
+    summary.textContent = `A ${labels[answers.occasion]} · ${labels[answers.focus]} · ${labels[answers.finish]} ritual — curated just for you.`;
     results.innerHTML = "";
     inputs.innerHTML = "";
     let total = 0;
@@ -166,11 +217,18 @@
       total += p.price;
       const card = document.createElement("article");
       card.className = "ritual__result";
+      card.style.setProperty("--reveal-delay", `${i * 90}ms`);
+      const media = p.image
+        ? `<img class="ritual__result-img" src="${escapeHtml(p.image)}" alt="" loading="lazy" width="160" height="200">`
+        : `<div class="ritual__result-img ritual__result-img--empty" aria-hidden="true"></div>`;
       card.innerHTML = `
-        <p class="ritual__result-step">0${i + 1}</p>
-        <h3 class="ritual__result-title"><a href="${p.url}">${p.name}</a></h3>
-        <p class="ritual__result-price">${symbol} ${Math.round(p.price)}</p>
-        ${p.is_low_stock ? `<p class="ritual__result-stock">Only ${p.stock} left</p>` : ""}
+        ${media}
+        <div class="ritual__result-copy">
+          <p class="ritual__result-step">Piece 0${i + 1}</p>
+          <h3 class="ritual__result-title"><a href="${escapeHtml(p.url)}">${escapeHtml(p.name)}</a></h3>
+          <p class="ritual__result-price">${symbol} ${Math.round(p.price)}</p>
+          ${p.is_low_stock ? `<p class="ritual__result-stock">Only ${p.stock} left</p>` : ""}
+        </div>
       `;
       results.appendChild(card);
       const input = document.createElement("input");
@@ -182,7 +240,7 @@
     totalEl.textContent = `${symbol} ${Math.round(total)}`;
     saveEl.hidden = false;
     saveEl.textContent = picked.length
-      ? "Your trio is ready — add all three and checkout when you are."
+      ? "Your trio is ready — add all three without leaving this page."
       : "No in-stock matches yet. Try another combination.";
     addBtn.disabled = picked.length === 0;
   };
@@ -193,11 +251,13 @@
       answers[key] = btn.dataset.value;
       root.querySelectorAll(`[data-choice="${key}"]`).forEach((b) => b.classList.remove("is-selected"));
       btn.classList.add("is-selected");
-      if (step < 3) showStep(step + 1);
-      else {
-        renderResults();
-        showStep(4);
-      }
+      window.setTimeout(() => {
+        if (step < 3) showStep(step + 1);
+        else {
+          renderResults();
+          showStep(4);
+        }
+      }, reduceMotion ? 0 : 180);
     });
   });
 
@@ -210,6 +270,8 @@
     root.querySelectorAll(".ritual__choice").forEach((b) => b.classList.remove("is-selected"));
     showStep(1);
   });
+
+  showStep(1);
 })();
 </script>
 {% endblock %}

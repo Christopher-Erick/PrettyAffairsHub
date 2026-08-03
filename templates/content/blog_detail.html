@@ -1,10 +1,27 @@
 {% extends "base.html" %}
 {% block title %}{{ post.title }} — {{ SITE_NAME }}{% endblock %}
+{% block meta_description %}{{ post.excerpt|default:post.title }}{% endblock %}
+
 {% block content %}
-<article class="section narrow prose">
-  <p class="eyebrow">{% if post.is_tutorial %}Tutorial{% else %}Journal{% endif %}</p>
-  <h1 class="section__title">{{ post.title }}</h1>
-  <p>{{ post.published_at|date:"F j, Y" }}</p>
-  {{ post.body|linebreaks }}
+<article class="section journal-detail">
+  <header class="journal-detail__header">
+    <p class="eyebrow">{% if post.is_tutorial %}Tutorial{% else %}Journal{% endif %}</p>
+    <h1 class="journal-detail__title">{{ post.title }}</h1>
+    <div class="journal-detail__meta">
+      <time datetime="{{ post.published_at|date:'Y-m-d' }}">{{ post.published_at|date:"F j, Y" }}</time>
+      {% if post.excerpt %}
+      <p class="journal-detail__dek">{{ post.excerpt }}</p>
+      {% endif %}
+    </div>
+  </header>
+
+  <div class="journal-detail__body prose">
+    {{ post.body|linebreaks }}
+  </div>
+
+  <footer class="journal-detail__footer">
+    <a class="btn btn--ghost" href="{% url 'content:blog' %}">Back to journal</a>
+    <a class="btn btn--primary" href="{% url 'catalog:shop' %}">Shop the edit</a>
+  </footer>
 </article>
 {% endblock %}

@@ -414,7 +414,7 @@
     armIdleLogout();
   }
 
-  document.querySelectorAll("[data-toast]").forEach((toast) => {
+  const bindToast = (toast) => {
     const ms = Number(toast.dataset.toastMs || 4000);
     const dismiss = () => {
       if (toast.classList.contains("is-leaving")) return;
@@ -424,6 +424,124 @@
     const closeBtn = toast.querySelector("[data-toast-close]");
     if (closeBtn) closeBtn.addEventListener("click", dismiss);
     window.setTimeout(dismiss, Math.max(1200, ms));
+  };
+
+  document.querySelectorAll("[data-toast]").forEach(bindToast);
+
+  const ensureToastHost = () => {
+    let host = document.querySelector(".site-toasts");
+    if (!host) {
+      host = document.createElement("div");
+      host.className = "site-toasts";
+      host.setAttribute("aria-live", "polite");
+      host.setAttribute("aria-relevant", "additions");
+      document.body.appendChild(host);
+    }
+    return host;
+  };
+
+  const showToast = (message, level = "info", ms = 4200) => {
+    if (!message) return;
+    const host = ensureToastHost();
+    const toast = document.createElement("div");
+    const safeLevel = ["success", "error", "warning", "info"].includes(level) ? level : "info";
+    toast.className = `site-toast site-toast--${safeLevel}`;
+    toast.dataset.toast = "";
+    toast.dataset.toastMs = String(ms);
+    toast.setAttribute("role", "status");
+    toast.innerHTML =
+      '<span class="site-toast__mark" aria-hidden="true"></span>' +
+      `<p class="site-toast__text"></p>` +
+      '<button class="site-toast__close" type="button" data-toast-close aria-label="Dismiss">×</button>';
+    toast.querySelector(".site-toast__text").textContent = message;
+    host.appendChild(toast);
+    bindToast(toast);
+  };
+
+  const updateCartCount = (count) => {
+    const n = Math.max(0, Number(count) || 0);
+    document.querySelectorAll("[data-cart-count]").forEach((el) => {
+      el.textContent = String(n);
+    });
+    document.querySelectorAll("[data-cart-link]").forEach((link) => {
+      link.setAttribute("aria-label", `Shopping cart, ${n} items`);
+    });
+  };
+
+  const isCartAddAction = (action) => {
+    if (!action) return false;
+    try {
+      const path = new URL(action, window.location.origin).pathname;
+      return /\/cart\/add\/?$/.test(path) || /\/cart\/add-many\/?$/.test(path);
+    } catch (e) {
+      return action.includes("/cart/add");
+    }
+  };
+
+  document.addEventListener("submit", (event) => {
+    const form = event.target;
+    if (!(form instanceof HTMLFormElement)) return;
+    if (form.dataset.ajaxCart === "off") return;
+
+    const submitter = event.submitter;
+    if (submitter && (submitter.name === "buy_now" || submitter.hasAttribute("formaction"))) {
+      return;
+    }
+
+    const action = form.getAttribute("action") || "";
+    if (!isCartAddAction(action)) return;
+
+    const nextInput = form.querySelector('input[name="next"]');
+    const nextVal = nextInput ? nextInput.value : "";
+    if (nextVal && /checkout/i.test(nextVal)) return;
+
+    event.preventDefault();
+
+    const body = new FormData(form);
+    const btn = submitter instanceof HTMLButtonElement ? submitter : form.querySelector('[type="submit"]');
+    if (btn) {
+      btn.disabled = true;
+      btn.classList.add("is-busy");
+    }
+
+    fetch(form.action || action, {
+      method: "POST",
+      body,
+      headers: {
+        "X-Requested-With": "XMLHttpRequest",
+        Accept: "application/json",
+      },
+      credentials: "same-origin",
+    })
+      .then(async (response) => {
+        let data = {};
+        try {
+          data = await response.json();
+        } catch (e) {
+          data = {};
+        }
+        if (typeof data.cart_count !== "undefined") {
+          updateCartCount(data.cart_count);
+        }
+        showToast(
+          data.message || (response.ok ? "Added to your cart." : "Could not add to cart."),
+          data.level || (response.ok ? "success" : "error"),
+          response.ok ? 3200 : 4500
+        );
+        if (btn) {
+          btn.classList.add("is-added");
+          window.setTimeout(() => btn.classList.remove("is-added"), 900);
+        }
+      })
+      .catch(() => {
+        showToast("Network error — try again.", "error", 4500);
+      })
+      .finally(() => {
+        if (btn) {
+          btn.disabled = false;
+          btn.classList.remove("is-busy");
+        }
+      });
   });
 
   document.querySelectorAll("[data-cart-qty-form]").forEach((form) => {

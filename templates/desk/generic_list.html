@@ -21,7 +21,15 @@
       {% elif display == "name" %}{{ item.name }}
       {% else %}{{ item.title }}{% endif %}
     </a>
-    <a href="{% url edit_url_name item.pk %}">Edit</a>
+    <span class="desk-list__actions">
+      <a href="{% url edit_url_name item.pk %}">Edit</a>
+      {% if delete_url_name %}
+      <form method="post" action="{% url delete_url_name item.pk %}" onsubmit="return confirm('Delete this item? This cannot be undone.');">
+        {% csrf_token %}
+        <button type="submit" class="desk-list__delete">Delete</button>
+      </form>
+      {% endif %}
+    </span>
   </li>
   {% empty %}
   <li>Nothing here yet. Add the first one.</li>

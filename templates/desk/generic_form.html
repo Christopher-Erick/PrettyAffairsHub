@@ -24,4 +24,11 @@
     <a class="btn btn--ghost" href="{% url back %}">Cancel</a>
   </div>
 </form>
+
+{% if delete_url %}
+<form class="desk-form desk-form--danger" method="post" action="{{ delete_url }}" onsubmit="return confirm('Delete “{{ object_name|escapejs }}”? This cannot be undone.');">
+  {% csrf_token %}
+  <button class="btn btn--ghost" type="submit">Delete</button>
+</form>
+{% endif %}
 {% endblock %}

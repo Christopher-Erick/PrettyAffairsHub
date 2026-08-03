@@ -1,9 +1,11 @@
 from decimal import Decimal
 
 from django.contrib import messages
+from django.http import JsonResponse
 from django.shortcuts import redirect, render
 from django.views.decorators.http import require_POST
 
+from apps.cart.context_processors import refresh_cart_item_count
 from apps.cart.services import (
     InsufficientStockError,
     add_to_cart,
@@ -15,6 +17,17 @@ from apps.cart.services import (
 from apps.core.http import safe_redirect
 from apps.discounts.models import Coupon
 from apps.orders.services import DEFAULT_SHIPPING, FREE_SHIPPING_THRESHOLD
+
+
+def _wants_json(request):
+    if request.headers.get("X-Requested-With") == "XMLHttpRequest":
+        return True
+    accept = (request.headers.get("Accept") or "").lower()
+    return "application/json" in accept
+
+
+def _cart_count(request):
+    return int(request.session.get("cart_item_count") or refresh_cart_item_count(request) or 0)
 
 
 def cart_detail(request):
@@ -62,12 +75,44 @@ def cart_add(request):
             variant_id=request.POST.get("variant_id") or None,
         )
         if added == 1:
-            messages.success(request, "Added 1 item to your cart.")
+            msg = "Added 1 item to your cart."
         else:
-            messages.success(request, f"Added {added} items to your cart.")
+            msg = f"Added {added} items to your cart."
+        if _wants_json(request):
+            return JsonResponse(
+                {
+                    "ok": True,
+                    "message": msg,
+                    "added": added,
+                    "cart_count": _cart_count(request),
+                    "level": "success",
+                }
+            )
+        messages.success(request, msg)
     except InsufficientStockError as exc:
+        if _wants_json(request):
+            return JsonResponse(
+                {
+                    "ok": False,
+                    "message": str(exc),
+                    "available": exc.available,
+                    "cart_count": _cart_count(request),
+                    "level": "error",
+                },
+                status=400,
+            )
         messages.error(request, str(exc), extra_tags="toast-fast")
     except Exception as exc:
+        if _wants_json(request):
+            return JsonResponse(
+                {
+                    "ok": False,
+                    "message": str(exc),
+                    "cart_count": _cart_count(request),
+                    "level": "error",
+                },
+                status=400,
+            )
         messages.error(request, str(exc), extra_tags="toast-fast")
     return safe_redirect(request, request.POST.get("next"), fallback="cart:detail")
 
@@ -76,18 +121,41 @@ def cart_add(request):
 def cart_add_many(request):
     ids = request.POST.getlist("product_id")
     added = 0
+    errors = []
     for product_id in ids:
         try:
             add_to_cart(request, product_id=product_id, quantity=1)
             added += 1
         except InsufficientStockError as exc:
-            messages.error(request, str(exc), extra_tags="toast-fast")
+            errors.append(str(exc))
+            if not _wants_json(request):
+                messages.error(request, str(exc), extra_tags="toast-fast")
         except Exception as exc:
-            messages.error(request, str(exc), extra_tags="toast-fast")
+            errors.append(str(exc))
+            if not _wants_json(request):
+                messages.error(request, str(exc), extra_tags="toast-fast")
     if added == 1:
-        messages.success(request, "Added 1 ritual piece to your cart.")
+        msg = "Added 1 ritual piece to your cart."
     elif added > 1:
-        messages.success(request, f"Added {added} ritual pieces to your cart.")
+        msg = f"Added {added} ritual pieces to your cart."
+    else:
+        msg = errors[0] if errors else "Nothing was added."
+    if _wants_json(request):
+        return JsonResponse(
+            {
+                "ok": added > 0,
+                "message": msg,
+                "added": added,
+                "errors": errors,
+                "cart_count": _cart_count(request),
+                "level": "success" if added else "error",
+            },
+            status=200 if added else 400,
+        )
+    if added == 1:
+        messages.success(request, msg)
+    elif added > 1:
+        messages.success(request, msg)
     return safe_redirect(request, request.POST.get("next"), fallback="cart:detail")
 
 

@@ -58,4 +58,16 @@
   </tbody>
 </table>
 </div>
+
+{% if page_obj and page_obj.paginator.num_pages > 1 %}
+<nav class="desk-pager" aria-label="Products pages">
+  {% if page_obj.has_previous %}
+  <a class="btn btn--ghost btn--sm" href="?q={{ q }}&amp;show={{ show }}&amp;page={{ page_obj.previous_page_number }}">Previous</a>
+  {% endif %}
+  <span class="desk-muted">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+  {% if page_obj.has_next %}
+  <a class="btn btn--ghost btn--sm" href="?q={{ q }}&amp;show={{ show }}&amp;page={{ page_obj.next_page_number }}">Next</a>
+  {% endif %}
+</nav>
+{% endif %}
 {% endblock %}

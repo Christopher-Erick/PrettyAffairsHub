@@ -301,6 +301,11 @@ def ritual_builder(request):
                     "trending": product.is_trending,
                     "featured": product.is_featured,
                 },
+                "image": (
+                    product.primary_image.image.url
+                    if product.primary_image and product.primary_image.image
+                    else ""
+                ),
             }
         )
     return render(
