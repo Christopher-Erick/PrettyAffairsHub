@@ -114,91 +114,93 @@
   </div>
 
   <div class="mobile-nav" id="mobile-nav" data-mobile-nav hidden>
-    <nav aria-label="Mobile">
-      <ul class="mobile-nav__list">
-        <li>
-          <a class="mobile-nav__link{% if NAV_ACTIVE.home %} is-active{% endif %}"
-             href="{% url 'content:home' %}"
-             {% if NAV_ACTIVE.home %}aria-current="page"{% endif %}>Home</a>
-        </li>
-        <li>
-          <a class="mobile-nav__link{% if NAV_ACTIVE.shop %} is-active{% endif %}"
-             href="{% url 'catalog:shop' %}"
-             {% if NAV_ACTIVE.shop %}aria-current="page"{% endif %}>Shop</a>
-        </li>
-        <li><a class="mobile-nav__link" href="{% url 'catalog:shop' %}?q=">Search</a></li>
-        <li>
-          <a class="mobile-nav__link{% if NAV_ACTIVE.new %} is-active{% endif %}"
-             href="{% url 'catalog:shop' %}?flag=new"
-             {% if NAV_ACTIVE.new %}aria-current="page"{% endif %}>New arrivals</a>
-        </li>
-        <li>
-          <a class="mobile-nav__link{% if NAV_ACTIVE.bestsellers %} is-active{% endif %}"
-             href="{% url 'catalog:shop' %}?flag=bestsellers"
-             {% if NAV_ACTIVE.bestsellers %}aria-current="page"{% endif %}>Best sellers</a>
-        </li>
-        <li>
-          <a class="mobile-nav__link{% if NAV_ACTIVE.bundles %} is-active{% endif %}"
-             href="{% url 'catalog:bundles' %}"
-             {% if NAV_ACTIVE.bundles %}aria-current="page"{% endif %}>Bundles</a>
-        </li>
-        <li>
-          <a class="mobile-nav__link{% if NAV_ACTIVE.ritual %} is-active{% endif %}"
-             href="{% url 'catalog:ritual_builder' %}"
-             {% if NAV_ACTIVE.ritual %}aria-current="page"{% endif %}>Build a ritual</a>
-        </li>
-        <li>
-          <a class="mobile-nav__link{% if NAV_ACTIVE.gifts %} is-active{% endif %}"
-             href="{% url 'content:gift_cards' %}"
-             {% if NAV_ACTIVE.gifts %}aria-current="page"{% endif %}>Gift cards</a>
-        </li>
-        <li>
-          <a class="mobile-nav__link{% if NAV_ACTIVE.journal %} is-active{% endif %}"
-             href="{% url 'content:blog' %}"
-             {% if NAV_ACTIVE.journal %}aria-current="page"{% endif %}>Journal</a>
-        </li>
-        <li>
-          <a class="mobile-nav__link{% if NAV_ACTIVE.about %} is-active{% endif %}"
-             href="{% url 'content:about' %}"
-             {% if NAV_ACTIVE.about %}aria-current="page"{% endif %}>About</a>
-        </li>
-        <li>
-          <a class="mobile-nav__link{% if NAV_ACTIVE.contact %} is-active{% endif %}"
-             href="{% url 'content:contact' %}"
-             {% if NAV_ACTIVE.contact %}aria-current="page"{% endif %}>Contact</a>
-        </li>
-        {% if user.is_authenticated %}
-        <li class="mobile-nav__session">
-          <p class="mobile-nav__session-label">
-            <span class="session-avatar session-avatar--sm" aria-hidden="true">
-              {% if user.first_name %}{{ user.first_name|slice:":1"|upper }}{% elif user.email %}{{ user.email|slice:":1"|upper }}{% else %}{{ user.username|slice:":1"|upper }}{% endif %}
-            </span>
-            Signed in as {{ user.first_name|default:user.email|default:user.username }}
-          </p>
-        </li>
-        <li>
-          <a class="mobile-nav__link{% if NAV_ACTIVE.account %} is-active{% endif %}"
-             href="{% url 'accounts:profile' %}"
-             {% if NAV_ACTIVE.account %}aria-current="page"{% endif %}>Your account</a>
-        </li>
-        <li>
-          <a class="mobile-nav__link" href="{% url 'accounts:wishlist' %}">Wishlist</a>
-        </li>
-        <li>
-          <form class="mobile-nav__logout" method="post" action="{% url 'accounts:logout' %}">
-            {% csrf_token %}
-            <button class="mobile-nav__link mobile-nav__link--action" type="submit">Sign out</button>
-          </form>
-        </li>
-        {% else %}
-        <li>
-          <a class="mobile-nav__link{% if NAV_ACTIVE.account %} is-active{% endif %}"
-             href="{% url 'accounts:login' %}"
-             {% if NAV_ACTIVE.account %}aria-current="page"{% endif %}>Sign in</a>
-        </li>
-        {% endif %}
-      </ul>
-    </nav>
+    <div class="mobile-nav__panel">
+      <nav aria-label="Mobile">
+        <ul class="mobile-nav__list">
+          <li>
+            <a class="mobile-nav__link{% if NAV_ACTIVE.home %} is-active{% endif %}"
+               href="{% url 'content:home' %}"
+               {% if NAV_ACTIVE.home %}aria-current="page"{% endif %}>Home</a>
+          </li>
+          <li>
+            <a class="mobile-nav__link{% if NAV_ACTIVE.shop %} is-active{% endif %}"
+               href="{% url 'catalog:shop' %}"
+               {% if NAV_ACTIVE.shop %}aria-current="page"{% endif %}>Shop</a>
+          </li>
+          <li><a class="mobile-nav__link" href="{% url 'catalog:shop' %}?q=">Search</a></li>
+          <li>
+            <a class="mobile-nav__link{% if NAV_ACTIVE.new %} is-active{% endif %}"
+               href="{% url 'catalog:shop' %}?flag=new"
+               {% if NAV_ACTIVE.new %}aria-current="page"{% endif %}>New arrivals</a>
+          </li>
+          <li>
+            <a class="mobile-nav__link{% if NAV_ACTIVE.bestsellers %} is-active{% endif %}"
+               href="{% url 'catalog:shop' %}?flag=bestsellers"
+               {% if NAV_ACTIVE.bestsellers %}aria-current="page"{% endif %}>Best sellers</a>
+          </li>
+          <li>
+            <a class="mobile-nav__link{% if NAV_ACTIVE.bundles %} is-active{% endif %}"
+               href="{% url 'catalog:bundles' %}"
+               {% if NAV_ACTIVE.bundles %}aria-current="page"{% endif %}>Bundles</a>
+          </li>
+          <li>
+            <a class="mobile-nav__link{% if NAV_ACTIVE.ritual %} is-active{% endif %}"
+               href="{% url 'catalog:ritual_builder' %}"
+               {% if NAV_ACTIVE.ritual %}aria-current="page"{% endif %}>Build a ritual</a>
+          </li>
+          <li>
+            <a class="mobile-nav__link{% if NAV_ACTIVE.gifts %} is-active{% endif %}"
+               href="{% url 'content:gift_cards' %}"
+               {% if NAV_ACTIVE.gifts %}aria-current="page"{% endif %}>Gift cards</a>
+          </li>
+          <li>
+            <a class="mobile-nav__link{% if NAV_ACTIVE.journal %} is-active{% endif %}"
+               href="{% url 'content:blog' %}"
+               {% if NAV_ACTIVE.journal %}aria-current="page"{% endif %}>Journal</a>
+          </li>
+          <li>
+            <a class="mobile-nav__link{% if NAV_ACTIVE.about %} is-active{% endif %}"
+               href="{% url 'content:about' %}"
+               {% if NAV_ACTIVE.about %}aria-current="page"{% endif %}>About</a>
+          </li>
+          <li>
+            <a class="mobile-nav__link{% if NAV_ACTIVE.contact %} is-active{% endif %}"
+               href="{% url 'content:contact' %}"
+               {% if NAV_ACTIVE.contact %}aria-current="page"{% endif %}>Contact</a>
+          </li>
+          {% if user.is_authenticated %}
+          <li class="mobile-nav__session">
+            <p class="mobile-nav__session-label">
+              <span class="session-avatar session-avatar--sm" aria-hidden="true">
+                {% if user.first_name %}{{ user.first_name|slice:":1"|upper }}{% elif user.email %}{{ user.email|slice:":1"|upper }}{% else %}{{ user.username|slice:":1"|upper }}{% endif %}
+              </span>
+              Signed in as {{ user.first_name|default:user.email|default:user.username }}
+            </p>
+          </li>
+          <li>
+            <a class="mobile-nav__link{% if NAV_ACTIVE.account %} is-active{% endif %}"
+               href="{% url 'accounts:profile' %}"
+               {% if NAV_ACTIVE.account %}aria-current="page"{% endif %}>Your account</a>
+          </li>
+          <li>
+            <a class="mobile-nav__link" href="{% url 'accounts:wishlist' %}">Wishlist</a>
+          </li>
+          <li>
+            <form class="mobile-nav__logout" method="post" action="{% url 'accounts:logout' %}">
+              {% csrf_token %}
+              <button class="mobile-nav__link mobile-nav__link--action" type="submit">Sign out</button>
+            </form>
+          </li>
+          {% else %}
+          <li>
+            <a class="mobile-nav__link{% if NAV_ACTIVE.account %} is-active{% endif %}"
+               href="{% url 'accounts:login' %}"
+               {% if NAV_ACTIVE.account %}aria-current="page"{% endif %}>Sign in</a>
+          </li>
+          {% endif %}
+        </ul>
+      </nav>
+    </div>
   </div>
 </header>
 {% if messages %}

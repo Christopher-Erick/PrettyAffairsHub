@@ -60,15 +60,15 @@
         window.clearTimeout(navCloseTimer);
         navCloseTimer = null;
       }
-      mobileNav.removeEventListener("animationend", onCloseAnimationEnd);
-      mobileNav.classList.remove("is-leaving");
+      mobileNav.removeEventListener("transitionend", onCloseTransitionEnd);
+      mobileNav.classList.remove("is-open", "is-leaving");
       mobileNav.setAttribute("hidden", "");
       navClosing = false;
     };
 
-    const onCloseAnimationEnd = (event) => {
+    const onCloseTransitionEnd = (event) => {
       if (event.target !== mobileNav) return;
-      if (event.animationName && event.animationName !== "mobile-nav-out") return;
+      if (event.propertyName && event.propertyName !== "grid-template-rows") return;
       finishClose();
     };
 
@@ -83,9 +83,10 @@
 
       if (navClosing) return;
       navClosing = true;
+      mobileNav.classList.remove("is-open");
       mobileNav.classList.add("is-leaving");
-      mobileNav.addEventListener("animationend", onCloseAnimationEnd);
-      navCloseTimer = window.setTimeout(finishClose, 420);
+      mobileNav.addEventListener("transitionend", onCloseTransitionEnd);
+      navCloseTimer = window.setTimeout(finishClose, 580);
     };
 
     const openMobileNav = () => {
@@ -93,15 +94,17 @@
         window.clearTimeout(navCloseTimer);
         navCloseTimer = null;
       }
-      mobileNav.removeEventListener("animationend", onCloseAnimationEnd);
+      mobileNav.removeEventListener("transitionend", onCloseTransitionEnd);
       mobileNav.classList.remove("is-leaving");
       navClosing = false;
 
       mobileNav.removeAttribute("hidden");
-      // Restart the enter animation if reopening quickly.
-      mobileNav.style.animation = "none";
-      void mobileNav.offsetWidth;
-      mobileNav.style.animation = "";
+      mobileNav.classList.remove("is-open");
+      // Start collapsed, then open on next frame for a soft expand.
+      void mobileNav.offsetHeight;
+      window.requestAnimationFrame(() => {
+        mobileNav.classList.add("is-open");
+      });
 
       toggle.setAttribute("aria-expanded", "true");
       navOpenScrollY = window.scrollY;
