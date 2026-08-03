@@ -377,7 +377,8 @@
   box-shadow:
     0 22px 48px rgba(28, 23, 21, 0.12),
     inset 0 1px 0 rgba(255, 255, 255, 0.5);
-  animation: mobile-nav-in 220ms var(--ease-out) both;
+  transform-origin: top center;
+  animation: mobile-nav-in 320ms var(--ease-out) both;
 }
 
 [data-theme="dark"] .mobile-nav {
@@ -402,6 +403,11 @@
 .mobile-nav > nav {
   position: relative;
   z-index: 1;
+}
+
+.mobile-nav.is-leaving {
+  pointer-events: none;
+  animation: mobile-nav-out 340ms cubic-bezier(0.4, 0.05, 0.25, 1) both;
 }
 
 .mobile-nav[hidden] {
@@ -463,11 +469,33 @@
 @keyframes mobile-nav-in {
   from {
     opacity: 0;
-    transform: translateY(-0.5rem);
+    transform: translateY(-0.65rem) scaleY(0.92);
+    clip-path: inset(0 0 100% 0 round 0 0 1.25rem 1.25rem);
   }
   to {
     opacity: 1;
-    transform: translateY(0);
+    transform: translateY(0) scaleY(1);
+    clip-path: inset(0 0 0 0 round 0 0 1.25rem 1.25rem);
+  }
+}
+
+@keyframes mobile-nav-out {
+  from {
+    opacity: 1;
+    transform: translateY(0) scaleY(1);
+    clip-path: inset(0 0 0 0 round 0 0 1.25rem 1.25rem);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-0.45rem) scaleY(0.9);
+    clip-path: inset(0 0 100% 0 round 0 0 1.25rem 1.25rem);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mobile-nav,
+  .mobile-nav.is-leaving {
+    animation: none;
   }
 }
 

@@ -51,21 +51,64 @@
 
   if (toggle && mobileNav) {
     let navOpenScrollY = 0;
+    let navClosing = false;
+    let navCloseTimer = null;
+    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
 
-    const closeMobileNav = () => {
-      if (mobileNav.hasAttribute("hidden")) return;
+    const finishClose = () => {
+      if (navCloseTimer) {
+        window.clearTimeout(navCloseTimer);
+        navCloseTimer = null;
+      }
+      mobileNav.removeEventListener("animationend", onCloseAnimationEnd);
+      mobileNav.classList.remove("is-leaving");
       mobileNav.setAttribute("hidden", "");
+      navClosing = false;
+    };
+
+    const onCloseAnimationEnd = (event) => {
+      if (event.target !== mobileNav) return;
+      if (event.animationName && event.animationName !== "mobile-nav-out") return;
+      finishClose();
+    };
+
+    const closeMobileNav = (immediate = false) => {
+      if (mobileNav.hasAttribute("hidden") && !navClosing) return;
       toggle.setAttribute("aria-expanded", "false");
+
+      if (immediate || reduceMotion.matches) {
+        finishClose();
+        return;
+      }
+
+      if (navClosing) return;
+      navClosing = true;
+      mobileNav.classList.add("is-leaving");
+      mobileNav.addEventListener("animationend", onCloseAnimationEnd);
+      navCloseTimer = window.setTimeout(finishClose, 420);
     };
 
     const openMobileNav = () => {
+      if (navCloseTimer) {
+        window.clearTimeout(navCloseTimer);
+        navCloseTimer = null;
+      }
+      mobileNav.removeEventListener("animationend", onCloseAnimationEnd);
+      mobileNav.classList.remove("is-leaving");
+      navClosing = false;
+
       mobileNav.removeAttribute("hidden");
+      // Restart the enter animation if reopening quickly.
+      mobileNav.style.animation = "none";
+      void mobileNav.offsetWidth;
+      mobileNav.style.animation = "";
+
       toggle.setAttribute("aria-expanded", "true");
       navOpenScrollY = window.scrollY;
     };
 
     toggle.addEventListener("click", () => {
-      if (mobileNav.hasAttribute("hidden")) openMobileNav();
+      if (mobileNav.hasAttribute("hidden") || navClosing) openMobileNav();
       else closeMobileNav();
     });
 
@@ -73,7 +116,7 @@
     window.addEventListener(
       "scroll",
       () => {
-        if (mobileNav.hasAttribute("hidden")) return;
+        if (mobileNav.hasAttribute("hidden") || navClosing) return;
         if (Math.abs(window.scrollY - navOpenScrollY) < 10) return;
         closeMobileNav();
       },
@@ -81,7 +124,7 @@
     );
 
     window.addEventListener("resize", () => {
-      if (window.matchMedia("(min-width: 900px)").matches) closeMobileNav();
+      if (window.matchMedia("(min-width: 900px)").matches) closeMobileNav(true);
     });
   }
 
