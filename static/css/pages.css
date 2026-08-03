@@ -2689,36 +2689,63 @@ article.narrow {
 }
 
 .ritual-path {
+  position: relative;
   margin: 0 0 var(--space-6);
   padding: var(--space-4) 0 var(--space-5);
   box-shadow: 0 1px 0 var(--hairline);
 }
 
 @media (max-width: 899px) {
+  /* Sticky guide strip — same page wash, clear chrome under the header */
   .ritual-path {
     position: sticky;
     top: calc(var(--header-h, 4.25rem) + env(safe-area-inset-top, 0px));
     z-index: 35;
-    padding: 0.75rem 0.15rem 0.9rem;
-    background:
-      linear-gradient(
-        180deg,
-        color-mix(in srgb, var(--bg-elevated-strong) 96%, var(--color-blush)),
-        var(--bg-elevated-strong)
-      );
+    margin: 0 0 var(--space-5);
+    padding: 0.85rem 0.35rem 0.95rem;
+    background-color: var(--page-wash-color, var(--bg-page));
+    background-image: var(--page-wash-image, none);
     box-shadow:
-      0 10px 28px rgba(28, 23, 21, 0.1),
-      0 1px 0 var(--hairline);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
+      0 1px 0 var(--hairline),
+      0 12px 20px -16px rgba(28, 23, 21, 0.28);
+    border-radius: 0;
+  }
+
+  .ritual-path::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: -0.65rem;
+    height: 0.65rem;
+    pointer-events: none;
+    background: linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--page-wash-color, var(--bg-page)) 88%, transparent),
+      transparent
+    );
   }
 
   .ritual-path__status {
-    margin-bottom: var(--space-3);
+    margin-bottom: 0.65rem;
+  }
+
+  .ritual-path__track {
+    gap: 0;
+  }
+
+  .ritual-path__label {
+    font-size: 0.62rem;
   }
 
   .ritual-path__picks {
-    margin-top: var(--space-3);
+    margin-top: 0.65rem;
+    padding-top: 0.55rem;
+    box-shadow: 0 -1px 0 var(--hairline);
+  }
+
+  .ritual-path__chips {
+    gap: 0.4rem;
   }
 }
 

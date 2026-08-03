@@ -4,13 +4,13 @@
   href="https://wa.me/{{ WHATSAPP_NUMBER }}"
   target="_blank"
   rel="noopener noreferrer"
-  aria-label="Order via WhatsApp"
+  aria-label="WhatsApp order"
   data-order-wa
   data-wa-number="{{ WHATSAPP_NUMBER }}"
   data-preview-url="{% url 'cart:order_preview' %}"
   data-clear-url="{% url 'cart:clear' %}"
 >
-  Order
+  <span class="whatsapp-float__label">WhatsApp order</span>
 </a>
 <form id="order-wa-csrf" hidden>{% csrf_token %}</form>
 {% endif %}
