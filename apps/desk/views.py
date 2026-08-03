@@ -54,10 +54,13 @@ def home(request):
 @store_manager_required
 def product_list(request):
     from django.core.paginator import Paginator
+    from django.db.models import Prefetch
+
+    from apps.catalog.models import ProductImage
 
     q = request.GET.get("q", "").strip()
     show = request.GET.get("show", "all")
-    # Only what the table needs — avoids loading every image/variant relation eagerly.
+    # Slim rows for the table — first image + variant stock only.
     products = (
         Product.objects.only(
             "id",
@@ -69,7 +72,20 @@ def product_list(request):
             "is_active",
             "updated_at",
         )
-        .prefetch_related("images", "variants")
+        .prefetch_related(
+            Prefetch(
+                "images",
+                queryset=ProductImage.objects.order_by("sort_order", "id").only(
+                    "id", "product_id", "image", "sort_order"
+                ),
+            ),
+            Prefetch(
+                "variants",
+                queryset=ProductVariant.objects.only(
+                    "id", "product_id", "stock", "is_active"
+                ),
+            ),
+        )
         .order_by("-updated_at")
     )
     if q:
@@ -114,7 +130,20 @@ def product_create(request):
 
 @store_manager_required
 def product_edit(request, pk):
-    product = get_object_or_404(Product.objects.prefetch_related("variants", "images"), pk=pk)
+    from django.db.models import Prefetch
+
+    product = get_object_or_404(
+        Product.objects.select_related("brand").prefetch_related(
+            Prefetch(
+                "variants",
+                queryset=ProductVariant.objects.only(
+                    "id", "product_id", "name", "color_hex", "stock", "is_active"
+                ).order_by("id"),
+            ),
+            "categories",
+        ),
+        pk=pk,
+    )
     form = _save_product(request, product)
     if not isinstance(form, ProductForm):
         return form

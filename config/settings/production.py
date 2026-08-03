@@ -27,6 +27,7 @@ if not (DATABASE_URL or SUPABASE_DB_URL):
             "HOST": env("POSTGRES_HOST"),
             "PORT": env("POSTGRES_PORT", default="5432"),
             "CONN_MAX_AGE": 60,
+            "DISABLE_SERVER_SIDE_CURSORS": True,
             "OPTIONS": {"sslmode": env("POSTGRES_SSLMODE", default="require")},
         }
     }

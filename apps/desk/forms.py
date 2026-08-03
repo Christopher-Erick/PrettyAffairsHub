@@ -9,8 +9,31 @@ from apps.content.models import (
     SitePage,
     Testimonial,
 )
+from apps.core.smart_cache import get_or_set, versioned_key
 from apps.discounts.models import FlashSale
 from apps.orders.models import Order
+
+
+def _desk_brand_choices():
+    return get_or_set(
+        versioned_key("desk:brand_choices"),
+        lambda: [
+            (b.pk, b.name)
+            for b in Brand.objects.filter(is_active=True).order_by("name").only("id", "name")
+        ],
+    )
+
+
+def _desk_category_choices():
+    return get_or_set(
+        versioned_key("desk:category_choices"),
+        lambda: [
+            (c.pk, c.name)
+            for c in Category.objects.filter(is_active=True)
+            .order_by("sort_order", "name")
+            .only("id", "name")
+        ],
+    )
 
 
 class ProductForm(forms.ModelForm):
@@ -55,10 +78,14 @@ class ProductForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields["brand"].queryset = Brand.objects.filter(is_active=True).order_by("name")
-        self.fields["categories"].queryset = Category.objects.filter(is_active=True).order_by(
-            "sort_order", "name"
-        )
+        # Set cached choices BEFORE assigning queryset — queryset.setter syncs
+        # widget.choices from field.choices, and would otherwise hit the DB.
+        brand_choices = [("", "---------")] + list(_desk_brand_choices())
+        category_choices = list(_desk_category_choices())
+        self.fields["brand"]._choices = brand_choices
+        self.fields["categories"]._choices = category_choices
+        self.fields["brand"].queryset = Brand.objects.filter(is_active=True).only("id", "name")
+        self.fields["categories"].queryset = Category.objects.filter(is_active=True).only("id", "name")
         for name, field in self.fields.items():
             if name in {"categories", "is_active", "is_featured", "is_new", "is_bestseller"}:
                 continue

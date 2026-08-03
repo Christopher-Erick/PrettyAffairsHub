@@ -1,30 +1,48 @@
 {% extends "base.html" %}
 {% block title %}Build your ritual — {{ SITE_NAME }}{% endblock %}
-{% block meta_description %}Answer a few questions and get a curated 3-piece beauty ritual with bundle pricing.{% endblock %}
+{% block meta_description %}Answer three questions and get a curated 3-piece beauty ritual.{% endblock %}
 
 {% block content %}
 <section class="ritual-hero">
   <div class="ritual-hero__glow" aria-hidden="true"></div>
   <p class="eyebrow">Your personal edit</p>
   <h1 class="ritual-hero__title">Build your ritual</h1>
-  <p class="ritual-hero__text">Three moods. One tailored trio. Watch your edit assemble as you choose.</p>
+  <p class="ritual-hero__text">One answer at a time. Your trio only appears after all three moods are set.</p>
 </section>
 
 <section class="section ritual" data-ritual>
-  <div class="ritual__progress" aria-hidden="true">
-    <div class="ritual__progress-bar" data-ritual-progress style="--ritual-progress: 25%"></div>
+  <div class="ritual-path" data-ritual-path aria-label="Ritual progress">
+    <p class="ritual-path__status" data-ritual-status>Step 1 of 3 — choose your occasion</p>
+    <ol class="ritual-path__track">
+      <li class="ritual-path__node is-current" data-path-node="1">
+        <span class="ritual-path__dot" aria-hidden="true"></span>
+        <span class="ritual-path__label">Occasion</span>
+      </li>
+      <li class="ritual-path__connector" aria-hidden="true" data-path-connector="1"></li>
+      <li class="ritual-path__node" data-path-node="2">
+        <span class="ritual-path__dot" aria-hidden="true"></span>
+        <span class="ritual-path__label">Focus</span>
+      </li>
+      <li class="ritual-path__connector" aria-hidden="true" data-path-connector="2"></li>
+      <li class="ritual-path__node" data-path-node="3">
+        <span class="ritual-path__dot" aria-hidden="true"></span>
+        <span class="ritual-path__label">Finish</span>
+      </li>
+      <li class="ritual-path__connector" aria-hidden="true" data-path-connector="3"></li>
+      <li class="ritual-path__node ritual-path__node--reveal" data-path-node="4">
+        <span class="ritual-path__dot" aria-hidden="true"></span>
+        <span class="ritual-path__label">Your edit</span>
+      </li>
+    </ol>
+    <div class="ritual-path__picks" data-ritual-picks hidden>
+      <p class="ritual-path__picks-label">Locked in so far</p>
+      <ul class="ritual-path__chips" data-ritual-chips></ul>
+    </div>
   </div>
 
-  <ol class="ritual__steps" data-ritual-steps aria-label="Ritual steps">
-    <li class="is-active" data-step-indicator="1"><span>01</span> Occasion</li>
-    <li data-step-indicator="2"><span>02</span> Focus</li>
-    <li data-step-indicator="3"><span>03</span> Finish</li>
-    <li data-step-indicator="4"><span>04</span> Your edit</li>
-  </ol>
-
-  <div class="ritual__panel is-active" data-ritual-panel="1">
+  <div class="ritual__panel is-active" data-ritual-panel="1" data-answer-key="occasion">
     <h2 class="ritual__question">What’s the moment?</h2>
-    <p class="ritual__hint">We’ll tune colour intensity to how you want to show up.</p>
+    <p class="ritual__hint">Pick one — we’ll tune colour intensity to how you want to show up.</p>
     <div class="ritual__choices">
       <button type="button" class="ritual__choice" data-choice="occasion" data-value="everyday">
         <span class="ritual__choice-label">Everyday soft</span>
@@ -41,9 +59,9 @@
     </div>
   </div>
 
-  <div class="ritual__panel" data-ritual-panel="2" hidden>
+  <div class="ritual__panel" data-ritual-panel="2" data-answer-key="focus" hidden>
     <h2 class="ritual__question">Where should we focus?</h2>
-    <p class="ritual__hint">Lips, eyes, or a balanced full-face trio.</p>
+    <p class="ritual__hint">Pick one — lips, eyes, or a balanced full-face trio.</p>
     <div class="ritual__choices">
       <button type="button" class="ritual__choice" data-choice="focus" data-value="lips">
         <span class="ritual__choice-label">Lips first</span>
@@ -61,9 +79,9 @@
     <button type="button" class="btn btn--ghost" data-ritual-back>Back</button>
   </div>
 
-  <div class="ritual__panel" data-ritual-panel="3" hidden>
+  <div class="ritual__panel" data-ritual-panel="3" data-answer-key="finish" hidden>
     <h2 class="ritual__question">Preferred finish?</h2>
-    <p class="ritual__hint">Texture changes the whole mood.</p>
+    <p class="ritual__hint">Pick one — texture changes the whole mood.</p>
     <div class="ritual__choices">
       <button type="button" class="ritual__choice" data-choice="finish" data-value="matte">
         <span class="ritual__choice-label">Matte</span>
@@ -96,6 +114,7 @@
       <div class="ritual__actions">
         <button class="btn btn--primary" type="submit" data-ritual-add disabled>Add ritual to cart</button>
         <button type="button" class="btn btn--ghost" data-ritual-restart>Start over</button>
+        <button type="button" class="btn btn--ghost" data-ritual-back>Change finish</button>
       </div>
     </form>
   </div>
@@ -109,42 +128,147 @@
 (() => {
   const root = document.querySelector("[data-ritual]");
   if (!root) return;
+
   const catalog = JSON.parse(document.getElementById("ritual-catalog-data").textContent || "[]");
   const symbol = "{{ currency_symbol|escapejs }}";
-  const answers = { occasion: "", focus: "", finish: "" };
-  let step = 1;
   const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
+  const STEP_KEYS = { 1: "occasion", 2: "focus", 3: "finish" };
+  const LABELS = {
+    everyday: "Everyday soft",
+    evening: "Evening glow",
+    bold: "Bold statement",
+    lips: "Lips first",
+    eyes: "Eye story",
+    full: "Full face",
+    matte: "Matte",
+    gloss: "Gloss & shine",
+    soft: "Soft & nourishing",
+  };
+  const STATUS = {
+    1: "Step 1 of 3 — choose your occasion",
+    2: "Step 2 of 3 — choose your focus",
+    3: "Step 3 of 3 — choose your finish",
+    4: "All set — here’s your ritual edit",
+  };
+
+  const answers = { occasion: "", focus: "", finish: "" };
+  let step = 1;
+  let advanceTimer = null;
+  let locked = false;
+
   const panels = [...root.querySelectorAll("[data-ritual-panel]")];
-  const indicators = [...root.querySelectorAll("[data-step-indicator]")];
+  const nodes = [...root.querySelectorAll("[data-path-node]")];
+  const connectors = [...root.querySelectorAll("[data-path-connector]")];
+  const statusEl = root.querySelector("[data-ritual-status]");
+  const picksWrap = root.querySelector("[data-ritual-picks]");
+  const chipsEl = root.querySelector("[data-ritual-chips]");
   const results = root.querySelector("[data-ritual-results]");
   const inputs = root.querySelector("[data-ritual-inputs]");
   const totalEl = root.querySelector("[data-ritual-total]");
   const saveEl = root.querySelector("[data-ritual-save]");
   const summary = root.querySelector("[data-ritual-summary]");
   const addBtn = root.querySelector("[data-ritual-add]");
-  const progress = root.querySelector("[data-ritual-progress]");
+
+  const cancelAdvance = () => {
+    if (advanceTimer) {
+      window.clearTimeout(advanceTimer);
+      advanceTimer = null;
+    }
+    locked = false;
+    root.classList.remove("is-advancing");
+  };
+
+  const clearResults = () => {
+    if (results) results.innerHTML = "";
+    if (inputs) inputs.innerHTML = "";
+    if (summary) summary.textContent = "";
+    if (totalEl) totalEl.textContent = `${symbol} 0`;
+    if (saveEl) {
+      saveEl.hidden = true;
+      saveEl.textContent = "";
+    }
+    if (addBtn) addBtn.disabled = true;
+  };
+
+  const clearChoiceSelection = (key) => {
+    root.querySelectorAll(`[data-choice="${key}"]`).forEach((btn) => {
+      btn.classList.remove("is-selected");
+      btn.setAttribute("aria-pressed", "false");
+    });
+  };
+
+  /** Wipe answers from `fromStep` onward (inclusive) and clear their UI. */
+  const clearFromStep = (fromStep) => {
+    for (let s = fromStep; s <= 3; s += 1) {
+      const key = STEP_KEYS[s];
+      answers[key] = "";
+      clearChoiceSelection(key);
+    }
+    clearResults();
+  };
+
+  const syncPath = () => {
+    if (statusEl) statusEl.textContent = STATUS[step] || "";
+
+    nodes.forEach((node) => {
+      const n = Number(node.dataset.pathNode);
+      node.classList.toggle("is-done", n < step);
+      node.classList.toggle("is-current", n === step);
+      node.classList.toggle("is-upcoming", n > step);
+      node.setAttribute("aria-current", n === step ? "step" : "false");
+    });
+
+    connectors.forEach((line) => {
+      const n = Number(line.dataset.pathConnector);
+      line.classList.toggle("is-filled", n < step);
+    });
+
+    const chips = [];
+    [1, 2, 3].forEach((s) => {
+      const key = STEP_KEYS[s];
+      if (!answers[key]) return;
+      chips.push({ step: s, key, value: answers[key], label: LABELS[answers[key]] || answers[key] });
+    });
+
+    if (picksWrap && chipsEl) {
+      picksWrap.hidden = chips.length === 0 || step === 1;
+      chipsEl.innerHTML = "";
+      chips.forEach((chip) => {
+        const li = document.createElement("li");
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "ritual-path__chip";
+        btn.dataset.editStep = String(chip.step);
+        btn.innerHTML = `<span>${chip.label}</span><span class="ritual-path__chip-edit">Edit</span>`;
+        btn.addEventListener("click", () => goBackTo(chip.step));
+        li.appendChild(btn);
+        chipsEl.appendChild(li);
+      });
+    }
+  };
 
   const showStep = (n) => {
     step = n;
-    panels.forEach((p) => {
-      const active = Number(p.dataset.ritualPanel) === n;
-      p.hidden = !active;
-      p.classList.toggle("is-active", active);
+    panels.forEach((panel) => {
+      const active = Number(panel.dataset.ritualPanel) === n;
+      panel.hidden = !active;
+      panel.classList.toggle("is-active", active);
       if (active && !reduceMotion) {
-        p.classList.remove("is-entering");
-        void p.offsetWidth;
-        p.classList.add("is-entering");
+        panel.classList.remove("is-entering");
+        void panel.offsetWidth;
+        panel.classList.add("is-entering");
       }
     });
-    indicators.forEach((el) => {
-      const i = Number(el.dataset.stepIndicator);
-      el.classList.toggle("is-active", i <= n);
-      el.classList.toggle("is-current", i === n);
-    });
-    if (progress) {
-      progress.style.setProperty("--ritual-progress", `${(n / 4) * 100}%`);
-    }
+    syncPath();
+  };
+
+  /** Back / edit: land on target step with that answer cleared so they pick again. */
+  const goBackTo = (targetStep) => {
+    cancelAdvance();
+    const dest = Math.max(1, Math.min(3, targetStep));
+    clearFromStep(dest);
+    showStep(dest);
   };
 
   const scoreProduct = (p) => {
@@ -166,6 +290,8 @@
   };
 
   const pickRitual = () => {
+    if (!answers.occasion || !answers.focus || !answers.finish) return [];
+
     const ranked = [...catalog]
       .filter((p) => p.in_stock)
       .map((p) => ({ ...p, score: scoreProduct(p) }))
@@ -198,18 +324,12 @@
 
   const renderResults = () => {
     const picked = pickRitual();
-    const labels = {
-      everyday: "everyday soft",
-      evening: "evening glow",
-      bold: "bold statement",
-      lips: "lips-first",
-      eyes: "eye-focused",
-      full: "full-face",
-      matte: "matte",
-      gloss: "glossy",
-      soft: "nourishing",
-    };
-    summary.textContent = `A ${labels[answers.occasion]} · ${labels[answers.focus]} · ${labels[answers.finish]} ritual — curated just for you.`;
+    if (!picked.length && (!answers.occasion || !answers.focus || !answers.finish)) {
+      clearResults();
+      return;
+    }
+
+    summary.textContent = `A ${LABELS[answers.occasion].toLowerCase()} · ${LABELS[answers.focus].toLowerCase()} · ${LABELS[answers.finish].toLowerCase()} ritual — curated just for you.`;
     results.innerHTML = "";
     inputs.innerHTML = "";
     let total = 0;
@@ -241,33 +361,67 @@
     saveEl.hidden = false;
     saveEl.textContent = picked.length
       ? "Your trio is ready — add all three without leaving this page."
-      : "No in-stock matches yet. Try another combination.";
+      : "No in-stock matches yet. Go back and try another combination.";
     addBtn.disabled = picked.length === 0;
   };
 
+  const advanceFrom = (fromStep) => {
+    cancelAdvance();
+    locked = true;
+    root.classList.add("is-advancing");
+
+    const delay = reduceMotion ? 0 : 220;
+    advanceTimer = window.setTimeout(() => {
+      advanceTimer = null;
+      locked = false;
+      root.classList.remove("is-advancing");
+      // Ignore stale advances if user navigated away meanwhile.
+      if (step !== fromStep) return;
+
+      if (fromStep < 3) {
+        showStep(fromStep + 1);
+        return;
+      }
+      if (!answers.occasion || !answers.focus || !answers.finish) return;
+      renderResults();
+      showStep(4);
+    }, delay);
+  };
+
   root.querySelectorAll("[data-choice]").forEach((btn) => {
+    btn.setAttribute("aria-pressed", "false");
     btn.addEventListener("click", () => {
+      if (locked) return;
+
       const key = btn.dataset.choice;
+      const expectedKey = STEP_KEYS[step];
+      if (!expectedKey || key !== expectedKey) return;
+
       answers[key] = btn.dataset.value;
-      root.querySelectorAll(`[data-choice="${key}"]`).forEach((b) => b.classList.remove("is-selected"));
-      btn.classList.add("is-selected");
-      window.setTimeout(() => {
-        if (step < 3) showStep(step + 1);
-        else {
-          renderResults();
-          showStep(4);
-        }
-      }, reduceMotion ? 0 : 180);
+      // Clear any later answers if they re-picked on an earlier revisit.
+      clearFromStep(step + 1);
+      answers[key] = btn.dataset.value;
+
+      root.querySelectorAll(`[data-choice="${key}"]`).forEach((el) => {
+        const on = el === btn;
+        el.classList.toggle("is-selected", on);
+        el.setAttribute("aria-pressed", on ? "true" : "false");
+      });
+      syncPath();
+      advanceFrom(step);
     });
   });
 
   root.querySelectorAll("[data-ritual-back]").forEach((btn) => {
-    btn.addEventListener("click", () => showStep(Math.max(1, step - 1)));
+    btn.addEventListener("click", () => {
+      if (step <= 1) return;
+      goBackTo(step - 1);
+    });
   });
 
   root.querySelector("[data-ritual-restart]")?.addEventListener("click", () => {
-    Object.keys(answers).forEach((k) => (answers[k] = ""));
-    root.querySelectorAll(".ritual__choice").forEach((b) => b.classList.remove("is-selected"));
+    cancelAdvance();
+    clearFromStep(1);
     showStep(1);
   });
 

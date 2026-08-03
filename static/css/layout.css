@@ -651,6 +651,20 @@
   gap: var(--space-3);
 }
 
+@media (min-width: 720px) {
+  .hero__actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    width: min(30rem, 100%);
+    margin-inline: auto;
+  }
+
+  .hero__actions .btn {
+    width: 100%;
+    min-width: 0;
+  }
+}
+
 .hero .btn--primary {
   background: #faf6f3;
   color: #1c1715;

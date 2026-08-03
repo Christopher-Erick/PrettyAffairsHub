@@ -2619,54 +2619,162 @@ article.narrow {
   max-width: 52rem;
 }
 
-.ritual__progress {
-  height: 3px;
-  margin: 0 0 var(--space-5);
-  background: color-mix(in srgb, var(--hairline) 80%, transparent);
+.ritual-path {
+  margin: 0 0 var(--space-6);
+  padding: var(--space-4) 0 var(--space-5);
+  box-shadow: 0 1px 0 var(--hairline);
+}
+
+.ritual-path__status {
+  margin: 0 0 var(--space-4);
+  font-size: var(--fs-sm);
+  letter-spacing: 0.04em;
+  color: var(--color-burgundy);
+  font-weight: 600;
+}
+
+.ritual-path__track {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0;
+}
+
+.ritual-path__node {
+  display: grid;
+  justify-items: center;
+  gap: 0.45rem;
+  flex: 0 0 auto;
+  width: 4.5rem;
+  text-align: center;
+  color: var(--text-secondary);
+}
+
+.ritual-path__dot {
+  width: 0.85rem;
+  height: 0.85rem;
+  border-radius: 50%;
+  background: var(--bg-chip);
+  box-shadow: inset 0 0 0 1px var(--hairline);
+  transition:
+    background 0.35s var(--ease-out, ease),
+    box-shadow 0.35s var(--ease-out, ease),
+    transform 0.35s var(--ease-out, ease);
+}
+
+.ritual-path__label {
+  font-size: 0.68rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  line-height: 1.25;
+}
+
+.ritual-path__connector {
+  flex: 1 1 auto;
+  height: 2px;
+  margin-top: 0.4rem;
+  background: color-mix(in srgb, var(--hairline) 90%, transparent);
+  align-self: flex-start;
+  position: relative;
   overflow: hidden;
 }
 
-.ritual__progress-bar {
-  height: 100%;
-  width: var(--ritual-progress, 25%);
+.ritual-path__connector::after {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 0;
   background: linear-gradient(90deg, var(--color-burgundy), var(--color-rose, #c9a39a));
   transition: width 0.45s var(--ease-out, ease);
 }
 
-.ritual__steps {
-  list-style: none;
-  margin: 0 0 var(--space-6);
-  padding: 0;
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-3);
+.ritual-path__connector.is-filled::after {
+  width: 100%;
 }
 
-.ritual__steps li {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4rem;
-  font-size: var(--fs-xs);
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--text-secondary);
-  padding-bottom: 0.35rem;
-  border-bottom: 1px solid transparent;
-  transition: color var(--duration-fast) var(--ease-out), border-color var(--duration-fast) var(--ease-out);
+.ritual-path__node.is-done {
+  color: var(--color-burgundy);
 }
 
-.ritual__steps li span {
-  font-family: var(--font-display);
+.ritual-path__node.is-done .ritual-path__dot {
+  background: var(--color-burgundy);
+  box-shadow: none;
+}
+
+.ritual-path__node.is-current {
+  color: var(--color-burgundy);
+}
+
+.ritual-path__node.is-current .ritual-path__dot {
+  background: var(--color-rose, #c9a39a);
+  box-shadow: 0 0 0 5px color-mix(in srgb, var(--color-burgundy) 18%, transparent);
+  transform: scale(1.15);
+}
+
+.ritual-path__node.is-upcoming {
   opacity: 0.55;
 }
 
-.ritual__steps li.is-active {
-  color: var(--color-burgundy);
-  border-bottom-color: color-mix(in srgb, var(--color-burgundy) 40%, transparent);
+.ritual-path__node--reveal.is-current .ritual-path__dot {
+  background: var(--color-burgundy);
+  box-shadow: 0 0 0 6px color-mix(in srgb, var(--color-burgundy) 22%, transparent);
 }
 
-.ritual__steps li.is-current {
-  border-bottom-color: var(--color-burgundy);
+.ritual-path__picks {
+  margin-top: var(--space-4);
+}
+
+.ritual-path__picks-label {
+  margin: 0 0 var(--space-2);
+  font-size: var(--fs-xs);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+
+.ritual-path__chips {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.ritual-path__chip {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  min-height: 2.1rem;
+  padding: 0.25rem 0.75rem;
+  border: 0;
+  background: color-mix(in srgb, var(--bg-panel) 70%, var(--color-blush) 30%);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--color-burgundy) 30%, var(--hairline));
+  color: var(--color-ink);
+  font: inherit;
+  font-size: var(--fs-sm);
+  cursor: pointer;
+}
+
+.ritual-path__chip:hover,
+.ritual-path__chip:focus-visible {
+  color: var(--color-burgundy);
+}
+
+.ritual-path__chip-edit {
+  font-size: var(--fs-xs);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-burgundy);
+  opacity: 0.8;
+}
+
+.ritual.is-advancing .ritual__choice {
+  pointer-events: none;
 }
 
 .ritual__panel {
@@ -2895,7 +3003,13 @@ article.narrow {
   .ritual__choice:hover {
     transform: none;
   }
+
+  .ritual-path__connector::after,
+  .ritual-path__dot {
+    transition: none;
+  }
 }
+
 
 /* Account */
 .account-shell {

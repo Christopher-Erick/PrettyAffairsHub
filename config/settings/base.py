@@ -107,6 +107,9 @@ def _database_from_url(url: str) -> dict:
         "PORT": port,
         "CONN_MAX_AGE": conn_max_age,
         "CONN_HEALTH_CHECKS": True,
+        # Poolers + high-latency hosts: server-side cursors do a network round-trip
+        # per fetch and make small desk forms (brands/categories) feel frozen.
+        "DISABLE_SERVER_SIDE_CURSORS": True,
         "OPTIONS": {"sslmode": env("POSTGRES_SSLMODE", default="require")},
     }
 
@@ -126,6 +129,7 @@ elif env("USE_POSTGRES"):
             "HOST": env("POSTGRES_HOST", default="localhost"),
             "PORT": env("POSTGRES_PORT", default="5432"),
             "CONN_MAX_AGE": 60,
+            "DISABLE_SERVER_SIDE_CURSORS": True,
             "OPTIONS": {"sslmode": env("POSTGRES_SSLMODE", default="prefer")},
         }
     }
