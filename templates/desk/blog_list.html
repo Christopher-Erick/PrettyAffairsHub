@@ -1,0 +1,49 @@
+{% extends "desk/base_desk.html" %}
+{% block title %}{{ label }} — Store Manager{% endblock %}
+{% block content %}
+<section class="desk-hero">
+  <p class="desk-eyebrow">Site content</p>
+  <h1>{{ label }}</h1>
+  {% if help %}<p>{{ help }}</p>{% endif %}
+</section>
+
+<div class="desk-toolbar desk-toolbar--wrap">
+  <form class="desk-search" method="get" role="search">
+    <input type="hidden" name="kind" value="{{ kind }}">
+    <input class="field" type="search" name="q" value="{{ q }}" placeholder="Search journal &amp; tutorials…">
+    <button class="btn btn--ghost" type="submit">Search</button>
+    {% if q %}
+    <a class="btn btn--ghost" href="?kind={{ kind }}">Clear</a>
+    {% endif %}
+  </form>
+  <div class="desk-toolbar__filters">
+    <a class="desk-chip{% if kind == 'all' %} is-active{% endif %}" href="?kind=all{% if q %}&amp;q={{ q|urlencode }}{% endif %}">All</a>
+    <a class="desk-chip{% if kind == 'tutorials' %} is-active{% endif %}" href="?kind=tutorials{% if q %}&amp;q={{ q|urlencode }}{% endif %}">Tutorials</a>
+    <a class="desk-chip{% if kind == 'journal' %} is-active{% endif %}" href="?kind=journal{% if q %}&amp;q={{ q|urlencode }}{% endif %}">Journal</a>
+  </div>
+  <a class="btn btn--ghost" href="{% url 'desk:content_hub' %}">Back</a>
+  <a class="btn btn--primary" href="{% url create_url %}">Add new</a>
+</div>
+
+<ul class="desk-list">
+  {% for item in items %}
+  <li>
+    <a href="{% url edit_url_name item.pk %}">
+      {{ item.title }}
+      <span class="desk-muted"> · {% if item.is_tutorial %}Tutorial{% else %}Journal{% endif %}</span>
+    </a>
+    <span class="desk-list__actions">
+      <a href="{% url edit_url_name item.pk %}">Edit</a>
+      {% if delete_url_name %}
+      <form method="post" action="{% url delete_url_name item.pk %}" onsubmit="return confirm('Delete this item? This cannot be undone.');">
+        {% csrf_token %}
+        <button type="submit" class="desk-list__delete">Delete</button>
+      </form>
+      {% endif %}
+    </span>
+  </li>
+  {% empty %}
+  <li>{% if q %}No posts match “{{ q }}”.{% else %}Nothing here yet. Add the first one.{% endif %}</li>
+  {% endfor %}
+</ul>
+{% endblock %}

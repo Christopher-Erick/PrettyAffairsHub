@@ -5,31 +5,65 @@
 {% block content %}
 <section class="section journal-page">
   <header class="journal-hero">
-    <p class="eyebrow">From the atelier</p>
-    <h1 class="journal-hero__title">Beauty journal</h1>
-    <p class="journal-hero__lede">
-      Soft tutorials, shade stories, and the little rituals that make getting ready feel like something.
-    </p>
-    <nav class="journal-filters" aria-label="Journal filters">
-      <a class="journal-filters__chip{% if not request.GET.tutorials %} is-active{% endif %}" href="{% url 'content:blog' %}">All posts</a>
-      <a class="journal-filters__chip{% if request.GET.tutorials %} is-active{% endif %}" href="?tutorials=1">Tutorials</a>
-    </nav>
+    <div class="journal-hero__copy">
+      <p class="eyebrow">From the atelier</p>
+      <h1 class="journal-hero__title">Beauty journal</h1>
+      <p class="journal-hero__lede">
+        Soft tutorials, shade stories, and the little rituals that make getting ready feel like something.
+      </p>
+      <nav class="journal-filters" aria-label="Journal filters">
+        <a class="journal-filters__chip{% if kind == 'all' %} is-active{% endif %}" href="{% url 'content:blog' %}{% if q %}?q={{ q|urlencode }}{% endif %}">All posts</a>
+        <a class="journal-filters__chip{% if kind == 'tutorials' %} is-active{% endif %}" href="?kind=tutorials{% if q %}&amp;q={{ q|urlencode }}{% endif %}">Tutorials</a>
+        <a class="journal-filters__chip{% if kind == 'journal' %} is-active{% endif %}" href="?kind=journal{% if q %}&amp;q={{ q|urlencode }}{% endif %}">Journal</a>
+      </nav>
+    </div>
+    <form class="journal-search" method="get" role="search" aria-label="Search journal">
+      {% if kind and kind != 'all' %}<input type="hidden" name="kind" value="{{ kind }}">{% endif %}
+      <label class="visually-hidden" for="journal-search-q">Search</label>
+      <input
+        id="journal-search-q"
+        class="field journal-search__input"
+        type="search"
+        name="q"
+        value="{{ q }}"
+        placeholder="{{ search_placeholder }}"
+        autocomplete="off"
+      >
+      <button class="btn btn--primary journal-search__submit" type="submit">Search</button>
+      {% if q %}
+      <a class="journal-search__clear" href="{% url 'content:blog' %}{% if kind and kind != 'all' %}?kind={{ kind }}{% endif %}">Clear</a>
+      {% endif %}
+    </form>
   </header>
+
+  {% if q %}
+  <p class="journal-search-meta">
+    {% if posts %}
+      Showing results for “{{ q }}”
+    {% else %}
+      No results for “{{ q }}”
+    {% endif %}
+  </p>
+  {% endif %}
 
   {% if posts %}
   {% with featured=posts.0 %}
   <article class="journal-feature">
-    <div class="journal-feature__meta">
-      <span class="journal-feature__kind">{% if featured.is_tutorial %}Tutorial{% else %}Story{% endif %}</span>
-      <time datetime="{{ featured.published_at|date:'Y-m-d' }}">{{ featured.published_at|date:"F j, Y" }}</time>
+    <div class="journal-feature__main">
+      <div class="journal-feature__meta">
+        <span class="journal-feature__kind">{% if featured.is_tutorial %}Tutorial{% else %}Journal{% endif %}</span>
+        <time datetime="{{ featured.published_at|date:'Y-m-d' }}">{{ featured.published_at|date:"F j, Y" }}</time>
+      </div>
+      <h2 class="journal-feature__title">
+        <a href="{{ featured.get_absolute_url }}">{{ featured.title }}</a>
+      </h2>
     </div>
-    <h2 class="journal-feature__title">
-      <a href="{{ featured.get_absolute_url }}">{{ featured.title }}</a>
-    </h2>
-    {% if featured.excerpt %}
-    <p class="journal-feature__excerpt">{{ featured.excerpt }}</p>
-    {% endif %}
-    <a class="journal-feature__cta" href="{{ featured.get_absolute_url }}">Read this piece</a>
+    <div class="journal-feature__aside">
+      {% if featured.excerpt %}
+      <p class="journal-feature__excerpt">{{ featured.excerpt }}</p>
+      {% endif %}
+      <a class="journal-feature__cta" href="{{ featured.get_absolute_url }}">Read this piece</a>
+    </div>
   </article>
   {% endwith %}
 
@@ -41,7 +75,7 @@
         <span class="journal-entry__index" aria-hidden="true">{{ forloop.counter0|stringformat:"02d" }}</span>
         <div class="journal-entry__body">
           <div class="journal-entry__meta">
-            <span>{% if post.is_tutorial %}Tutorial{% else %}Article{% endif %}</span>
+            <span>{% if post.is_tutorial %}Tutorial{% else %}Journal{% endif %}</span>
             <time datetime="{{ post.published_at|date:'Y-m-d' }}">{{ post.published_at|date:"M j" }}</time>
           </div>
           <h2 class="journal-entry__title"><a href="{{ post.get_absolute_url }}">{{ post.title }}</a></h2>
@@ -54,8 +88,20 @@
     {% endfor %}
   </div>
   {% endif %}
+
+  {% if is_paginated %}
+  <nav class="pagination" aria-label="Journal pages">
+    {% if page_obj.has_previous %}
+    <a class="pagination__btn" href="?{% if kind and kind != 'all' %}kind={{ kind }}&amp;{% endif %}{% if q %}q={{ q|urlencode }}&amp;{% endif %}page={{ page_obj.previous_page_number }}">Previous</a>
+    {% endif %}
+    <span class="pagination__page">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+    {% if page_obj.has_next %}
+    <a class="pagination__btn" href="?{% if kind and kind != 'all' %}kind={{ kind }}&amp;{% endif %}{% if q %}q={{ q|urlencode }}&amp;{% endif %}page={{ page_obj.next_page_number }}">Next</a>
+    {% endif %}
+  </nav>
+  {% endif %}
   {% else %}
-  <p class="journal-empty">No posts yet — check back soon for new notes from the atelier.</p>
+  <p class="journal-empty">{% if q %}Try another search, or clear the filter.{% else %}No posts yet — check back soon for new notes from the atelier.{% endif %}</p>
   {% endif %}
 </section>
 {% endblock %}

@@ -1,4 +1,5 @@
 from django.contrib import messages
+from django.db.models import Q
 from django.shortcuts import redirect, render
 from django.views.generic import DetailView, ListView, TemplateView
 
@@ -104,11 +105,40 @@ class BlogListView(ListView):
     context_object_name = "posts"
     paginate_by = 9
 
+    def _kind(self):
+        kind = (self.request.GET.get("kind") or "").strip().lower()
+        if kind in {"tutorials", "journal", "all"}:
+            return kind
+        if self.request.GET.get("tutorials") == "1":
+            return "tutorials"
+        return "all"
+
     def get_queryset(self):
         qs = BlogPost.objects.filter(is_published=True)
-        if self.request.GET.get("tutorials") == "1":
+        kind = self._kind()
+        if kind == "tutorials":
             qs = qs.filter(is_tutorial=True)
+        elif kind == "journal":
+            qs = qs.filter(is_tutorial=False)
+        q = (self.request.GET.get("q") or "").strip()
+        if q:
+            qs = qs.filter(
+                Q(title__icontains=q) | Q(excerpt__icontains=q) | Q(body__icontains=q)
+            )
         return qs
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        kind = self._kind()
+        q = (self.request.GET.get("q") or "").strip()
+        context["kind"] = kind
+        context["q"] = q
+        context["search_placeholder"] = {
+            "tutorials": "Search tutorials…",
+            "journal": "Search journal articles…",
+            "all": "Search journal & tutorials…",
+        }.get(kind, "Search…")
+        return context
 
 
 class BlogDetailView(DetailView):

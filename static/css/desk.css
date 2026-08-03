@@ -448,6 +448,48 @@
   flex: 1;
 }
 
+.desk-toolbar--wrap {
+  justify-content: flex-start;
+}
+
+.desk-search {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+  flex: 1 1 16rem;
+}
+
+.desk-search .field {
+  min-width: min(100%, 14rem);
+  flex: 1 1 12rem;
+}
+
+.desk-toolbar__filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.desk-chip {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2rem;
+  padding: 0.2rem 0.7rem;
+  text-decoration: none;
+  font-size: 0.75rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  box-shadow: inset 0 0 0 1px var(--color-border);
+}
+
+.desk-chip.is-active,
+.desk-chip:hover {
+  color: var(--text-primary);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--color-burgundy) 45%, var(--color-border));
+}
+
 .desk-table-wrap {
   overflow-x: auto;
   background: color-mix(in srgb, var(--bg-elevated-strong) 70%, transparent);

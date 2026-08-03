@@ -147,7 +147,7 @@ class BlogPostForm(forms.ModelForm):
         fields = ["title", "excerpt", "body", "is_tutorial", "is_published"]
         labels = {
             "is_published": "Published on the Journal",
-            "is_tutorial": "Mark as tutorial",
+            "is_tutorial": "Mark as tutorial (unchecked = Journal article)",
             "excerpt": "Short preview",
         }
         widgets = {"body": forms.Textarea(attrs={"rows": 10}), "excerpt": forms.TextInput()}

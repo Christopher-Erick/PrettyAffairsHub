@@ -300,15 +300,31 @@ def section_delete(request, pk):
 
 @store_manager_required
 def blog_list(request):
-    return render(request, "desk/generic_list.html", {
-        "items": BlogPost.objects.all(),
-        "label": "Journal posts",
-        "create_url": "desk:blog_create",
-        "edit_url_name": "desk:blog_edit",
-        "delete_url_name": "desk:blog_delete",
-        "help": "Articles and tutorials on the Journal page.",
-        "display": "title",
-    })
+    q = (request.GET.get("q") or "").strip()
+    kind = (request.GET.get("kind") or "all").strip().lower()
+    items = BlogPost.objects.all()
+    if kind == "tutorials":
+        items = items.filter(is_tutorial=True)
+    elif kind == "journal":
+        items = items.filter(is_tutorial=False)
+    if q:
+        items = items.filter(
+            Q(title__icontains=q) | Q(excerpt__icontains=q) | Q(body__icontains=q)
+        )
+    return render(
+        request,
+        "desk/blog_list.html",
+        {
+            "items": items,
+            "label": "Journal posts",
+            "create_url": "desk:blog_create",
+            "edit_url_name": "desk:blog_edit",
+            "delete_url_name": "desk:blog_delete",
+            "help": "Articles and tutorials on the Journal page.",
+            "q": q,
+            "kind": kind if kind in {"tutorials", "journal", "all"} else "all",
+        },
+    )
 
 
 @store_manager_required
