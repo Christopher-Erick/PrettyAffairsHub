@@ -569,4 +569,105 @@
     input.addEventListener("change", submitSoon);
     input.addEventListener("input", previewLine);
   });
+
+  const orderWa = document.querySelector("[data-order-wa]");
+  if (orderWa) {
+    const csrfToken = () =>
+      document.querySelector("#order-wa-csrf input[name='csrfmiddlewaretoken']")?.value || "";
+
+    orderWa.addEventListener("click", (event) => {
+      event.preventDefault();
+      const number = orderWa.dataset.waNumber || "";
+      const previewUrl = orderWa.dataset.previewUrl || "";
+      const clearUrl = orderWa.dataset.clearUrl || "";
+      if (!number || !previewUrl) {
+        window.open(orderWa.href, "_blank", "noopener,noreferrer");
+        return;
+      }
+
+      const token = csrfToken();
+      if (!token) {
+        showToast("Could not verify this request. Refresh and try again.", "error", 4000);
+        return;
+      }
+
+      const badgeCount = Number(
+        document.querySelector("[data-cart-count]")?.textContent?.trim() || "0"
+      );
+      if (badgeCount > 0) {
+        const ok = window.confirm(
+          "Open WhatsApp to send your cart as an order? Your cart will be cleared afterward."
+        );
+        if (!ok) return;
+      }
+
+      orderWa.classList.add("is-busy");
+      // Keep the popup tied to the click (fetch alone would get blocked).
+      const waWindow = window.open("about:blank", "_blank");
+
+      fetch(previewUrl, {
+        method: "POST",
+        headers: {
+          Accept: "application/json",
+          "X-Requested-With": "XMLHttpRequest",
+          "X-CSRFToken": token,
+        },
+        credentials: "same-origin",
+      })
+        .then(async (response) => {
+          const data = await response.json().catch(() => ({}));
+          if (!response.ok || data.ok === false) {
+            if (waWindow) waWindow.close();
+            showToast(data.message || "Could not prepare your order.", "error", 4000);
+            return null;
+          }
+
+          const message =
+            data.message || "Hi Pretty Affairs Hub — I'd like to place an order.";
+          const waUrl = `https://wa.me/${number}?text=${encodeURIComponent(message)}`;
+          if (waWindow) {
+            waWindow.location = waUrl;
+          } else {
+            window.location.assign(waUrl);
+          }
+
+          if (!data.has_items || !clearUrl) return null;
+
+          return fetch(clearUrl, {
+            method: "POST",
+            headers: {
+              Accept: "application/json",
+              "X-Requested-With": "XMLHttpRequest",
+              "X-CSRFToken": token,
+            },
+            credentials: "same-origin",
+          }).then(async (clearResponse) => {
+            const clearData = await clearResponse.json().catch(() => ({}));
+            if (!clearResponse.ok || clearData.ok === false) {
+              showToast(clearData.message || "Could not clear cart.", "error", 4000);
+              return clearData;
+            }
+            updateCartCount(0);
+            showToast("Order opened in WhatsApp — your cart is cleared.", "success", 4200);
+            if (/\/cart\/?$/.test(window.location.pathname)) {
+              window.setTimeout(() => window.location.reload(), 500);
+            }
+            return clearData;
+          });
+        })
+        .catch(() => {
+          if (waWindow) {
+            try {
+              waWindow.close();
+            } catch (e) {
+              /* ignore */
+            }
+          }
+          showToast("Could not prepare your order. Try again.", "error", 4000);
+        })
+        .finally(() => {
+          orderWa.classList.remove("is-busy");
+        });
+    });
+  }
 })();

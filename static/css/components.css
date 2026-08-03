@@ -402,3 +402,8 @@
   text-decoration: none;
   filter: brightness(1.06);
 }
+
+.whatsapp-float.is-busy {
+  opacity: 0.72;
+  pointer-events: none;
+}

@@ -1,5 +1,6 @@
 from decimal import Decimal
 
+from django.conf import settings
 from django.contrib import messages
 from django.http import JsonResponse
 from django.shortcuts import redirect, render
@@ -9,12 +10,16 @@ from apps.cart.context_processors import refresh_cart_item_count
 from apps.cart.services import (
     InsufficientStockError,
     add_to_cart,
+    build_whatsapp_order_message,
     cart_totals,
+    clear_cart,
+    get_cart_if_exists,
     get_or_create_cart,
     remove_cart_item,
     update_cart_item,
 )
-from apps.core.http import safe_redirect
+from apps.core.http import is_same_origin_request, safe_redirect
+from apps.core.ratelimit import rate_limit_exceeded
 from apps.discounts.models import Coupon
 from apps.orders.services import DEFAULT_SHIPPING, FREE_SHIPPING_THRESHOLD
 
@@ -24,6 +29,15 @@ def _wants_json(request):
         return True
     accept = (request.headers.get("Accept") or "").lower()
     return "application/json" in accept
+
+
+def _require_trusted_json(request):
+    """CSRF is enforced by middleware; also require XHR + same-origin."""
+    if request.headers.get("X-Requested-With") != "XMLHttpRequest":
+        return JsonResponse({"ok": False, "message": "Invalid request."}, status=403)
+    if not is_same_origin_request(request):
+        return JsonResponse({"ok": False, "message": "Invalid request."}, status=403)
+    return None
 
 
 def _cart_count(request):
@@ -192,3 +206,59 @@ def apply_coupon(request):
         cart.save(update_fields=["coupon_code"])
         messages.error(request, "Invalid or expired coupon.")
     return redirect("cart:detail")
+
+
+@require_POST
+def cart_order_preview(request):
+    """CSRF-protected JSON draft for the Order button (never creates a cart)."""
+    denied = _require_trusted_json(request)
+    if denied:
+        return denied
+    if rate_limit_exceeded(request, scope="cart_order_preview", limit=30, window_seconds=300):
+        return JsonResponse(
+            {"ok": False, "message": "Too many requests. Please wait a moment."},
+            status=429,
+        )
+
+    cart = get_cart_if_exists(request)
+    if cart is None:
+        message = "Hi Pretty Affairs Hub — I'd like to place an order."
+        count = 0
+        total = Decimal("0")
+    else:
+        message, count, total = build_whatsapp_order_message(
+            cart, currency_symbol=settings.SITE_CURRENCY_SYMBOL
+        )
+    return JsonResponse(
+        {
+            "ok": True,
+            "message": message,
+            "count": count,
+            "total": str(total),
+            "cart_count": _cart_count(request),
+            "has_items": count > 0,
+        }
+    )
+
+
+@require_POST
+def cart_clear(request):
+    """Clear the caller's cart only — CSRF + same-origin XHR required."""
+    denied = _require_trusted_json(request)
+    if denied:
+        return denied
+    if rate_limit_exceeded(request, scope="cart_clear", limit=20, window_seconds=300):
+        return JsonResponse(
+            {"ok": False, "message": "Too many requests. Please wait a moment."},
+            status=429,
+        )
+
+    clear_cart(request)
+    return JsonResponse(
+        {
+            "ok": True,
+            "message": "Cart cleared.",
+            "cart_count": 0,
+            "level": "success",
+        }
+    )

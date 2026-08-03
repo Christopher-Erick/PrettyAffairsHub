@@ -144,6 +144,62 @@ def remove_cart_item(request, item_id):
     refresh_cart_item_count(request, cart)
 
 
+def get_cart_if_exists(request):
+    """Return the caller's cart without creating a session or cart row."""
+    if request.user.is_authenticated:
+        return Cart.objects.filter(user=request.user).first()
+    key = getattr(request.session, "session_key", None)
+    if not key:
+        return None
+    return Cart.objects.filter(session_key=key, user__isnull=True).first()
+
+
+def clear_cart(request):
+    """Remove every line from the active cart and refresh the header count.
+
+    Does not create a cart when none exists.
+    """
+    from apps.cart.context_processors import SESSION_CART_COUNT_KEY
+
+    cart = get_cart_if_exists(request)
+    if cart is None:
+        request.session[SESSION_CART_COUNT_KEY] = 0
+        return 0
+    deleted, _ = cart.items.all().delete()
+    if cart.coupon_code:
+        cart.coupon_code = ""
+        cart.save(update_fields=["coupon_code"])
+    refresh_cart_item_count(request, cart)
+    return deleted
+
+
+def build_whatsapp_order_message(cart, currency_symbol="KSh"):
+    """Plain-text order draft for wa.me prefill."""
+    items = list(cart.items.select_related("product", "variant"))
+    if not items:
+        return (
+            "Hi Pretty Affairs Hub — I'd like to place an order.",
+            0,
+            Decimal("0"),
+        )
+
+    lines = ["Hi Pretty Affairs Hub — I'd like to order:", ""]
+    total = Decimal("0")
+    count = 0
+    for item in items:
+        name = item.product.name
+        if item.variant_id:
+            name = f"{name} ({item.variant.name})"
+        line_total = item.unit_price * item.quantity
+        total += line_total
+        count += item.quantity
+        price = int(line_total) if line_total == line_total.to_integral_value() else line_total
+        lines.append(f"- {name} x {item.quantity} — {currency_symbol} {price}")
+    total_fmt = int(total) if total == total.to_integral_value() else total
+    lines.extend(["", f"Total: {currency_symbol} {total_fmt}", "", "Please confirm availability and payment. Thank you!"])
+    return "\n".join(lines), count, total
+
+
 def cart_totals(cart, discount_amount=Decimal("0"), shipping_amount=Decimal("0"), tax_rate=Decimal("0")):
     subtotal = cart.subtotal
     taxable = max(subtotal - discount_amount, Decimal("0"))
