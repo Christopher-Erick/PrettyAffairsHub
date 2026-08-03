@@ -114,7 +114,7 @@
       <div class="ritual__actions">
         <button class="btn btn--primary" type="submit" data-ritual-add disabled>Add ritual to cart</button>
         <button type="button" class="btn btn--ghost" data-ritual-restart>Start over</button>
-        <button type="button" class="btn btn--ghost" data-ritual-back>Change finish</button>
+        <button type="button" class="btn btn--ghost" data-ritual-back data-ritual-change-finish>Change finish</button>
       </div>
     </form>
   </div>
@@ -248,7 +248,27 @@
     }
   };
 
-  const showStep = (n) => {
+  const pathEl = root.querySelector("[data-ritual-path]");
+  const ritualTop = document.querySelector(".ritual-hero") || root;
+
+  const headerOffset = () => {
+    const raw = getComputedStyle(document.documentElement).getPropertyValue("--header-h");
+    const parsed = Number.parseFloat(raw);
+    return (Number.isFinite(parsed) ? parsed : 68) + 8;
+  };
+
+  /** Scroll progress + current step into view. Avoid scrollIntoView on sticky nodes —
+   * after tall results collapse they report a stuck rect and leave you at the footer. */
+  const scrollToGuide = () => {
+    const behavior = reduceMotion ? "auto" : "smooth";
+    const run = () => {
+      const y = root.getBoundingClientRect().top + window.scrollY - headerOffset();
+      window.scrollTo({ top: Math.max(0, y), behavior });
+    };
+    window.requestAnimationFrame(() => window.requestAnimationFrame(run));
+  };
+
+  const showStep = (n, { scroll = false } = {}) => {
     step = n;
     panels.forEach((panel) => {
       const active = Number(panel.dataset.ritualPanel) === n;
@@ -261,6 +281,7 @@
       }
     });
     syncPath();
+    if (scroll) scrollToGuide();
   };
 
   /** Back / edit: land on target step with that answer cleared so they pick again. */
@@ -268,7 +289,7 @@
     cancelAdvance();
     const dest = Math.max(1, Math.min(3, targetStep));
     clearFromStep(dest);
-    showStep(dest);
+    showStep(dest, { scroll: true });
   };
 
   const scoreProduct = (p) => {
@@ -423,6 +444,13 @@
     cancelAdvance();
     clearFromStep(1);
     showStep(1);
+    const behavior = reduceMotion ? "auto" : "smooth";
+    window.requestAnimationFrame(() => {
+      window.requestAnimationFrame(() => {
+        const y = ritualTop.getBoundingClientRect().top + window.scrollY - headerOffset();
+        window.scrollTo({ top: Math.max(0, y), behavior });
+      });
+    });
   });
 
   showStep(1);

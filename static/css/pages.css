@@ -2689,41 +2689,38 @@ article.narrow {
 }
 
 .ritual-path {
-  position: relative;
+  position: sticky;
+  top: calc(var(--header-h, 4.25rem) + env(safe-area-inset-top, 0px));
+  z-index: 35;
   margin: 0 0 var(--space-6);
-  padding: var(--space-4) 0 var(--space-5);
-  box-shadow: 0 1px 0 var(--hairline);
+  padding: var(--space-4) 0.15rem var(--space-5);
+  background-color: var(--page-wash-color, var(--bg-page));
+  background-image: var(--page-wash-image, none);
+  box-shadow:
+    0 1px 0 var(--hairline),
+    0 12px 20px -16px rgba(28, 23, 21, 0.28);
+  scroll-margin-top: calc(var(--header-h, 4.25rem) + env(safe-area-inset-top, 0px));
+}
+
+.ritual-path::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -0.65rem;
+  height: 0.65rem;
+  pointer-events: none;
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--page-wash-color, var(--bg-page)) 88%, transparent),
+    transparent
+  );
 }
 
 @media (max-width: 899px) {
-  /* Sticky guide strip — same page wash, clear chrome under the header */
   .ritual-path {
-    position: sticky;
-    top: calc(var(--header-h, 4.25rem) + env(safe-area-inset-top, 0px));
-    z-index: 35;
     margin: 0 0 var(--space-5);
     padding: 0.85rem 0.35rem 0.95rem;
-    background-color: var(--page-wash-color, var(--bg-page));
-    background-image: var(--page-wash-image, none);
-    box-shadow:
-      0 1px 0 var(--hairline),
-      0 12px 20px -16px rgba(28, 23, 21, 0.28);
-    border-radius: 0;
-  }
-
-  .ritual-path::after {
-    content: "";
-    position: absolute;
-    left: 0;
-    right: 0;
-    bottom: -0.65rem;
-    height: 0.65rem;
-    pointer-events: none;
-    background: linear-gradient(
-      180deg,
-      color-mix(in srgb, var(--page-wash-color, var(--bg-page)) 88%, transparent),
-      transparent
-    );
   }
 
   .ritual-path__status {

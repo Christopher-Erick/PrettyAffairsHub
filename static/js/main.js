@@ -50,21 +50,38 @@
   }
 
   if (toggle && mobileNav) {
+    let navOpenScrollY = 0;
+
+    const closeMobileNav = () => {
+      if (mobileNav.hasAttribute("hidden")) return;
+      mobileNav.setAttribute("hidden", "");
+      toggle.setAttribute("aria-expanded", "false");
+    };
+
+    const openMobileNav = () => {
+      mobileNav.removeAttribute("hidden");
+      toggle.setAttribute("aria-expanded", "true");
+      navOpenScrollY = window.scrollY;
+    };
+
     toggle.addEventListener("click", () => {
-      const open = mobileNav.hasAttribute("hidden");
-      if (open) {
-        mobileNav.removeAttribute("hidden");
-      } else {
-        mobileNav.setAttribute("hidden", "");
-      }
-      toggle.setAttribute("aria-expanded", String(open));
+      if (mobileNav.hasAttribute("hidden")) openMobileNav();
+      else closeMobileNav();
     });
 
+    // Close the menu once the page is scrolled (small screens).
+    window.addEventListener(
+      "scroll",
+      () => {
+        if (mobileNav.hasAttribute("hidden")) return;
+        if (Math.abs(window.scrollY - navOpenScrollY) < 10) return;
+        closeMobileNav();
+      },
+      { passive: true }
+    );
+
     window.addEventListener("resize", () => {
-      if (window.matchMedia("(min-width: 900px)").matches && !mobileNav.hasAttribute("hidden")) {
-        mobileNav.setAttribute("hidden", "");
-        toggle.setAttribute("aria-expanded", "false");
-      }
+      if (window.matchMedia("(min-width: 900px)").matches) closeMobileNav();
     });
   }
 
