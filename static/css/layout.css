@@ -601,14 +601,16 @@
   position: relative;
   /* Pull under translucent header so colours share one surface */
   margin-top: calc(-1 * var(--header-h));
+  /* Use svh only: dvh grows/shrinks with the mobile URL bar and makes
+     short scrolls bounce / fail to settle on the homepage. */
+  min-height: 100vh;
   min-height: 100svh;
-  min-height: 100dvh;
   display: grid;
   place-items: center;
   padding:
-    calc(var(--header-h) + clamp(1.75rem, 5vh, 3.5rem))
+    calc(var(--header-h) + clamp(1.75rem, 5svh, 3.5rem))
     var(--page-gutter)
-    clamp(3.5rem, 8vh, 6rem);
+    clamp(3.5rem, 8svh, 6rem);
   overflow: hidden;
   color: var(--text-inverse);
 }
