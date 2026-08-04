@@ -159,6 +159,9 @@
   let advanceTimer = null;
   let locked = false;
   let recommendAbort = null;
+  // When jumping back from “Your edit” to change an answer, Back should
+  // return there — not walk the quiz backwards “anyhow”.
+  let returnToReveal = false;
 
   const panels = [...root.querySelectorAll("[data-ritual-panel]")];
   const nodes = [...root.querySelectorAll("[data-path-node]")];
@@ -233,9 +236,10 @@
       node.classList.toggle("is-done", n < step);
       node.classList.toggle("is-current", n === step);
       node.classList.toggle("is-upcoming", n > step);
-      node.classList.toggle("is-jumpable", n >= 1 && n <= 3 && n < step);
+      const jumpable = n >= 1 && n <= 3 && (n < step || step === 4);
+      node.classList.toggle("is-jumpable", jumpable);
       node.setAttribute("aria-current", n === step ? "step" : "false");
-      if (n >= 1 && n <= 3 && n < step) {
+      if (jumpable) {
         node.setAttribute("role", "button");
         node.setAttribute("tabindex", "0");
         node.setAttribute("aria-label", `Go back to ${node.querySelector(".ritual-path__label")?.textContent || "step"}`);
@@ -287,7 +291,15 @@
   const scrollToGuide = () => {
     const behavior = reduceMotion ? "auto" : "smooth";
     const run = () => {
-      const y = root.getBoundingClientRect().top + window.scrollY - headerOffset();
+      // Sit under the sticky progressive path so the active step is obvious.
+      const pathH = pathEl ? pathEl.getBoundingClientRect().height : 0;
+      const panel = root.querySelector(`[data-ritual-panel="${step}"]:not([hidden])`);
+      const target = panel || pathEl || root;
+      const y =
+        target.getBoundingClientRect().top +
+        window.scrollY -
+        headerOffset() -
+        (panel && pathEl ? Math.min(pathH, 120) : 0);
       window.scrollTo({ top: Math.max(0, y), behavior });
     };
     window.requestAnimationFrame(() => window.requestAnimationFrame(run));
@@ -309,11 +321,39 @@
     if (scroll) scrollToGuide();
   };
 
-  const goBackTo = (targetStep) => {
+  const openReveal = ({ scroll = true } = {}) => {
+    returnToReveal = false;
+    showStep(4, { scroll });
+    fetchRitual();
+  };
+
+  const goBackTo = (targetStep, { fromReveal = false } = {}) => {
     cancelAdvance();
     const dest = Math.max(1, Math.min(3, targetStep));
-    // Keep the answer at the step you land on so you can keep or change it —
-    // no need to press Edit first.
+    if (fromReveal || step === 4) {
+      returnToReveal = true;
+    }
+    // Keep later answers until the shopper actually picks a different option.
+    restoreChoiceSelection(dest);
+    showStep(dest, { scroll: true });
+  };
+
+  /** Previous node on the progressive path (Occasion → Focus → Finish → Your edit). */
+  const previousPathStep = () => {
+    if (step === 4) return 3;
+    return Math.max(1, step - 1);
+  };
+
+  const goBack = () => {
+    cancelAdvance();
+    // After jumping out of “Your edit” to tweak a pick, Back returns there.
+    if (returnToReveal && answers.occasion && answers.focus && answers.finish) {
+      openReveal();
+      return;
+    }
+    if (step <= 1) return;
+    returnToReveal = false;
+    const dest = previousPathStep();
     clearFromStep(dest + 1);
     restoreChoiceSelection(dest);
     showStep(dest, { scroll: true });
@@ -424,13 +464,22 @@
       root.classList.remove("is-advancing");
       if (step !== fromStep) return;
 
+      if (
+        returnToReveal &&
+        answers.occasion &&
+        answers.focus &&
+        answers.finish
+      ) {
+        openReveal({ scroll: true });
+        return;
+      }
+
       if (fromStep < 3) {
         showStep(fromStep + 1);
         return;
       }
       if (!answers.occasion || !answers.focus || !answers.finish) return;
-      showStep(4);
-      fetchRitual();
+      openReveal({ scroll: false });
     }, delay);
   };
 
@@ -443,9 +492,15 @@
       const expectedKey = STEP_KEYS[step];
       if (!expectedKey || key !== expectedKey) return;
 
-      answers[key] = btn.dataset.value;
-      clearFromStep(step + 1);
-      answers[key] = btn.dataset.value;
+      const previous = answers[key];
+      const next = btn.dataset.value;
+      const changed = previous !== next;
+
+      answers[key] = next;
+      if (changed) {
+        clearFromStep(step + 1);
+        answers[key] = next;
+      }
 
       root.querySelectorAll(`[data-choice="${key}"]`).forEach((el) => {
         const on = el === btn;
@@ -453,22 +508,32 @@
         el.setAttribute("aria-pressed", on ? "true" : "false");
       });
       syncPath();
+
+      // Same pick while reviewing from Your edit → return to the progressive edit.
+      if (!changed && returnToReveal && answers.occasion && answers.focus && answers.finish) {
+        openReveal({ scroll: true });
+        return;
+      }
       advanceFrom(step);
     });
   });
 
   root.querySelectorAll("[data-ritual-back]").forEach((btn) => {
     btn.addEventListener("click", () => {
-      if (step <= 1) return;
-      goBackTo(step - 1);
+      if (btn.hasAttribute("data-ritual-change-finish")) {
+        goBackTo(3, { fromReveal: step === 4 });
+        return;
+      }
+      goBack();
     });
   });
 
   nodes.forEach((node) => {
     const jump = () => {
       const n = Number(node.dataset.pathNode);
-      if (n < 1 || n > 3 || n >= step) return;
-      goBackTo(n);
+      if (n < 1 || n > 3) return;
+      if (n >= step && step !== 4) return;
+      goBackTo(n, { fromReveal: step === 4 });
     };
     node.addEventListener("click", jump);
     node.addEventListener("keydown", (event) => {
@@ -481,6 +546,7 @@
 
   root.querySelector("[data-ritual-restart]")?.addEventListener("click", () => {
     cancelAdvance();
+    returnToReveal = false;
     clearFromStep(1);
     showStep(1);
     const behavior = reduceMotion ? "auto" : "smooth";
