@@ -3085,65 +3085,28 @@ article.narrow {
   top: calc(var(--header-h, 4.25rem) + env(safe-area-inset-top, 0px));
   z-index: 35;
   isolation: isolate;
-  padding: var(--space-4) 0.15rem var(--space-4);
-  background-color: var(--page-wash-color, var(--bg-page));
+  margin-inline: calc(-1 * var(--page-gutter, 1rem));
+  padding: 0.85rem var(--page-gutter, 1rem) 0.95rem;
+  background-color: color-mix(in srgb, var(--page-wash-color, var(--bg-page)) 92%, var(--bg-panel));
   background-image: var(--page-wash-image, none);
-  box-shadow:
-    0 1px 0 var(--hairline),
-    0 12px 20px -16px rgba(28, 23, 21, 0.28);
+  border-bottom: 1px solid color-mix(in srgb, var(--color-burgundy) 14%, var(--hairline));
+  box-shadow: 0 10px 18px -16px rgba(28, 23, 21, 0.35);
   scroll-margin-top: calc(var(--header-h, 4.25rem) + env(safe-area-inset-top, 0px));
 }
 
-.ritual-path__sticky::after {
-  content: "";
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: -0.65rem;
-  height: 0.65rem;
-  pointer-events: none;
-  background: linear-gradient(
-    180deg,
-    color-mix(in srgb, var(--page-wash-color, var(--bg-page)) 88%, transparent),
-    transparent
-  );
-}
-
-@media (max-width: 899px) {
-  .ritual-path {
-    margin: 0 0 var(--space-5);
-  }
-
+@media (min-width: 900px) {
   .ritual-path__sticky {
-    padding: 0.85rem 0.35rem 0.85rem;
-  }
-
-  .ritual-path__status {
-    margin-bottom: 0.65rem;
-  }
-
-  .ritual-path__track {
-    gap: 0;
-  }
-
-  .ritual-path__label {
-    font-size: 0.62rem;
-  }
-
-  .ritual-path__picks {
-    margin-top: 0.85rem;
-    padding-top: 0.65rem;
-  }
-
-  .ritual-path__chips {
-    gap: 0.4rem;
+    margin-inline: 0;
+    padding-inline: 0.45rem;
+    border-radius: 0 0 0.85rem 0.85rem;
   }
 }
 
 .ritual-path__status {
-  margin: 0 0 var(--space-4);
-  font-size: var(--fs-sm);
-  letter-spacing: 0.04em;
+  margin: 0 0 0.7rem;
+  font-size: clamp(0.78rem, 0.72rem + 0.2vw, 0.88rem);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
   color: var(--color-burgundy);
   font-weight: 600;
 }
@@ -3151,7 +3114,7 @@ article.narrow {
 .ritual-path__track {
   list-style: none;
   margin: 0;
-  padding: 0;
+  padding: 0.15rem 0 0.1rem;
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
@@ -3161,16 +3124,16 @@ article.narrow {
 .ritual-path__node {
   display: grid;
   justify-items: center;
-  gap: 0.45rem;
+  gap: 0.4rem;
   flex: 0 0 auto;
-  width: 4.5rem;
+  width: clamp(3.4rem, 18vw, 4.6rem);
   text-align: center;
   color: var(--text-secondary);
 }
 
 .ritual-path__dot {
-  width: 0.85rem;
-  height: 0.85rem;
+  width: 0.78rem;
+  height: 0.78rem;
   border-radius: 50%;
   background: var(--bg-chip);
   box-shadow: inset 0 0 0 1px var(--hairline);
@@ -3181,20 +3144,22 @@ article.narrow {
 }
 
 .ritual-path__label {
-  font-size: 0.68rem;
-  letter-spacing: 0.1em;
+  font-size: clamp(0.58rem, 0.52rem + 0.25vw, 0.68rem);
+  letter-spacing: 0.08em;
   text-transform: uppercase;
-  line-height: 1.25;
+  line-height: 1.2;
+  max-width: 100%;
 }
 
 .ritual-path__connector {
   flex: 1 1 auto;
   height: 2px;
-  margin-top: 0.4rem;
+  margin-top: 0.35rem;
   background: color-mix(in srgb, var(--hairline) 90%, transparent);
   align-self: flex-start;
   position: relative;
   overflow: hidden;
+  min-width: 0.55rem;
 }
 
 .ritual-path__connector::after {
@@ -3239,8 +3204,8 @@ article.narrow {
 
 .ritual-path__node.is-current .ritual-path__dot {
   background: var(--color-rose, #c9a39a);
-  box-shadow: 0 0 0 5px color-mix(in srgb, var(--color-burgundy) 18%, transparent);
-  transform: scale(1.15);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--color-burgundy) 16%, transparent);
+  transform: scale(1.12);
 }
 
 .ritual-path__node.is-upcoming {
@@ -3249,17 +3214,17 @@ article.narrow {
 
 .ritual-path__node--reveal.is-current .ritual-path__dot {
   background: var(--color-burgundy);
-  box-shadow: 0 0 0 6px color-mix(in srgb, var(--color-burgundy) 22%, transparent);
+  box-shadow: 0 0 0 5px color-mix(in srgb, var(--color-burgundy) 20%, transparent);
 }
 
 .ritual-path__picks {
   margin-top: var(--space-4);
-  padding-top: var(--space-3);
-  box-shadow: 0 -1px 0 var(--hairline);
+  padding: 0.75rem 0 0;
+  border-top: 1px solid color-mix(in srgb, var(--color-burgundy) 12%, var(--hairline));
 }
 
 .ritual-path__picks-label {
-  margin: 0 0 var(--space-2);
+  margin: 0 0 0.55rem;
   font-size: var(--fs-xs);
   letter-spacing: 0.1em;
   text-transform: uppercase;
@@ -3272,36 +3237,74 @@ article.narrow {
   padding: 0;
   display: flex;
   flex-wrap: wrap;
-  gap: 0.5rem;
+  gap: 0.45rem;
 }
 
 .ritual-path__chip {
   appearance: none;
   display: inline-flex;
   align-items: center;
-  gap: 0.55rem;
-  min-height: 2.1rem;
-  padding: 0.25rem 0.75rem;
+  gap: 0.45rem;
+  min-height: 2.15rem;
+  max-width: 100%;
+  padding: 0.3rem 0.35rem 0.3rem 0.7rem;
   border: 0;
-  background: color-mix(in srgb, var(--bg-panel) 70%, var(--color-blush) 30%);
-  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--color-burgundy) 30%, var(--hairline));
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--bg-panel) 78%, var(--color-blush) 22%);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--color-burgundy) 22%, var(--hairline));
   color: var(--color-ink);
   font: inherit;
-  font-size: var(--fs-sm);
+  font-size: 0.84rem;
+  line-height: 1.2;
   cursor: pointer;
+  transition:
+    background var(--duration-fast) var(--ease-out),
+    box-shadow var(--duration-fast) var(--ease-out);
+}
+
+.ritual-path__chip > span:first-child {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .ritual-path__chip:hover,
 .ritual-path__chip:focus-visible {
-  color: var(--color-burgundy);
+  background: color-mix(in srgb, var(--bg-panel) 55%, var(--color-blush) 45%);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--color-burgundy) 40%, var(--hairline));
+  outline: none;
 }
 
 .ritual-path__chip-edit {
-  font-size: var(--fs-xs);
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+  flex: 0 0 auto;
+  padding: 0.2rem 0.55rem;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--color-burgundy) 12%, transparent);
   color: var(--color-burgundy);
-  opacity: 0.8;
+  font-size: 0.62rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  font-weight: 600;
+  opacity: 1;
+}
+
+@media (max-width: 899px) {
+  .ritual-path {
+    margin: 0 0 var(--space-5);
+  }
+
+  .ritual-path__sticky {
+    padding-block: 0.7rem 0.8rem;
+  }
+
+  .ritual-path__status {
+    margin-bottom: 0.55rem;
+  }
+
+  .ritual-path__picks {
+    margin-top: 0.85rem;
+    padding-top: 0.7rem;
+  }
 }
 
 .ritual.is-advancing .ritual__choice {
