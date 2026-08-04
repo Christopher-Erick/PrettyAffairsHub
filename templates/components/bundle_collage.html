@@ -1,0 +1,27 @@
+{# Expects: bundle. Optional: collage_class #}
+{% with items=bundle.items.all %}
+<div class="bundle-collage{% if items|length == 1 %} bundle-collage--one{% elif items|length == 2 %} bundle-collage--two{% else %} bundle-collage--three{% endif %}{% if collage_class %} {{ collage_class }}{% endif %}" role="img" aria-label="{{ bundle.name }} — {{ items|length }} piece{% if items|length != 1 %}s{% endif %}">
+  {% for item in items|slice:":3" %}
+    {% with product=item.product img=item.product.primary_image %}
+    <figure class="bundle-collage__cell">
+      {% if img and img.image %}
+        <img
+          src="{{ img.image.url }}"
+          alt="{{ img.alt_text|default:product.name }}"
+          loading="lazy"
+          decoding="async"
+          width="480"
+          height="600"
+        >
+      {% else %}
+        <div class="product-card__placeholder" aria-hidden="true"></div>
+      {% endif %}
+    </figure>
+    {% endwith %}
+  {% empty %}
+    <figure class="bundle-collage__cell bundle-collage__cell--empty">
+      <div class="product-card__placeholder" aria-hidden="true"></div>
+    </figure>
+  {% endfor %}
+</div>
+{% endwith %}

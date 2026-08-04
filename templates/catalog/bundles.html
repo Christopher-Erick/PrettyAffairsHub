@@ -3,19 +3,23 @@
 {% block content %}
 <section class="section bundles-page">
   <h1 class="section__title">Combos & bundles</h1>
-  <div class="product-grid">
+  <p class="section__intro">Curated sets — see all three pieces at a glance, then open for the full edit.</p>
+  <div class="product-grid bundle-grid">
     {% for bundle in bundles %}
-    <article class="product-card">
-      <a class="product-card__media" href="{{ bundle.get_absolute_url }}">
-        <div class="product-card__placeholder" role="img" aria-label="{{ bundle.name }}"></div>
+    {% with items=bundle.items.all %}
+    <article class="product-card bundle-card">
+      <a class="product-card__media bundle-card__media" href="{{ bundle.get_absolute_url }}">
+        {% include "components/bundle_collage.html" %}
       </a>
       <div class="product-card__body">
+        <p class="product-card__tagline">{{ items|length }} piece{% if items|length != 1 %}s{% endif %}</p>
         <h3 class="product-card__title"><a href="{{ bundle.get_absolute_url }}">{{ bundle.name }}</a></h3>
-        <p class="product-card__price">{{ SITE_CURRENCY_SYMBOL }} {{ bundle.price }}
-          {% if bundle.compare_at_price %}<span class="price-compare">{{ SITE_CURRENCY_SYMBOL }} {{ bundle.compare_at_price }}</span>{% endif %}
+        <p class="product-card__price">{{ SITE_CURRENCY_SYMBOL }} {{ bundle.price|floatformat:0 }}
+          {% if bundle.compare_at_price %}<span class="price-compare">{{ SITE_CURRENCY_SYMBOL }} {{ bundle.compare_at_price|floatformat:0 }}</span>{% endif %}
         </p>
       </div>
     </article>
+    {% endwith %}
     {% empty %}<p>Bundles coming soon.</p>{% endfor %}
   </div>
 </section>

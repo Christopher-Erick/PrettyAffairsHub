@@ -1,20 +1,41 @@
 {% extends "base.html" %}
 {% block title %}{{ bundle.name }} — {{ SITE_NAME }}{% endblock %}
 {% block content %}
-<section class="section bundles-page">
-  <h1 class="section__title">{{ bundle.name }}</h1>
-  <p class="pdp__price">{{ SITE_CURRENCY_SYMBOL }} {{ bundle.price }}
-    {% if bundle.compare_at_price %}<span class="price-compare">{{ SITE_CURRENCY_SYMBOL }} {{ bundle.compare_at_price }}</span>{% endif %}
+<section class="section bundles-page bundle-detail">
+  <p class="bundle-detail__back">
+    <a href="{% url 'catalog:bundles' %}">← All bundles</a>
   </p>
-  <p>{{ bundle.description|linebreaks }}</p>
-  <h2 class="section__title">Includes</h2>
-  <p class="section__intro">Hand-picked pieces in this edit — chosen by our desk, not auto-filled.</p>
-  <div class="product-grid">
-    {% for item in bundle.items.all %}
+
+  {% with items=bundle.items.all %}
+  <div class="bundle-hero">
+    <div class="bundle-hero__media">
+      {% include "components/bundle_collage.html" with collage_class="bundle-collage--hero" %}
+    </div>
+    <div class="bundle-hero__info">
+      <p class="eyebrow">{{ items|length }} curated piece{% if items|length != 1 %}s{% endif %}</p>
+      <h1 class="bundle-hero__title">{{ bundle.name }}</h1>
+      <p class="pdp__price bundle-hero__price">
+        {{ SITE_CURRENCY_SYMBOL }} {{ bundle.price|floatformat:0 }}
+        {% if bundle.compare_at_price %}<span class="price-compare">{{ SITE_CURRENCY_SYMBOL }} {{ bundle.compare_at_price|floatformat:0 }}</span>{% endif %}
+      </p>
+      {% if bundle.description %}
+      <div class="bundle-hero__desc">{{ bundle.description|linebreaks }}</div>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="bundle-includes-head">
+    <h2 class="section__title">Includes</h2>
+    <p class="section__intro">Each piece on its own — shop individually or enjoy them as the set.</p>
+  </div>
+
+  <div class="bundle-includes" data-count="{{ items|length }}">
+    {% for item in items %}
       {% with product=item.product %}{% include "components/product_card.html" %}{% endwith %}
     {% empty %}
-      <p>This bundle has no products yet.</p>
+      <p class="bundle-includes__empty">This bundle has no products yet.</p>
     {% endfor %}
   </div>
+  {% endwith %}
 </section>
 {% endblock %}

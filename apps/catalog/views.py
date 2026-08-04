@@ -270,7 +270,9 @@ class BundleListView(ListView):
     context_object_name = "bundles"
 
     def get_queryset(self):
-        return Bundle.objects.filter(is_active=True).prefetch_related("items__product")
+        return Bundle.objects.filter(is_active=True).prefetch_related(
+            "items__product__images"
+        )
 
 
 class BundleDetailView(DetailView):
@@ -279,7 +281,10 @@ class BundleDetailView(DetailView):
     context_object_name = "bundle"
 
     def get_queryset(self):
-        return Bundle.objects.filter(is_active=True).prefetch_related("items__product__images")
+        return Bundle.objects.filter(is_active=True).prefetch_related(
+            "items__product__images",
+            "items__product__variants",
+        )
 
 
 def ritual_builder(request):
