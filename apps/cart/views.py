@@ -51,18 +51,26 @@ def _cart_count(request):
 
 def cart_detail(request):
     cart = get_or_create_cart(request)
+    items = list(
+        cart.items.select_related("product", "variant", "bundle").prefetch_related(
+            "product__images",
+            "bundle__items__product__images",
+        )
+    )
+    subtotal = sum((item.line_total for item in items), Decimal("0"))
+    cart._subtotal_cache = subtotal
     discount = Decimal("0")
     if cart.coupon_code:
         coupon = Coupon.objects.filter(code__iexact=cart.coupon_code).first()
         if coupon:
-            discount = coupon.calculate_discount(cart.subtotal)
+            discount = coupon.calculate_discount(subtotal)
     shipping = (
         Decimal("0")
-        if cart.subtotal - discount >= FREE_SHIPPING_THRESHOLD
+        if subtotal - discount >= FREE_SHIPPING_THRESHOLD
         else DEFAULT_SHIPPING
     )
-    totals = cart_totals(cart, discount, shipping)
-    toward_free = cart.subtotal - discount
+    totals = cart_totals(cart, discount, shipping, subtotal=subtotal)
+    toward_free = subtotal - discount
     remaining = max(FREE_SHIPPING_THRESHOLD - toward_free, Decimal("0"))
     progress = min(100, int((toward_free / FREE_SHIPPING_THRESHOLD) * 100)) if FREE_SHIPPING_THRESHOLD else 100
     return render(
@@ -70,10 +78,7 @@ def cart_detail(request):
         "cart/cart.html",
         {
             "cart": cart,
-            "items": cart.items.select_related("product", "variant", "bundle").prefetch_related(
-                "product__images",
-                "bundle__items__product__images",
-            ),
+            "items": items,
             "totals": totals,
             "free_shipping_remaining": remaining,
             "free_shipping_progress": progress,

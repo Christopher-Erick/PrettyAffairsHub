@@ -39,12 +39,17 @@ def checkout(request):
         return redirect_to_login(request.get_full_path(), login_url="accounts:login")
 
     cart = get_or_create_cart(request)
-    items = cart.items.select_related("product", "variant", "bundle").prefetch_related(
-        "bundle__items__product"
+    items_qs = cart.items.select_related("product", "variant", "bundle").prefetch_related(
+        "bundle__items__product",
+        "product__images",
     )
-    if not items.exists():
+    items = list(items_qs)
+    if not items:
         messages.info(request, "Your cart is empty.")
         return redirect("cart:detail")
+
+    subtotal = sum((item.line_total for item in items), Decimal("0"))
+    cart._subtotal_cache = subtotal
 
     initial = {"shipping_city": "Nairobi"}
     staff_shopping = False
@@ -82,14 +87,14 @@ def checkout(request):
     if code:
         coupon = Coupon.objects.filter(code__iexact=code).first()
         if coupon:
-            discount = coupon.calculate_discount(cart.subtotal)
+            discount = coupon.calculate_discount(subtotal)
     shipping = (
         Decimal("0")
-        if cart.subtotal - discount >= FREE_SHIPPING_THRESHOLD
+        if subtotal - discount >= FREE_SHIPPING_THRESHOLD
         else DEFAULT_SHIPPING
     )
-    totals = cart_totals(cart, discount, shipping)
-    toward_free = cart.subtotal - discount
+    totals = cart_totals(cart, discount, shipping, subtotal=subtotal)
+    toward_free = subtotal - discount
     remaining = max(FREE_SHIPPING_THRESHOLD - toward_free, Decimal("0"))
     return render(
         request,
@@ -97,7 +102,7 @@ def checkout(request):
         {
             "form": form,
             "cart": cart,
-            "items": items.prefetch_related("product__images"),
+            "items": items,
             "totals": totals,
             "free_shipping_remaining": remaining,
             "staff_shopping": staff_shopping,

@@ -29,7 +29,7 @@ from apps.catalog.services import get_recently_viewed_ids, track_product_view, t
 from apps.cart.services import build_whatsapp_bundle_enquiry
 from apps.core.http import is_same_origin_request
 from apps.core.ratelimit import rate_limit_exceeded
-from apps.core.smart_cache import get_or_set
+from apps.core.smart_cache import get_or_set, versioned_key
 from apps.reviews.forms import ReviewForm
 from apps.reviews.models import Review
 from decimal import Decimal, InvalidOperation
@@ -93,11 +93,11 @@ class ProductListView(ListView):
 
         if q:
             track_shop_search(self.request, q)
+            # Keep search lean — variants__name blows up joins and forces DISTINCT.
             qs = qs.filter(
                 Q(name__icontains=q)
                 | Q(short_description__icontains=q)
                 | Q(brand__name__icontains=q)
-                | Q(variants__name__icontains=q)
             )
         if category:
             qs = products_for_category_slug(qs, category)
@@ -125,7 +125,11 @@ class ProductListView(ListView):
             "newest": "-created_at",
             "rating": "-average_rating",
         }
-        return qs.order_by(sort_map.get(sort, "-created_at")).distinct()
+        qs = qs.order_by(sort_map.get(sort, "-created_at"))
+        # DISTINCT is only needed when M2M / multi-row joins can duplicate products.
+        if q or category or collection:
+            qs = qs.distinct()
+        return qs
 
     def get_queryset(self):
         # Real queryset for counting/slicing; page payloads are cached in paginate_queryset.
@@ -266,28 +270,47 @@ class ProductDetailView(DetailView):
         context = super().get_context_data(**kwargs)
         product = self.object
         related_qs = _shop_product_qs()
-        context["reviews"] = product.reviews.filter(is_approved=True)[:20]
-        context["review_form"] = ReviewForm()
-        context["similar"] = list(
-            related_qs.filter(
-                relations_to__from_product=product,
-                relations_to__relation_type="similar",
-            )[:4]
-        )
-        if not context["similar"]:
-            context["similar"] = list(
-                related_qs.filter(categories__in=product.categories.all())
-                .exclude(pk=product.pk)
-                .distinct()[:4]
+
+        def rails_producer():
+            reviews = list(product.reviews.filter(is_approved=True)[:20])
+            similar = list(
+                related_qs.filter(
+                    relations_to__from_product=product,
+                    relations_to__relation_type="similar",
+                )[:4]
             )
-        context["fbt"] = list(
-            related_qs.filter(
-                relations_to__from_product=product,
-                relations_to__relation_type="fbt",
-            )[:3]
+            if not similar:
+                similar = list(
+                    related_qs.filter(categories__in=product.categories.all())
+                    .exclude(pk=product.pk)
+                    .distinct()[:4]
+                )
+            fbt = list(
+                related_qs.filter(
+                    relations_to__from_product=product,
+                    relations_to__relation_type="fbt",
+                )[:3]
+            )
+            return {"reviews": reviews, "similar": similar, "fbt": fbt}
+
+        rails = get_or_set(
+            versioned_key("catalog:product_rails", product.slug),
+            rails_producer,
         )
+        context["reviews"] = rails["reviews"]
+        context["similar"] = rails["similar"]
+        context["fbt"] = rails["fbt"]
+        context["review_form"] = ReviewForm()
         recent_ids = [pid for pid in get_recently_viewed_ids(self.request) if pid != product.pk]
-        context["recently_viewed"] = list(related_qs.filter(pk__in=recent_ids)[:4])
+        if recent_ids:
+            # Preserve recency order from the session list.
+            by_id = {
+                p.pk: p
+                for p in related_qs.filter(pk__in=recent_ids[:8])
+            }
+            context["recently_viewed"] = [by_id[pid] for pid in recent_ids if pid in by_id][:4]
+        else:
+            context["recently_viewed"] = []
         return context
 
 

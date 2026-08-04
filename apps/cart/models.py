@@ -28,10 +28,15 @@ class Cart(models.Model):
 
     @property
     def subtotal(self):
-        return sum(
+        cached = getattr(self, "_subtotal_cache", None)
+        if cached is not None:
+            return cached
+        total = sum(
             (item.line_total for item in self.items.select_related("product", "bundle")),
             Decimal("0"),
         )
+        self._subtotal_cache = total
+        return total
 
     @property
     def item_count(self):

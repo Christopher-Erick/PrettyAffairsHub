@@ -50,7 +50,7 @@ LABELS = {
     "late": "tonight",
 }
 
-POOL_CAP = 120
+POOL_CAP = 60
 TRIO_SIZE = 3
 
 
@@ -166,6 +166,7 @@ def _candidate_queryset(signals: RitualSignals):
 
     matched = list(
         qs.filter(interest_q)
+        .filter(Q(stock__gt=0) | Q(variants__is_active=True, variants__stock__gt=0))
         .distinct()
         .order_by("-is_bestseller", "-is_featured", "-is_trending", "name")[:POOL_CAP]
     )

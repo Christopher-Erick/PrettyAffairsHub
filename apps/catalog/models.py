@@ -156,6 +156,12 @@ class Product(TimeStampedModel):
 
     class Meta:
         ordering = ["-created_at"]
+        indexes = [
+            models.Index(fields=["is_active", "-created_at"]),
+            models.Index(fields=["is_active", "is_featured"]),
+            models.Index(fields=["is_active", "is_bestseller"]),
+            models.Index(fields=["is_active", "price"]),
+        ]
 
     def __str__(self):
         return self.name
@@ -176,7 +182,12 @@ class Product(TimeStampedModel):
 
     def _variant_list(self):
         """Prefer prefetched variants to avoid N+1 on product cards."""
-        return list(self.variants.all())
+        cached = getattr(self, "_variant_list_cache", None)
+        if cached is not None:
+            return cached
+        cached = list(self.variants.all())
+        self._variant_list_cache = cached
+        return cached
 
     @property
     def in_stock(self):

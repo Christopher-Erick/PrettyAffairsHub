@@ -38,9 +38,13 @@ def assign_admin_role(user, *, superuser=False):
 def is_store_admin(user):
     if not getattr(user, "is_authenticated", False):
         return False
-    if user.is_staff or user.is_superuser:
-        return True
-    return user.groups.filter(name=ADMINS_GROUP).exists()
+    cached = getattr(user, "_cached_is_store_admin", None)
+    if cached is not None:
+        return cached
+    # Admins are always staff (see assign_admin_role); avoid a groups query on every page.
+    result = bool(user.is_staff or user.is_superuser)
+    user._cached_is_store_admin = result
+    return result
 
 
 def is_client(user):
@@ -48,4 +52,9 @@ def is_client(user):
         return False
     if is_store_admin(user):
         return False
-    return user.groups.filter(name=CLIENTS_GROUP).exists() or not user.is_staff
+    cached = getattr(user, "_cached_is_client", None)
+    if cached is not None:
+        return cached
+    result = user.groups.filter(name=CLIENTS_GROUP).exists() or not user.is_staff
+    user._cached_is_client = result
+    return result

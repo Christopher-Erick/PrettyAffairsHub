@@ -106,11 +106,12 @@ def _build_discovery():
     leaf_ids = {c.id for c in leaf_categories}
     samples_by_category: dict[int, Product] = {}
     if leaf_ids:
+        # Bound the scan — full catalogue walk was expensive on cold cache.
         for product in (
             shop_product_qs()
             .filter(categories__id__in=leaf_ids)
             .order_by("-is_featured", "-average_rating", "-created_at")
-            .distinct()
+            .distinct()[: max(48, len(leaf_ids) * 3)]
         ):
             for category in product.categories.all():
                 if category.id in leaf_ids and category.id not in samples_by_category:

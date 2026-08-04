@@ -46,7 +46,35 @@ def home(request):
         status__in=[Order.STATUS_PENDING, Order.STATUS_PAID, Order.STATUS_PROCESSING]
     ).count()
     live_products = Product.objects.filter(is_active=True).count()
-    low_stock = sum(1 for p in Product.objects.filter(is_active=True).prefetch_related("variants") if p.is_low_stock)
+    # Prefer a cheap aggregate over loading every product + variants into Python.
+    from django.db.models import Sum, Case, When, IntegerField, F, Value, Count, Q
+    from django.db.models.functions import Coalesce
+
+    low_stock = (
+        Product.objects.filter(is_active=True)
+        .annotate(
+            has_active_variants=Count(
+                "variants", filter=Q(variants__is_active=True), distinct=True
+            ),
+            variant_stock=Coalesce(
+                Sum(
+                    Case(
+                        When(variants__is_active=True, then=F("variants__stock")),
+                        default=Value(0),
+                        output_field=IntegerField(),
+                    )
+                ),
+                Value(0),
+            ),
+            effective_stock=Case(
+                When(has_active_variants__gt=0, then=F("variant_stock")),
+                default=F("stock"),
+                output_field=IntegerField(),
+            ),
+        )
+        .filter(effective_stock__gt=0, effective_stock__lte=8)
+        .count()
+    )
     unread = ContactMessage.objects.filter(is_handled=False).count()
     wa_pending = pending_count()
     return render(

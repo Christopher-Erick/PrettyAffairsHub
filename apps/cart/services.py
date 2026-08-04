@@ -472,8 +472,9 @@ def ritual_products_snapshot(products) -> tuple[list[dict], int, Decimal]:
     return rows, len(rows), total
 
 
-def cart_totals(cart, discount_amount=Decimal("0"), shipping_amount=Decimal("0"), tax_rate=Decimal("0")):
-    subtotal = cart.subtotal
+def cart_totals(cart, discount_amount=Decimal("0"), shipping_amount=Decimal("0"), tax_rate=Decimal("0"), *, subtotal=None):
+    if subtotal is None:
+        subtotal = cart.subtotal
     taxable = max(subtotal - discount_amount, Decimal("0"))
     tax_amount = (taxable * tax_rate / Decimal("100")).quantize(Decimal("0.01"))
     total = taxable + shipping_amount + tax_amount

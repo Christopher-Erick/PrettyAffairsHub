@@ -1,7 +1,8 @@
 <article class="product-card{% if product.is_low_stock %} product-card--low-stock{% endif %}" data-product-card>
+  {% with in_stock=product.in_stock available_stock=product.available_stock default_variant=product.default_variant %}
   <a class="product-card__media" href="{{ product.get_absolute_url }}">
-    {% if product.is_low_stock and product.in_stock %}
-      <span class="badge badge--pulse">Only {{ product.available_stock }} left</span>
+    {% if product.is_low_stock and in_stock %}
+      <span class="badge badge--pulse">Only {{ available_stock }} left</span>
     {% elif product.is_new %}<span class="badge">New</span>
     {% elif product.is_bestseller %}<span class="badge">Best seller</span>
     {% elif product.is_trending %}<span class="badge">Trending</span>
@@ -42,7 +43,7 @@
         {% endfor %}
         {% if variants|length > 6 %}<span class="product-card__swatch-more">+{{ variants|length|add:"-6" }}</span>{% endif %}
       </div>
-      <p class="product-card__shade" data-card-shade-name aria-live="polite">{% if product.default_variant %}{{ product.default_variant.name }}{% endif %}</p>
+      <p class="product-card__shade" data-card-shade-name aria-live="polite">{% if default_variant %}{{ default_variant.name }}{% endif %}</p>
       {% endif %}
     {% endwith %}
     {% if product.review_count %}
@@ -54,12 +55,12 @@
     <form class="product-card__actions" action="{% url 'cart:add' %}" method="post">
       {% csrf_token %}
       <input type="hidden" name="product_id" value="{{ product.id }}">
-      {% if product.default_variant %}
-      <input type="hidden" name="variant_id" value="{{ product.default_variant.id }}" data-card-variant>
+      {% if default_variant %}
+      <input type="hidden" name="variant_id" value="{{ default_variant.id }}" data-card-variant>
       {% endif %}
       <input type="hidden" name="next" value="{{ request.path }}">
-      <button class="btn btn--ghost btn--full product-card__cart" type="submit" {% if not product.in_stock %}disabled{% endif %}>
-        {% if product.in_stock %}
+      <button class="btn btn--ghost btn--full product-card__cart" type="submit" {% if not in_stock %}disabled{% endif %}>
+        {% if in_stock %}
           <svg class="product-card__cart-icon" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6">
             <path d="M6.5 8.5h11l-1 10.2a1.5 1.5 0 0 1-1.5 1.3H9a1.5 1.5 0 0 1-1.5-1.3L6.5 8.5Z"/>
             <path d="M9 8.5V7a3 3 0 0 1 6 0v1.5"/>
@@ -71,4 +72,5 @@
       </button>
     </form>
   </div>
+  {% endwith %}
 </article>

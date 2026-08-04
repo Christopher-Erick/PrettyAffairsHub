@@ -107,7 +107,30 @@ def invalidate_catalog_cache(*, reason: str = "") -> None:
     if reason:
         logger.info("Catalog cache invalidated: %s (version=%s)", reason, catalog_version())
 
-    purge_cloudflare_cache()
+    # Never block the request on Cloudflare's HTTP API.
+    try:
+        from django.db import transaction
+
+        transaction.on_commit(_schedule_cloudflare_purge)
+    except Exception:
+        _schedule_cloudflare_purge()
+
+
+def _schedule_cloudflare_purge() -> None:
+    """Debounce and fire Cloudflare purge off the request thread."""
+    import threading
+    import time
+
+    lock_key = "smart:cf_purge_scheduled"
+    try:
+        # Only one purge every 30s across workers that share cache.
+        if not cache.add(lock_key, time.time(), timeout=30):
+            return
+    except Exception:
+        pass
+
+    thread = threading.Thread(target=purge_cloudflare_cache, daemon=True)
+    thread.start()
 
 
 def purge_cloudflare_cache() -> None:
@@ -130,7 +153,7 @@ def purge_cloudflare_cache() -> None:
             },
             method="POST",
         )
-        with urlopen(request, timeout=10) as response:
+        with urlopen(request, timeout=5) as response:
             response.read()
         logger.info("Cloudflare edge cache purged for zone %s", zone)
     except Exception:
