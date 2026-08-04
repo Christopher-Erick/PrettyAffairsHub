@@ -25,6 +25,10 @@
     <span class="desk-stat__n">{{ low_stock }}</span>
     <span class="desk-stat__l">Low stock</span>
   </a>
+  <a class="desk-stat{% if wa_pending %} desk-stat--alert{% endif %}" href="{% url 'desk:whatsapp_lead_list' %}">
+    <span class="desk-stat__n">{{ wa_pending }}</span>
+    <span class="desk-stat__l">WhatsApp to review</span>
+  </a>
   <a class="desk-stat{% if unread_messages %} desk-stat--alert{% endif %}" href="{% url 'desk:message_list' %}">
     <span class="desk-stat__n">{{ unread_messages }}</span>
     <span class="desk-stat__l">New messages</span>
@@ -42,18 +46,28 @@
       <strong>Products</strong>
       <span>Add, edit, hide, or update photos and shades</span>
     </a>
-    <a class="desk-action" href="{% url 'desk:order_list' %}">
+    <a class="desk-action" href="{% url 'desk:bundle_list' %}">
       <span class="desk-action__index" aria-hidden="true">02</span>
+      <strong>Bundles</strong>
+      <span>Build curated sets with the products you choose</span>
+    </a>
+    <a class="desk-action" href="{% url 'desk:order_list' %}">
+      <span class="desk-action__index" aria-hidden="true">03</span>
       <strong>Orders</strong>
       <span>Update status and tracking for every purchase</span>
     </a>
+    <a class="desk-action" href="{% url 'desk:whatsapp_lead_list' %}">
+      <span class="desk-action__index" aria-hidden="true">04</span>
+      <strong>WhatsApp leads</strong>
+      <span>Confirm sales, keep true enquiries, delete false alarms</span>
+    </a>
     <a class="desk-action" href="{% url 'desk:content_hub' %}">
-      <span class="desk-action__index" aria-hidden="true">03</span>
+      <span class="desk-action__index" aria-hidden="true">05</span>
       <strong>Site content</strong>
       <span>Homepage, journal, FAQs, quotes, and pages</span>
     </a>
     <a class="desk-action" href="{% url 'desk:message_list' %}">
-      <span class="desk-action__index" aria-hidden="true">04</span>
+      <span class="desk-action__index" aria-hidden="true">06</span>
       <strong>Messages</strong>
       <span>Reply to the contact form inbox</span>
     </a>

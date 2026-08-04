@@ -1,0 +1,115 @@
+{% extends "desk/base_desk.html" %}
+{% block title %}WhatsApp lead #{{ lead.pk }} — Store Manager{% endblock %}
+{% block content %}
+<section class="desk-hero">
+  <p class="desk-eyebrow">WhatsApp lead #{{ lead.pk }}</p>
+  <h1>Review this cart</h1>
+  <p>
+    Opened {{ created_at|date:"M j, Y H:i" }}.
+    {% if is_pending %}
+      Awaiting your triage — not counted as a sale until you confirm.
+    {% else %}
+      Saved as a true enquiry{% if lead.handled_at %} on {{ lead.handled_at|date:"M j, Y H:i" }}{% endif %}.
+    {% endif %}
+  </p>
+</section>
+
+<p><a class="btn btn--ghost" href="{% url 'desk:whatsapp_lead_list' %}">Back to leads</a></p>
+
+<section class="desk-panel">
+  <h2>Products they sent</h2>
+  <table class="desk-table">
+    <thead>
+      <tr><th>Product</th><th>Qty</th><th>Line</th></tr>
+    </thead>
+    <tbody>
+      {% for item in items %}
+      <tr>
+        <td>
+          {{ item.product_name }}
+          {% if item.variant_name %}<span class="desk-muted">({{ item.variant_name }})</span>{% endif %}
+        </td>
+        <td>{{ item.quantity }}</td>
+        <td>{{ SITE_CURRENCY_SYMBOL }} {{ item.line_total }}</td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="3">No lines on this lead.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  <p><strong>Subtotal:</strong> {{ SITE_CURRENCY_SYMBOL }} {{ lead.subtotal }}</p>
+  {% if lead.message_preview %}
+  <h3>WhatsApp draft</h3>
+  <pre class="desk-muted" style="white-space:pre-wrap">{{ lead.message_preview }}</pre>
+  {% endif %}
+</section>
+
+{% if is_pending %}
+<section class="desk-panel">
+  <h2>1. Confirm sale</h2>
+  <p class="desk-muted">Creates a real order (counts for ritual &amp; bundles), then removes this lead from the queue.</p>
+  <form class="desk-form" method="post">
+    {% csrf_token %}
+    <input type="hidden" name="action" value="confirm_sale">
+    {% for field in sale_form %}
+    <div>
+      <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+      {{ field }}
+      {% if field.help_text %}<span class="help">{{ field.help_text }}</span>{% endif %}
+      {{ field.errors }}
+    </div>
+    {% endfor %}
+    <button class="btn btn--primary" type="submit">Confirm as sale</button>
+  </form>
+</section>
+
+<section class="desk-panel">
+  <h2>2. True enquiry</h2>
+  <p class="desk-muted">You interacted with them, but no sale. Kept for history — not counted as sold units.</p>
+  <form class="desk-form" method="post">
+    {% csrf_token %}
+    <input type="hidden" name="action" value="true_enquiry">
+    {% for field in enquiry_form %}
+    <div>
+      <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+      {{ field }}
+      {{ field.errors }}
+    </div>
+    {% endfor %}
+    <button class="btn btn--ghost" type="submit">Save as true enquiry</button>
+  </form>
+</section>
+
+<section class="desk-panel desk-form--danger">
+  <h2>3. False alarm</h2>
+  <p class="desk-muted">No reply after you messaged — delete this pending lead from the database.</p>
+  <form method="post" onsubmit="return confirm('Delete this false alarm? It cannot be undone.');">
+    {% csrf_token %}
+    <input type="hidden" name="action" value="false_alarm">
+    <button class="btn btn--ghost" type="submit">Delete false alarm</button>
+  </form>
+</section>
+{% else %}
+<section class="desk-panel">
+  <h2>True enquiry</h2>
+  {% if lead.manager_note %}<p>{{ lead.manager_note|linebreaks }}</p>{% endif %}
+  <p class="desk-muted">Handled by {{ lead.handled_by|default:"staff" }}. If they later bought in chat, confirm as a sale below.</p>
+</section>
+<section class="desk-panel">
+  <h2>Convert to sale</h2>
+  <form class="desk-form" method="post">
+    {% csrf_token %}
+    <input type="hidden" name="action" value="confirm_sale">
+    {% for field in sale_form %}
+    <div>
+      <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+      {{ field }}
+      {% if field.help_text %}<span class="help">{{ field.help_text }}</span>{% endif %}
+      {{ field.errors }}
+    </div>
+    {% endfor %}
+    <button class="btn btn--primary" type="submit">Confirm as sale</button>
+  </form>
+</section>
+{% endif %}
+{% endblock %}

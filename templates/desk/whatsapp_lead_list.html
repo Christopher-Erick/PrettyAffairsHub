@@ -1,0 +1,55 @@
+{% extends "desk/base_desk.html" %}
+{% block title %}WhatsApp leads — Store Manager{% endblock %}
+{% block content %}
+<section class="desk-hero">
+  <p class="desk-eyebrow">WhatsApp</p>
+  <h1>WhatsApp leads</h1>
+  <p>
+    Carts opened via WhatsApp land here as a <strong>pending queue</strong> (not sales).
+    You choose: <strong>confirm sale</strong> (becomes an order), <strong>true enquiry</strong>
+    (kept for history), or <strong>false alarm</strong> (deleted).
+  </p>
+</section>
+
+<div class="desk-toolbar">
+  <a class="btn btn--ghost{% if show == 'pending' %} is-active{% endif %}" href="{% url 'desk:whatsapp_lead_list' %}?show=pending">
+    Awaiting review ({{ pending_count }})
+  </a>
+  <a class="btn btn--ghost{% if show == 'enquiry' %} is-active{% endif %}" href="{% url 'desk:whatsapp_lead_list' %}?show=enquiry">
+    True enquiries
+  </a>
+</div>
+
+<table class="desk-table">
+  <thead>
+    <tr>
+      <th>When</th>
+      <th>Items</th>
+      <th>Total</th>
+      <th>Status</th>
+      <th></th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for lead in leads %}
+    <tr>
+      <td>{{ lead.created_at|date:"M j, H:i" }}</td>
+      <td>{{ lead.item_count }}</td>
+      <td>{{ SITE_CURRENCY_SYMBOL }} {{ lead.subtotal }}</td>
+      <td>{% if lead.status == "pending" %}Awaiting review{% else %}True enquiry{% endif %}</td>
+      <td><a href="{% url 'desk:whatsapp_lead_detail' lead.pk %}">Review</a></td>
+    </tr>
+    {% empty %}
+    <tr>
+      <td colspan="5">
+        {% if show == "enquiry" %}
+          No true enquiries saved yet.
+        {% else %}
+          No WhatsApp carts waiting. New ones appear when a shopper opens WhatsApp order with items.
+        {% endif %}
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

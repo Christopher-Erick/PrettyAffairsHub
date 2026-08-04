@@ -1,9 +1,12 @@
 from django.contrib import messages
 from django.db.models import Count, Q
+from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse
 from django.views.decorators.http import require_POST
 from django.views.generic import DetailView, ListView
 from django.conf import settings
+import json
 
 from apps.catalog.cache import (
     cached_active_categories,
@@ -17,7 +20,10 @@ from apps.catalog.cache import (
     shop_product_qs,
 )
 from apps.catalog.models import Bundle, Category, Collection, Product
-from apps.catalog.services import get_recently_viewed_ids, track_product_view
+from apps.catalog.ritual import recommend_ritual
+from apps.catalog.services import get_recently_viewed_ids, track_product_view, track_shop_search
+from apps.core.http import is_same_origin_request
+from apps.core.ratelimit import rate_limit_exceeded
 from apps.core.smart_cache import get_or_set
 from apps.reviews.forms import ReviewForm
 from apps.reviews.models import Review
@@ -65,6 +71,7 @@ class ProductListView(ListView):
         flag = self.request.GET.get("flag")
 
         if q:
+            track_shop_search(self.request, q)
             qs = qs.filter(
                 Q(name__icontains=q)
                 | Q(short_description__icontains=q)
@@ -276,46 +283,42 @@ class BundleDetailView(DetailView):
 
 
 def ritual_builder(request):
-    products = list(
-        _shop_product_qs()
-        .prefetch_related("collections")
-        .order_by("-is_bestseller", "-is_featured", "name")[:24]
-    )
-    catalog = []
-    for product in products:
-        catalog.append(
-            {
-                "id": product.id,
-                "name": product.name,
-                "slug": product.slug,
-                "url": product.get_absolute_url(),
-                "price": float(product.price),
-                "stock": product.available_stock,
-                "in_stock": product.in_stock,
-                "is_low_stock": product.is_low_stock,
-                "categories": list(product.categories.values_list("slug", flat=True)),
-                "collections": list(product.collections.values_list("slug", flat=True)),
-                "flags": {
-                    "new": product.is_new,
-                    "bestseller": product.is_bestseller,
-                    "trending": product.is_trending,
-                    "featured": product.is_featured,
-                },
-                "image": (
-                    product.primary_image.image.url
-                    if product.primary_image and product.primary_image.image
-                    else ""
-                ),
-            }
-        )
     return render(
         request,
         "catalog/ritual_builder.html",
         {
-            "ritual_catalog": catalog,
             "currency_symbol": settings.SITE_CURRENCY_SYMBOL,
+            "ritual_recommend_url": reverse("catalog:ritual_recommend"),
         },
     )
+
+
+@require_POST
+def ritual_recommend(request):
+    if request.headers.get("X-Requested-With") != "XMLHttpRequest":
+        return JsonResponse({"ok": False, "message": "Invalid request."}, status=403)
+    if not is_same_origin_request(request):
+        return JsonResponse({"ok": False, "message": "Invalid request."}, status=403)
+    if rate_limit_exceeded(request, scope="ritual_recommend", limit=40, window_seconds=300):
+        return JsonResponse(
+            {"ok": False, "message": "Too many ritual builds — wait a moment and try again."},
+            status=429,
+        )
+
+    try:
+        payload = json.loads(request.body.decode("utf-8") or "{}")
+    except (TypeError, ValueError, UnicodeDecodeError):
+        payload = {}
+    if not isinstance(payload, dict):
+        payload = {}
+
+    occasion = str(payload.get("occasion") or request.POST.get("occasion") or "").strip()
+    focus = str(payload.get("focus") or request.POST.get("focus") or "").strip()
+    finish = str(payload.get("finish") or request.POST.get("finish") or "").strip()
+
+    result = recommend_ritual(request, occasion=occasion, focus=focus, finish=finish)
+    status = 200 if result.get("ok") else 400
+    return JsonResponse(result, status=status)
 
 
 @require_POST

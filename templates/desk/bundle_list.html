@@ -1,0 +1,54 @@
+{% extends "desk/base_desk.html" %}
+{% block title %}Bundles — Store Manager{% endblock %}
+{% block content %}
+<section class="desk-hero">
+  <p class="desk-eyebrow">Merchandising</p>
+  <h1>Bundles</h1>
+  <p>Build curated sets yourself, or let the desk suggest <strong>two strong sellers plus one quieter piece that complements them</strong>. Review before you publish.</p>
+</section>
+
+<div class="desk-toolbar">
+  <form class="desk-search" method="get" role="search">
+    <label class="visually-hidden" for="bundle-q">Search bundles</label>
+    <input class="field" id="bundle-q" type="search" name="q" value="{{ q }}" placeholder="Search by name…">
+    <select class="field" name="show" aria-label="Show">
+      <option value="all"{% if show == "all" %} selected{% endif %}>All</option>
+      <option value="live"{% if show == "live" %} selected{% endif %}>Live on shop</option>
+      <option value="hidden"{% if show == "hidden" %} selected{% endif %}>Hidden</option>
+    </select>
+    <button class="btn btn--ghost" type="submit">Filter</button>
+  </form>
+  <form method="post" action="{% url 'desk:bundle_suggest' %}">
+    {% csrf_token %}
+    <button class="btn btn--ghost" type="submit">Suggest bundle</button>
+  </form>
+  <a class="btn btn--primary" href="{% url 'desk:bundle_create' %}">New bundle</a>
+</div>
+
+<p class="desk-muted">Suggestions use confirmed order quantities when available. WhatsApp chats alone do not count until those sales are logged as orders.</p>
+
+<table class="desk-table">
+  <thead>
+    <tr>
+      <th>Name</th>
+      <th>Price</th>
+      <th>Items</th>
+      <th>Status</th>
+      <th></th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for bundle in bundles %}
+    <tr>
+      <td><a href="{% url 'desk:bundle_edit' bundle.pk %}">{{ bundle.name }}</a></td>
+      <td>{{ SITE_CURRENCY_SYMBOL }} {{ bundle.price }}</td>
+      <td>{{ bundle.items.count }}</td>
+      <td>{% if bundle.is_active %}Live{% else %}Hidden{% endif %}</td>
+      <td><a href="{% url 'desk:bundle_edit' bundle.pk %}">Edit</a></td>
+    </tr>
+    {% empty %}
+    <tr><td colspan="5">No bundles yet. Create the first curated set.</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

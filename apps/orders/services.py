@@ -90,6 +90,7 @@ def create_order_from_cart(request, cleaned_data):
         user=request.user if request.user.is_authenticated else None,
         email=cleaned_data["email"],
         phone=cleaned_data.get("phone", ""),
+        channel=Order.CHANNEL_WEBSITE,
         shipping_name=cleaned_data["shipping_name"],
         shipping_line1=cleaned_data["shipping_line1"],
         shipping_line2=cleaned_data.get("shipping_line2", ""),

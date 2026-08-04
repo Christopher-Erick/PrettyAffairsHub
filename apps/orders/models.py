@@ -21,6 +21,13 @@ class Order(models.Model):
         (STATUS_CANCELLED, "Cancelled"),
     ]
 
+    CHANNEL_WEBSITE = "website"
+    CHANNEL_WHATSAPP = "whatsapp"
+    CHANNEL_CHOICES = [
+        (CHANNEL_WEBSITE, "Website checkout"),
+        (CHANNEL_WHATSAPP, "WhatsApp"),
+    ]
+
     order_number = models.CharField(max_length=20, unique=True, editable=False)
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
@@ -32,6 +39,12 @@ class Order(models.Model):
     email = models.EmailField()
     phone = models.CharField(max_length=32, blank=True)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default=STATUS_PENDING)
+    channel = models.CharField(
+        max_length=20,
+        choices=CHANNEL_CHOICES,
+        default=CHANNEL_WEBSITE,
+        db_index=True,
+    )
     tracking_code = models.CharField(max_length=64, blank=True)
     shipping_name = models.CharField(max_length=120)
     shipping_line1 = models.CharField(max_length=200)
@@ -95,3 +108,56 @@ class OrderEvent(models.Model):
     @property
     def status_label(self):
         return dict(Order.STATUS_CHOICES).get(self.status, self.status.replace("_", " ").title())
+
+
+class WhatsAppLead(models.Model):
+    """WhatsApp cart queue for manager triage.
+
+    - pending: awaiting review (work queue, not a sale)
+    - true_enquiry: manager confirmed real engagement, no sale
+    Sales become Order rows; false alarms delete the pending row.
+    """
+
+    STATUS_PENDING = "pending"
+    STATUS_TRUE_ENQUIRY = "true_enquiry"
+    STATUS_CHOICES = [
+        (STATUS_PENDING, "Awaiting review"),
+        (STATUS_TRUE_ENQUIRY, "True enquiry"),
+    ]
+
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        null=True,
+        blank=True,
+        related_name="whatsapp_leads",
+        on_delete=models.SET_NULL,
+    )
+    session_key = models.CharField(max_length=40, blank=True, db_index=True)
+    fingerprint = models.CharField(max_length=64, db_index=True)
+    items_json = models.JSONField(default=list)
+    item_count = models.PositiveIntegerField(default=0)
+    subtotal = models.DecimalField(max_digits=10, decimal_places=2, default=Decimal("0"))
+    message_preview = models.TextField(blank=True)
+    status = models.CharField(
+        max_length=20,
+        choices=STATUS_CHOICES,
+        default=STATUS_PENDING,
+        db_index=True,
+    )
+    manager_note = models.TextField(blank=True)
+    handled_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        null=True,
+        blank=True,
+        related_name="handled_whatsapp_leads",
+        on_delete=models.SET_NULL,
+    )
+    handled_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return f"WA lead #{self.pk} ({self.status})"

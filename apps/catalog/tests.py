@@ -132,3 +132,64 @@ class CategoryRuleTests(SimpleTestCase):
     def test_lip_products_are_unaffected(self):
         self.assertEqual(category_for("Gisou Honey Infused Lip Oil"), "Lip Oil")
         self.assertEqual(category_for("Fenty Beauty Gloss Bomb"), "Lip Gloss")
+
+
+class RitualRecommendTests(TestCase):
+    def setUp(self):
+        from apps.catalog.models import Category
+
+        lips = Category.objects.create(name="Lips", slug="lips")
+        gloss = Category.objects.create(name="Lip Gloss", slug="lip-gloss", parent=lips)
+        self.p1 = Product.objects.create(
+            name="Ritual Gloss One",
+            price="1200.00",
+            stock=8,
+            is_active=True,
+            is_bestseller=True,
+        )
+        self.p1.categories.add(gloss)
+        self.p2 = Product.objects.create(
+            name="Ritual Gloss Two",
+            price="1400.00",
+            stock=6,
+            is_active=True,
+            is_featured=True,
+        )
+        self.p2.categories.add(gloss)
+        self.p3 = Product.objects.create(
+            name="Ritual Gloss Three",
+            price="1600.00",
+            stock=4,
+            is_active=True,
+        )
+        self.p3.categories.add(gloss)
+
+    def test_recommend_requires_xhr(self):
+        url = reverse("catalog:ritual_recommend")
+        response = self.client.post(
+            url,
+            data='{"occasion":"everyday","focus":"lips","finish":"gloss"}',
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 403)
+
+    def test_recommend_returns_trio(self):
+        url = reverse("catalog:ritual_recommend")
+        response = self.client.post(
+            url,
+            data='{"occasion":"everyday","focus":"lips","finish":"gloss"}',
+            content_type="application/json",
+            HTTP_X_REQUESTED_WITH="XMLHttpRequest",
+            HTTP_HOST="testserver",
+        )
+        self.assertEqual(response.status_code, 200)
+        payload = response.json()
+        self.assertTrue(payload["ok"])
+        self.assertEqual(len(payload["products"]), 3)
+        self.assertTrue(payload["summary"])
+
+    def test_shop_search_is_tracked(self):
+        response = self.client.get(reverse("catalog:shop"), {"q": "gloss"})
+        self.assertEqual(response.status_code, 200)
+        session = self.client.session
+        self.assertIn("gloss", session.get("recent_searches", []))

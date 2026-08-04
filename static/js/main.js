@@ -716,7 +716,7 @@
               return clearData;
             }
             updateCartCount(0);
-            showToast("Order opened in WhatsApp — your cart is cleared.", "success", 4200);
+            showToast("Order opened in WhatsApp — your cart is cleared. Our desk will review it.", "success", 4200);
             if (/\/cart\/?$/.test(window.location.pathname)) {
               window.setTimeout(() => window.location.reload(), 500);
             }

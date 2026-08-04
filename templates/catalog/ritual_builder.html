@@ -1,16 +1,16 @@
 {% extends "base.html" %}
 {% block title %}Build your ritual — {{ SITE_NAME }}{% endblock %}
-{% block meta_description %}Answer three questions and get a curated 3-piece beauty ritual.{% endblock %}
+{% block meta_description %}Answer three questions and get a curated 3-piece beauty ritual shaped around your day and what you’ve been exploring.{% endblock %}
 
 {% block content %}
 <section class="ritual-hero">
   <div class="ritual-hero__glow" aria-hidden="true"></div>
   <p class="eyebrow">Your personal edit</p>
   <h1 class="ritual-hero__title">Build your ritual</h1>
-  <p class="ritual-hero__text">One answer at a time. Your trio only appears after all three moods are set.</p>
+  <p class="ritual-hero__text">One answer at a time. We shape your trio from your mood, the time of day, and what you’ve been exploring in the shop.</p>
 </section>
 
-<section class="section ritual" data-ritual>
+<section class="section ritual" data-ritual data-ritual-url="{{ ritual_recommend_url }}">
   <div class="ritual-path" data-ritual-path aria-label="Ritual progress">
     <p class="ritual-path__status" data-ritual-status>Step 1 of 3 — choose your occasion</p>
     <ol class="ritual-path__track">
@@ -69,7 +69,7 @@
       </button>
       <button type="button" class="ritual__choice" data-choice="focus" data-value="eyes">
         <span class="ritual__choice-label">Eye story</span>
-        <span class="ritual__choice-note">Shadow, definition, a little drama</span>
+        <span class="ritual__choice-note">Lashes, definition, a little drama</span>
       </button>
       <button type="button" class="ritual__choice" data-choice="focus" data-value="full">
         <span class="ritual__choice-label">Full face</span>
@@ -119,8 +119,6 @@
     </form>
   </div>
 </section>
-
-{{ ritual_catalog|json_script:"ritual-catalog-data" }}
 {% endblock %}
 
 {% block extra_js %}
@@ -129,9 +127,13 @@
   const root = document.querySelector("[data-ritual]");
   if (!root) return;
 
-  const catalog = JSON.parse(document.getElementById("ritual-catalog-data").textContent || "[]");
+  const recommendUrl = root.dataset.ritualUrl || "";
   const symbol = "{{ currency_symbol|escapejs }}";
   const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const csrfToken =
+    document.querySelector("[data-ritual-form] input[name=csrfmiddlewaretoken]")?.value ||
+    document.querySelector("input[name=csrfmiddlewaretoken]")?.value ||
+    "";
 
   const STEP_KEYS = { 1: "occasion", 2: "focus", 3: "finish" };
   const LABELS = {
@@ -156,6 +158,7 @@
   let step = 1;
   let advanceTimer = null;
   let locked = false;
+  let recommendAbort = null;
 
   const panels = [...root.querySelectorAll("[data-ritual-panel]")];
   const nodes = [...root.querySelectorAll("[data-path-node]")];
@@ -180,6 +183,10 @@
   };
 
   const clearResults = () => {
+    if (recommendAbort) {
+      recommendAbort.abort();
+      recommendAbort = null;
+    }
     if (results) results.innerHTML = "";
     if (inputs) inputs.innerHTML = "";
     if (summary) summary.textContent = "";
@@ -198,7 +205,6 @@
     });
   };
 
-  /** Wipe answers from `fromStep` onward (inclusive) and clear their UI. */
   const clearFromStep = (fromStep) => {
     for (let s = fromStep; s <= 3; s += 1) {
       const key = STEP_KEYS[s];
@@ -257,8 +263,6 @@
     return (Number.isFinite(parsed) ? parsed : 68) + 8;
   };
 
-  /** Scroll progress + current step into view. Avoid scrollIntoView on sticky nodes —
-   * after tall results collapse they report a stuck rect and leave you at the footer. */
   const scrollToGuide = () => {
     const behavior = reduceMotion ? "auto" : "smooth";
     const run = () => {
@@ -284,56 +288,11 @@
     if (scroll) scrollToGuide();
   };
 
-  /** Back / edit: land on target step with that answer cleared so they pick again. */
   const goBackTo = (targetStep) => {
     cancelAdvance();
     const dest = Math.max(1, Math.min(3, targetStep));
     clearFromStep(dest);
     showStep(dest, { scroll: true });
-  };
-
-  const scoreProduct = (p) => {
-    let score = 0;
-    const cats = p.categories || [];
-    const cols = p.collections || [];
-    if (answers.occasion === "everyday" && cols.includes("everyday-nudes")) score += 4;
-    if (answers.occasion === "bold" && cols.includes("bold-reds")) score += 4;
-    if (answers.occasion === "evening" && (p.flags.bestseller || p.flags.trending)) score += 3;
-    if (answers.focus === "lips" && ["lipstick", "lip-gloss", "lip-oils"].some((c) => cats.includes(c))) score += 5;
-    if (answers.focus === "eyes" && cats.includes("eye-shadow")) score += 6;
-    if (answers.focus === "full") score += 2;
-    if (answers.finish === "gloss" && cats.includes("lip-gloss")) score += 4;
-    if (answers.finish === "soft" && cats.includes("lip-oils")) score += 4;
-    if (answers.finish === "matte" && cats.includes("lipstick")) score += 4;
-    if (p.flags.featured) score += 1;
-    if (p.in_stock) score += 2;
-    return score;
-  };
-
-  const pickRitual = () => {
-    if (!answers.occasion || !answers.focus || !answers.finish) return [];
-
-    const ranked = [...catalog]
-      .filter((p) => p.in_stock)
-      .map((p) => ({ ...p, score: scoreProduct(p) }))
-      .sort((a, b) => b.score - a.score || a.price - b.price);
-
-    const picked = [];
-    const usedCats = new Set();
-    for (const item of ranked) {
-      if (picked.length >= 3) break;
-      const primary = item.categories[0] || item.name;
-      if (answers.focus !== "full" && usedCats.has(primary) && picked.length < 2) continue;
-      if (picked.some((x) => x.id === item.id)) continue;
-      picked.push(item);
-      usedCats.add(primary);
-    }
-    while (picked.length < 3 && ranked.length) {
-      const next = ranked.find((p) => !picked.some((x) => x.id === p.id));
-      if (!next) break;
-      picked.push(next);
-    }
-    return picked.slice(0, 3);
   };
 
   const escapeHtml = (str) =>
@@ -343,19 +302,14 @@
       .replace(/>/g, "&gt;")
       .replace(/"/g, "&quot;");
 
-  const renderResults = () => {
-    const picked = pickRitual();
-    if (!picked.length && (!answers.occasion || !answers.focus || !answers.finish)) {
-      clearResults();
-      return;
-    }
-
-    summary.textContent = `A ${LABELS[answers.occasion].toLowerCase()} · ${LABELS[answers.focus].toLowerCase()} · ${LABELS[answers.finish].toLowerCase()} ritual — curated just for you.`;
+  const paintResults = (payload) => {
+    const picked = payload.products || [];
+    summary.textContent =
+      payload.summary ||
+      `A ${LABELS[answers.occasion].toLowerCase()} · ${LABELS[answers.focus].toLowerCase()} · ${LABELS[answers.finish].toLowerCase()} ritual.`;
     results.innerHTML = "";
     inputs.innerHTML = "";
-    let total = 0;
     picked.forEach((p, i) => {
-      total += p.price;
       const card = document.createElement("article");
       card.className = "ritual__result";
       card.style.setProperty("--reveal-delay", `${i * 90}ms`);
@@ -378,12 +332,60 @@
       input.value = String(p.id);
       inputs.appendChild(input);
     });
+    const total = Number(payload.total || 0);
     totalEl.textContent = `${symbol} ${Math.round(total)}`;
     saveEl.hidden = false;
     saveEl.textContent = picked.length
       ? "Your trio is ready — add all three without leaving this page."
       : "No in-stock matches yet. Go back and try another combination.";
     addBtn.disabled = picked.length === 0;
+  };
+
+  const fetchRitual = async () => {
+    if (!recommendUrl || !answers.occasion || !answers.focus || !answers.finish) {
+      clearResults();
+      return;
+    }
+    if (recommendAbort) recommendAbort.abort();
+    recommendAbort = new AbortController();
+    if (summary) summary.textContent = "Reading your mood and what you’ve been exploring…";
+    if (addBtn) addBtn.disabled = true;
+
+    try {
+      const response = await fetch(recommendUrl, {
+        method: "POST",
+        credentials: "same-origin",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+          "X-Requested-With": "XMLHttpRequest",
+          "X-CSRFToken": csrfToken,
+        },
+        body: JSON.stringify({
+          occasion: answers.occasion,
+          focus: answers.focus,
+          finish: answers.finish,
+        }),
+        signal: recommendAbort.signal,
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok || !data.ok) {
+        if (summary) {
+          summary.textContent =
+            data.message || "We couldn’t build that ritual just now. Try again in a moment.";
+        }
+        if (results) results.innerHTML = "";
+        if (addBtn) addBtn.disabled = true;
+        return;
+      }
+      paintResults(data);
+    } catch (err) {
+      if (err && err.name === "AbortError") return;
+      if (summary) summary.textContent = "We couldn’t build that ritual just now. Try again.";
+      if (addBtn) addBtn.disabled = true;
+    } finally {
+      recommendAbort = null;
+    }
   };
 
   const advanceFrom = (fromStep) => {
@@ -396,7 +398,6 @@
       advanceTimer = null;
       locked = false;
       root.classList.remove("is-advancing");
-      // Ignore stale advances if user navigated away meanwhile.
       if (step !== fromStep) return;
 
       if (fromStep < 3) {
@@ -404,8 +405,8 @@
         return;
       }
       if (!answers.occasion || !answers.focus || !answers.finish) return;
-      renderResults();
       showStep(4);
+      fetchRitual();
     }, delay);
   };
 
@@ -419,7 +420,6 @@
       if (!expectedKey || key !== expectedKey) return;
 
       answers[key] = btn.dataset.value;
-      // Clear any later answers if they re-picked on an earlier revisit.
       clearFromStep(step + 1);
       answers[key] = btn.dataset.value;
 

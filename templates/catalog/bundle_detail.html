@@ -8,9 +8,12 @@
   </p>
   <p>{{ bundle.description|linebreaks }}</p>
   <h2 class="section__title">Includes</h2>
+  <p class="section__intro">Hand-picked pieces in this edit — chosen by our desk, not auto-filled.</p>
   <div class="product-grid">
     {% for item in bundle.items.all %}
       {% with product=item.product %}{% include "components/product_card.html" %}{% endwith %}
+    {% empty %}
+      <p>This bundle has no products yet.</p>
     {% endfor %}
   </div>
 </section>

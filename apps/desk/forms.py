@@ -1,6 +1,7 @@
 from django import forms
+from django.forms import inlineformset_factory
 
-from apps.catalog.models import Brand, Category, Product, ProductVariant
+from apps.catalog.models import Brand, Bundle, BundleItem, Category, Product, ProductVariant
 from apps.content.models import (
     BlogPost,
     ContactMessage,
@@ -245,3 +246,118 @@ class ContactReplyForm(forms.Form):
             }
         ),
     )
+
+
+class WhatsAppTrueEnquiryForm(forms.Form):
+    manager_note = forms.CharField(
+        required=False,
+        label="Note (optional)",
+        widget=forms.Textarea(
+            attrs={
+                "class": "field",
+                "rows": 3,
+                "placeholder": "What you learned from the chat…",
+            }
+        ),
+    )
+
+
+class WhatsAppConfirmSaleForm(forms.Form):
+    shipping_name = forms.CharField(label="Customer name", max_length=120)
+    phone = forms.CharField(label="WhatsApp / phone", max_length=32)
+    email = forms.EmailField(
+        label="Email",
+        help_text="Used for order records. You can use a placeholder if they only chatted.",
+    )
+    shipping_city = forms.CharField(label="City", max_length=100, initial="Nairobi")
+    shipping_line1 = forms.CharField(
+        label="Delivery address",
+        max_length=200,
+        required=False,
+        initial="WhatsApp order",
+    )
+    status = forms.ChoiceField(
+        label="Order status",
+        choices=[
+            ("paid", "Paid"),
+            ("processing", "Processing"),
+            ("pending", "Pending"),
+        ],
+        initial="paid",
+    )
+    notes = forms.CharField(
+        required=False,
+        label="Internal notes",
+        widget=forms.Textarea(attrs={"class": "field", "rows": 2}),
+    )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for name, field in self.fields.items():
+            if name == "notes":
+                continue
+            css = field.widget.attrs.get("class", "")
+            field.widget.attrs["class"] = f"{css} field".strip()
+
+
+def _desk_product_choices():
+    return get_or_set(
+        versioned_key("desk:product_choices"),
+        lambda: [
+            (p.pk, p.name)
+            for p in Product.objects.filter(is_active=True).order_by("name").only("id", "name")
+        ],
+    )
+
+
+class BundleForm(forms.ModelForm):
+    class Meta:
+        model = Bundle
+        fields = [
+            "name",
+            "description",
+            "price",
+            "compare_at_price",
+            "is_active",
+        ]
+        labels = {
+            "is_active": "Show on the shop",
+            "compare_at_price": "Was price (optional)",
+            "description": "What’s in this edit",
+        }
+        widgets = {
+            "description": forms.Textarea(attrs={"rows": 4}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for name, field in self.fields.items():
+            if name == "is_active":
+                continue
+            field.widget.attrs["class"] = "field"
+
+
+class BundleItemForm(forms.ModelForm):
+    class Meta:
+        model = BundleItem
+        fields = ["product", "quantity"]
+        labels = {"quantity": "Qty"}
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        product_choices = [("", "---------")] + list(_desk_product_choices())
+        self.fields["product"]._choices = product_choices
+        self.fields["product"].queryset = Product.objects.filter(is_active=True).only("id", "name")
+        for field in self.fields.values():
+            field.widget.attrs["class"] = "field"
+
+
+BundleItemFormSet = inlineformset_factory(
+    Bundle,
+    BundleItem,
+    form=BundleItemForm,
+    extra=3,
+    can_delete=True,
+    min_num=1,
+    validate_min=True,
+)

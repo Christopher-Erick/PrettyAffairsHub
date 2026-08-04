@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import Order, OrderEvent, OrderItem
+from .models import Order, OrderEvent, OrderItem, WhatsAppLead
 
 
 class OrderItemInline(admin.TabularInline):
@@ -17,8 +17,8 @@ class OrderEventInline(admin.TabularInline):
 
 @admin.register(Order)
 class OrderAdmin(admin.ModelAdmin):
-    list_display = ("order_number", "email", "status", "is_gift", "total", "created_at")
-    list_filter = ("status", "is_gift", "created_at")
+    list_display = ("order_number", "email", "channel", "status", "is_gift", "total", "created_at")
+    list_filter = ("status", "channel", "is_gift", "created_at")
     search_fields = ("order_number", "email", "tracking_code", "shipping_name", "gift_note")
     inlines = [OrderItemInline, OrderEventInline]
     readonly_fields = ("order_number", "created_at", "updated_at")
@@ -27,6 +27,7 @@ class OrderAdmin(admin.ModelAdmin):
         "user",
         "email",
         "phone",
+        "channel",
         "status",
         "tracking_code",
         "shipping_name",
@@ -48,3 +49,11 @@ class OrderAdmin(admin.ModelAdmin):
         "created_at",
         "updated_at",
     )
+
+
+@admin.register(WhatsAppLead)
+class WhatsAppLeadAdmin(admin.ModelAdmin):
+    list_display = ("id", "status", "item_count", "subtotal", "created_at", "handled_at")
+    list_filter = ("status", "created_at")
+    search_fields = ("session_key", "message_preview", "manager_note")
+    readonly_fields = ("fingerprint", "items_json", "created_at", "updated_at", "handled_at")

@@ -225,10 +225,17 @@ def cart_order_preview(request):
         message = "Hi Pretty Affairs Hub — I'd like to place an order."
         count = 0
         total = Decimal("0")
+        lead_id = None
     else:
         message, count, total = build_whatsapp_order_message(
             cart, currency_symbol=settings.SITE_CURRENCY_SYMBOL
         )
+        lead_id = None
+        if count > 0:
+            from apps.orders.whatsapp_leads import capture_whatsapp_lead
+
+            lead = capture_whatsapp_lead(request, cart, message=message)
+            lead_id = lead.pk if lead else None
     return JsonResponse(
         {
             "ok": True,
@@ -237,6 +244,7 @@ def cart_order_preview(request):
             "total": str(total),
             "cart_count": _cart_count(request),
             "has_items": count > 0,
+            "lead_id": lead_id,
         }
     )
 

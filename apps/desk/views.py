@@ -5,7 +5,7 @@ from django.urls import reverse
 from django.utils.text import slugify
 from django.views.decorators.http import require_POST
 
-from apps.catalog.models import Product, ProductImage, ProductVariant
+from apps.catalog.models import Bundle, Product, ProductImage, ProductVariant
 from apps.content.models import (
     BlogPost,
     ContactMessage,
@@ -17,6 +17,8 @@ from apps.content.models import (
 from apps.desk.decorators import store_manager_required
 from apps.desk.forms import (
     BlogPostForm,
+    BundleForm,
+    BundleItemFormSet,
     ContactReplyForm,
     FAQForm,
     FlashSaleForm,
@@ -26,10 +28,17 @@ from apps.desk.forms import (
     SitePageForm,
     TestimonialForm,
     VariantForm,
+    WhatsAppConfirmSaleForm,
+    WhatsAppTrueEnquiryForm,
 )
 from apps.discounts.models import FlashSale
-from apps.orders.models import Order, OrderEvent
-
+from apps.orders.models import Order, OrderEvent, WhatsAppLead
+from apps.orders.whatsapp_leads import (
+    confirm_whatsapp_sale,
+    delete_false_alarm,
+    mark_true_enquiry,
+    pending_count,
+)
 
 @store_manager_required
 def home(request):
@@ -39,6 +48,7 @@ def home(request):
     live_products = Product.objects.filter(is_active=True).count()
     low_stock = sum(1 for p in Product.objects.filter(is_active=True).prefetch_related("variants") if p.is_low_stock)
     unread = ContactMessage.objects.filter(is_handled=False).count()
+    wa_pending = pending_count()
     return render(
         request,
         "desk/home.html",
@@ -47,6 +57,7 @@ def home(request):
             "live_products": live_products,
             "low_stock": low_stock,
             "unread_messages": unread,
+            "wa_pending": wa_pending,
         },
     )
 
@@ -558,5 +569,223 @@ def message_detail(request, pk):
             "item": obj,
             "reply_form": reply_form,
             "show_reply_form": show_reply_form or bool(reply_form.errors),
+        },
+    )
+
+
+@store_manager_required
+def bundle_list(request):
+    q = (request.GET.get("q") or "").strip()
+    show = (request.GET.get("show") or "all").strip().lower()
+    bundles = Bundle.objects.prefetch_related("items").order_by("name")
+    if q:
+        bundles = bundles.filter(Q(name__icontains=q) | Q(description__icontains=q))
+    if show == "live":
+        bundles = bundles.filter(is_active=True)
+    elif show == "hidden":
+        bundles = bundles.filter(is_active=False)
+    return render(
+        request,
+        "desk/bundle_list.html",
+        {
+            "bundles": bundles,
+            "q": q,
+            "show": show,
+        },
+    )
+
+
+def _save_bundle(request, bundle=None):
+    form = BundleForm(request.POST or None, instance=bundle)
+    formset = BundleItemFormSet(request.POST or None, instance=bundle)
+    if request.method == "POST" and form.is_valid() and formset.is_valid():
+        obj = form.save()
+        formset.instance = obj
+        formset.save()
+        messages.success(request, f"Saved bundle “{obj.name}”.")
+        return redirect("desk:bundle_edit", pk=obj.pk), None, None
+    return None, form, formset
+
+
+@store_manager_required
+def bundle_create(request):
+    redirect_response, form, formset = _save_bundle(request)
+    if redirect_response:
+        return redirect_response
+    return render(
+        request,
+        "desk/bundle_form.html",
+        {"form": form, "formset": formset, "bundle": None},
+    )
+
+
+@store_manager_required
+def bundle_edit(request, pk):
+    bundle = get_object_or_404(
+        Bundle.objects.prefetch_related("items__product"),
+        pk=pk,
+    )
+    redirect_response, form, formset = _save_bundle(request, bundle)
+    if redirect_response:
+        return redirect_response
+    return render(
+        request,
+        "desk/bundle_form.html",
+        {
+            "form": form,
+            "formset": formset,
+            "bundle": bundle,
+            "delete_url": reverse("desk:bundle_delete", args=[pk]),
+        },
+    )
+
+
+@store_manager_required
+@require_POST
+def bundle_suggest(request):
+    """Create a draft bundle: 2 hot sellers + 1 slower complementary lift."""
+    from apps.catalog.bundle_suggest import suggest_hot_and_slow_trio
+    from apps.catalog.models import BundleItem
+
+    suggestion = suggest_hot_and_slow_trio()
+    products = suggestion.get("products") or []
+    if len(products) < 2:
+        messages.error(request, "Need more in-stock products before we can suggest a bundle.")
+        return redirect("desk:bundle_list")
+
+    bundle = Bundle.objects.create(
+        name=suggestion["name"],
+        description="\n".join(suggestion.get("reasons") or []),
+        price=suggestion["price"],
+        compare_at_price=suggestion.get("compare_at"),
+        is_active=False,
+    )
+    for product in products:
+        BundleItem.objects.create(bundle=bundle, product=product, quantity=1)
+
+    messages.success(
+        request,
+        "Draft bundle suggested (hidden). Review the products and price, then set it live.",
+    )
+    return redirect("desk:bundle_edit", pk=bundle.pk)
+
+
+@store_manager_required
+@require_POST
+def bundle_delete(request, pk):
+    bundle = get_object_or_404(Bundle, pk=pk)
+    name = bundle.name
+    bundle.delete()
+    messages.success(request, f"Deleted bundle “{name}”.")
+    return redirect("desk:bundle_list")
+
+
+@store_manager_required
+def whatsapp_lead_list(request):
+    show = (request.GET.get("show") or "pending").strip().lower()
+    leads = WhatsAppLead.objects.select_related("user", "handled_by")
+    if show == "enquiry":
+        leads = leads.filter(status=WhatsAppLead.STATUS_TRUE_ENQUIRY)
+    else:
+        show = "pending"
+        leads = leads.filter(status=WhatsAppLead.STATUS_PENDING)
+    return render(
+        request,
+        "desk/whatsapp_lead_list.html",
+        {
+            "leads": leads[:100],
+            "show": show,
+            "pending_count": pending_count(),
+        },
+    )
+
+
+@store_manager_required
+def whatsapp_lead_detail(request, pk):
+    lead = get_object_or_404(
+        WhatsAppLead.objects.select_related("user", "handled_by"),
+        pk=pk,
+    )
+    is_pending = lead.status == WhatsAppLead.STATUS_PENDING
+    sale_form = WhatsAppConfirmSaleForm(
+        initial={
+            "shipping_name": (
+                lead.user.get_full_name()
+                if lead.user_id and lead.user.get_full_name()
+                else ""
+            ),
+            "email": lead.user.email if lead.user_id and lead.user.email else "",
+        }
+    )
+    enquiry_form = WhatsAppTrueEnquiryForm()
+
+    if request.method == "POST":
+        action = (request.POST.get("action") or "").strip()
+        if action == "false_alarm":
+            if not is_pending:
+                messages.error(request, "Only awaiting leads can be cleared as false alarms.")
+            else:
+                delete_false_alarm(lead)
+                messages.success(
+                    request,
+                    "False alarm deleted — removed from the queue.",
+                )
+            return redirect("desk:whatsapp_lead_list")
+
+        if action == "true_enquiry":
+            if not is_pending:
+                messages.error(request, "Only awaiting leads can be saved as true enquiries.")
+                return redirect("desk:whatsapp_lead_detail", pk=pk)
+            enquiry_form = WhatsAppTrueEnquiryForm(request.POST)
+            if enquiry_form.is_valid():
+                mark_true_enquiry(
+                    lead,
+                    manager=request.user,
+                    note=enquiry_form.cleaned_data.get("manager_note") or "",
+                )
+                messages.success(
+                    request,
+                    "Marked as a true enquiry. Kept for history — not counted as a sale.",
+                )
+                return redirect("desk:whatsapp_lead_list")
+            messages.error(request, "Could not save the enquiry note.")
+
+        elif action == "confirm_sale":
+            if lead.status not in {
+                WhatsAppLead.STATUS_PENDING,
+                WhatsAppLead.STATUS_TRUE_ENQUIRY,
+            }:
+                messages.error(request, "This lead cannot be confirmed as a sale.")
+                return redirect("desk:whatsapp_lead_list")
+            sale_form = WhatsAppConfirmSaleForm(request.POST)
+            if sale_form.is_valid():
+                try:
+                    order = confirm_whatsapp_sale(
+                        lead,
+                        manager=request.user,
+                        cleaned_data=sale_form.cleaned_data,
+                    )
+                except ValueError as exc:
+                    messages.error(request, str(exc))
+                else:
+                    messages.success(
+                        request,
+                        f"WhatsApp sale confirmed as {order.order_number}. "
+                        "Saved as an order — counts for ritual and bundles.",
+                    )
+                    return redirect("desk:order_detail", order_number=order.order_number)
+            else:
+                messages.error(request, "Check the sale details and try again.")
+
+    return render(
+        request,
+        "desk/whatsapp_lead_detail.html",
+        {
+            "lead": lead,
+            "is_pending": is_pending,
+            "created_at": lead.created_at,
+            "sale_form": sale_form,
+            "enquiry_form": enquiry_form,
+            "items": lead.items_json or [],
         },
     )
