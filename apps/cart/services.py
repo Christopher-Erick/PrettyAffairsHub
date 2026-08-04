@@ -315,6 +315,77 @@ def build_whatsapp_bundle_enquiry(bundle: Bundle, currency_symbol="KSh"):
     return "\n".join(lines)
 
 
+def build_whatsapp_ritual_order(
+    products,
+    *,
+    occasion: str = "",
+    focus: str = "",
+    finish: str = "",
+    currency_symbol="KSh",
+):
+    """WA draft for a completed ritual trio — prices/names from the DB only."""
+    labels = {
+        "everyday": "Everyday soft",
+        "evening": "Evening glow",
+        "bold": "Bold statement",
+        "lips": "Lips first",
+        "eyes": "Eye story",
+        "full": "Full face",
+        "matte": "Matte",
+        "gloss": "Gloss & shine",
+        "soft": "Soft & nourishing",
+    }
+    mood = " · ".join(
+        labels.get(key, key)
+        for key in (occasion, focus, finish)
+        if key
+    )
+    lines = ["Hi Pretty Affairs Hub — I'd like to order my ritual edit:", ""]
+    if mood:
+        lines.append(f"Mood: {mood}")
+        lines.append("")
+    total = Decimal("0")
+    for product in products:
+        unit = product.price
+        total += unit
+        price = int(unit) if unit == unit.to_integral_value() else unit
+        lines.append(f"- {product.name} x 1 — {currency_symbol} {price}")
+    total_fmt = int(total) if total == total.to_integral_value() else total
+    lines.extend(
+        [
+            "",
+            f"Total: {currency_symbol} {total_fmt}",
+            "",
+            "Please confirm availability and payment. Thank you!",
+        ]
+    )
+    return "\n".join(lines), len(products), total
+
+
+def ritual_products_snapshot(products) -> tuple[list[dict], int, Decimal]:
+    """Lead snapshot rows for a ritual trio (no cart mutation)."""
+    rows = []
+    total = Decimal("0")
+    for product in products:
+        unit = product.price
+        total += unit
+        rows.append(
+            {
+                "product_id": product.id,
+                "variant_id": None,
+                "product_name": product.name,
+                "variant_name": "",
+                "sku": product.sku or "",
+                "quantity": 1,
+                "unit_price": str(unit),
+                "line_total": str(unit),
+                "is_bundle": False,
+                "is_ritual": True,
+            }
+        )
+    return rows, len(rows), total
+
+
 def cart_totals(cart, discount_amount=Decimal("0"), shipping_amount=Decimal("0"), tax_rate=Decimal("0")):
     subtotal = cart.subtotal
     taxable = max(subtotal - discount_amount, Decimal("0"))

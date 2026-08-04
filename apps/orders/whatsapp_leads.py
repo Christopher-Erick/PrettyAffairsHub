@@ -109,7 +109,25 @@ def capture_whatsapp_lead(request, cart, *, message: str = "") -> WhatsAppLead |
     items, count, subtotal = cart_items_snapshot(cart)
     if not items:
         return None
+    return _persist_whatsapp_lead(request, items=items, count=count, subtotal=subtotal, message=message)
 
+
+def capture_whatsapp_lead_from_items(
+    request, items: list[dict], *, message: str = ""
+) -> WhatsAppLead | None:
+    """Save a pending lead from a validated product snapshot (e.g. ritual)."""
+    if not items:
+        return None
+    count = sum(int(row.get("quantity") or 0) for row in items)
+    subtotal = sum((Decimal(str(row.get("line_total") or 0)) for row in items), Decimal("0"))
+    if count < 1:
+        return None
+    return _persist_whatsapp_lead(
+        request, items=items, count=count, subtotal=subtotal, message=message
+    )
+
+
+def _persist_whatsapp_lead(request, *, items, count, subtotal, message: str = "") -> WhatsAppLead:
     fingerprint = _fingerprint_for_items(items)
     session_key = ""
     session = getattr(request, "session", None)

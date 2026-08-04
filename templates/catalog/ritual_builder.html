@@ -2,6 +2,10 @@
 {% block title %}Build your ritual — {{ SITE_NAME }}{% endblock %}
 {% block meta_description %}Answer three questions and get a curated 3-piece beauty ritual shaped around your day and what you’ve been exploring.{% endblock %}
 
+{% block whatsapp_fab %}
+{% include "partials/whatsapp.html" with wa_order_context="my ritual edit" %}
+{% endblock %}
+
 {% block content %}
 <section class="ritual-hero">
   <div class="ritual-hero__glow" aria-hidden="true"></div>
@@ -134,7 +138,17 @@
       <input type="hidden" name="next" value="{% url 'catalog:ritual_builder' %}">
       <div data-ritual-inputs></div>
       <div class="ritual__actions">
-        <button class="btn btn--primary" type="submit" data-ritual-add disabled>Add ritual to cart</button>
+        {% if WHATSAPP_NUMBER %}
+        <button
+          class="btn btn--primary"
+          type="button"
+          data-ritual-wa
+          data-wa-number="{{ WHATSAPP_NUMBER }}"
+          data-preview-url="{% url 'cart:order_preview' %}"
+          disabled
+        >Order on WhatsApp</button>
+        {% endif %}
+        <button class="btn {% if WHATSAPP_NUMBER %}btn--ghost{% else %}btn--primary{% endif %}" type="submit" data-ritual-add disabled>Add ritual to cart</button>
         <button type="button" class="btn btn--ghost" data-ritual-restart>Start over</button>
         <button type="button" class="btn btn--ghost" data-ritual-back data-ritual-change-finish>Back to finish</button>
       </div>
@@ -197,6 +211,28 @@
   const saveEl = root.querySelector("[data-ritual-save]");
   const summary = root.querySelector("[data-ritual-summary]");
   const addBtn = root.querySelector("[data-ritual-add]");
+  const waBtn = root.querySelector("[data-ritual-wa]");
+  const orderWaFab = document.querySelector("[data-order-wa]");
+  let ritualProductIds = [];
+
+  const syncWhatsAppTargets = (ids) => {
+    ritualProductIds = Array.isArray(ids) ? ids.map(String).filter(Boolean).slice(0, 3) : [];
+    if (waBtn) waBtn.disabled = ritualProductIds.length === 0;
+    if (!orderWaFab) return;
+    if (ritualProductIds.length) {
+      orderWaFab.dataset.waProductIds = ritualProductIds.join(",");
+      orderWaFab.dataset.waOccasion = answers.occasion || "";
+      orderWaFab.dataset.waFocus = answers.focus || "";
+      orderWaFab.dataset.waFinish = answers.finish || "";
+      orderWaFab.dataset.waDirect = "1";
+    } else {
+      delete orderWaFab.dataset.waProductIds;
+      delete orderWaFab.dataset.waOccasion;
+      delete orderWaFab.dataset.waFocus;
+      delete orderWaFab.dataset.waFinish;
+      delete orderWaFab.dataset.waDirect;
+    }
+  };
 
   const cancelAdvance = () => {
     if (advanceTimer) {
@@ -221,6 +257,7 @@
       saveEl.textContent = "";
     }
     if (addBtn) addBtn.disabled = true;
+    syncWhatsAppTargets([]);
   };
 
   const clearChoiceSelection = (key) => {
@@ -432,9 +469,10 @@
     totalEl.textContent = `${symbol} ${Math.round(total)}`;
     saveEl.hidden = false;
     saveEl.textContent = picked.length
-      ? "Your trio is ready — add all three without leaving this page."
+      ? "Your trio is ready — order on WhatsApp or add it to your cart."
       : "No in-stock matches yet. Go back and try another combination.";
     addBtn.disabled = picked.length === 0;
+    syncWhatsAppTargets(picked.map((p) => p.id).filter(Boolean));
   };
 
   const fetchRitual = async () => {
@@ -446,6 +484,7 @@
     recommendAbort = new AbortController();
     if (summary) summary.textContent = "Reading your mood and what you’ve been exploring…";
     if (addBtn) addBtn.disabled = true;
+    syncWhatsAppTargets([]);
 
     try {
       const response = await fetch(recommendUrl, {
@@ -589,6 +628,66 @@
       });
     });
   });
+
+  const openRitualWhatsApp = () => {
+    if (!waBtn || waBtn.disabled || !ritualProductIds.length) return;
+    const number = waBtn.dataset.waNumber || "";
+    const previewUrl = waBtn.dataset.previewUrl || "";
+    if (!number || !previewUrl || !csrfToken) {
+      window.alert("WhatsApp ordering isn’t available right now. Refresh and try again.");
+      return;
+    }
+
+    waBtn.classList.add("is-busy");
+    waBtn.disabled = true;
+    const waWindow = window.open("about:blank", "_blank");
+    const body = new URLSearchParams();
+    ritualProductIds.forEach((id) => body.append("product_id", id));
+    if (answers.occasion) body.set("occasion", answers.occasion);
+    if (answers.focus) body.set("focus", answers.focus);
+    if (answers.finish) body.set("finish", answers.finish);
+
+    fetch(previewUrl, {
+      method: "POST",
+      headers: {
+        Accept: "application/json",
+        "Content-Type": "application/x-www-form-urlencoded",
+        "X-Requested-With": "XMLHttpRequest",
+        "X-CSRFToken": csrfToken,
+      },
+      credentials: "same-origin",
+      body: body.toString(),
+    })
+      .then(async (response) => {
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok || data.ok === false) {
+          if (waWindow) waWindow.close();
+          window.alert(data.message || "Could not prepare your ritual order.");
+          return;
+        }
+        const message =
+          data.message || "Hi Pretty Affairs Hub — I'd like to order my ritual edit.";
+        const waUrl = `https://wa.me/${number}?text=${encodeURIComponent(message)}`;
+        if (waWindow) waWindow.location = waUrl;
+        else window.location.assign(waUrl);
+      })
+      .catch(() => {
+        if (waWindow) {
+          try {
+            waWindow.close();
+          } catch (e) {
+            /* ignore */
+          }
+        }
+        window.alert("Could not prepare your ritual order. Try again.");
+      })
+      .finally(() => {
+        waBtn.classList.remove("is-busy");
+        waBtn.disabled = ritualProductIds.length === 0;
+      });
+  };
+
+  waBtn?.addEventListener("click", openRitualWhatsApp);
 
   showStep(1);
 })();

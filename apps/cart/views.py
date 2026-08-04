@@ -13,11 +13,13 @@ from apps.cart.services import (
     add_to_cart,
     build_whatsapp_bundle_enquiry,
     build_whatsapp_order_message,
+    build_whatsapp_ritual_order,
     cart_totals,
     clear_cart,
     get_cart_if_exists,
     get_or_create_cart,
     remove_cart_item,
+    ritual_products_snapshot,
     update_cart_item,
 )
 from apps.core.http import is_same_origin_request, safe_redirect
@@ -272,6 +274,11 @@ def cart_order_preview(request):
             status=429,
         )
 
+    # Ritual direct order: trust only product IDs; names/prices come from the DB.
+    raw_ids = request.POST.getlist("product_id")
+    if raw_ids:
+        return _ritual_order_preview(request, raw_ids)
+
     cart = get_cart_if_exists(request)
     context_label = (request.POST.get("context") or "").strip()[:180]
     bundle_slug = (request.POST.get("bundle_slug") or "").strip()[:220]
@@ -330,6 +337,90 @@ def cart_order_preview(request):
             "cart_count": _cart_count(request),
             "has_items": count > 0,
             "lead_id": lead_id,
+            "clear_cart": count > 0,
+        }
+    )
+
+
+def _ritual_order_preview(request, raw_ids):
+    """Validate ritual product IDs and build a WA order draft without mutating the cart."""
+    from apps.catalog.models import Product
+    from apps.orders.whatsapp_leads import capture_whatsapp_lead_from_items
+
+    ids = []
+    seen = set()
+    for raw in raw_ids[:3]:
+        try:
+            pk = int(raw)
+        except (TypeError, ValueError):
+            continue
+        if pk < 1 or pk in seen:
+            continue
+        seen.add(pk)
+        ids.append(pk)
+
+    if len(ids) < 1:
+        return JsonResponse(
+            {"ok": False, "message": "Your ritual has no products to order yet."},
+            status=400,
+        )
+
+    products = list(
+        Product.objects.published()
+        .filter(id__in=ids)
+        .prefetch_related("variants")
+    )
+    by_id = {p.id: p for p in products}
+    ordered = [by_id[i] for i in ids if i in by_id]
+    if len(ordered) != len(ids):
+        return JsonResponse(
+            {"ok": False, "message": "One or more ritual pieces are no longer available."},
+            status=400,
+        )
+    for product in ordered:
+        if not product.in_stock:
+            return JsonResponse(
+                {"ok": False, "message": f"{product.name} is out of stock — rebuild your ritual."},
+                status=400,
+            )
+
+    occasion = (request.POST.get("occasion") or "").strip()[:40]
+    focus = (request.POST.get("focus") or "").strip()[:40]
+    finish = (request.POST.get("finish") or "").strip()[:40]
+    allowed = {
+        "everyday",
+        "evening",
+        "bold",
+        "lips",
+        "eyes",
+        "full",
+        "matte",
+        "gloss",
+        "soft",
+        "",
+    }
+    if occasion not in allowed or focus not in allowed or finish not in allowed:
+        occasion = focus = finish = ""
+
+    message, count, total = build_whatsapp_ritual_order(
+        ordered,
+        occasion=occasion,
+        focus=focus,
+        finish=finish,
+        currency_symbol=settings.SITE_CURRENCY_SYMBOL,
+    )
+    items, _, _ = ritual_products_snapshot(ordered)
+    lead = capture_whatsapp_lead_from_items(request, items, message=message)
+    return JsonResponse(
+        {
+            "ok": True,
+            "message": message,
+            "count": count,
+            "total": str(total),
+            "cart_count": _cart_count(request),
+            "has_items": count > 0,
+            "lead_id": lead.pk if lead else None,
+            "clear_cart": False,
         }
     )
 

@@ -662,7 +662,13 @@
       const badgeCount = Number(
         document.querySelector("[data-cart-count]")?.textContent?.trim() || "0"
       );
-      if (badgeCount > 0) {
+      const productIds = (orderWa.dataset.waProductIds || "")
+        .split(",")
+        .map((id) => id.trim())
+        .filter(Boolean)
+        .slice(0, 3);
+      const directRitual = orderWa.dataset.waDirect === "1" && productIds.length > 0;
+      if (badgeCount > 0 && !directRitual) {
         const ok = window.confirm(
           "Open WhatsApp to send your cart as an order? Your cart will be cleared afterward."
         );
@@ -675,8 +681,18 @@
       const context = (orderWa.dataset.waContext || "").trim();
       const bundleSlug = (orderWa.dataset.waBundleSlug || "").trim();
       const body = new URLSearchParams();
-      if (context) body.set("context", context);
-      if (bundleSlug) body.set("bundle_slug", bundleSlug);
+      if (directRitual) {
+        productIds.forEach((id) => body.append("product_id", id));
+        const occasion = (orderWa.dataset.waOccasion || "").trim();
+        const focus = (orderWa.dataset.waFocus || "").trim();
+        const finish = (orderWa.dataset.waFinish || "").trim();
+        if (occasion) body.set("occasion", occasion);
+        if (focus) body.set("focus", focus);
+        if (finish) body.set("finish", finish);
+      } else {
+        if (context) body.set("context", context);
+        if (bundleSlug) body.set("bundle_slug", bundleSlug);
+      }
 
       fetch(previewUrl, {
         method: "POST",
@@ -706,7 +722,13 @@
             window.location.assign(waUrl);
           }
 
-          if (!data.has_items || !clearUrl) return null;
+          const shouldClear = data.clear_cart !== false && data.has_items && clearUrl && !directRitual;
+          if (!shouldClear) {
+            if (directRitual) {
+              showToast("Ritual order opened in WhatsApp. Our desk will review it.", "success", 4200);
+            }
+            return null;
+          }
 
           return fetch(clearUrl, {
             method: "POST",
