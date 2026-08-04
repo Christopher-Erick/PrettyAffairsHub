@@ -12,28 +12,30 @@
 
 <section class="section ritual" data-ritual data-ritual-url="{{ ritual_recommend_url }}">
   <div class="ritual-path" data-ritual-path aria-label="Ritual progress">
-    <p class="ritual-path__status" data-ritual-status>Step 1 of 3 — choose your occasion</p>
-    <ol class="ritual-path__track">
-      <li class="ritual-path__node is-current" data-path-node="1">
-        <span class="ritual-path__dot" aria-hidden="true"></span>
-        <span class="ritual-path__label">Occasion</span>
-      </li>
-      <li class="ritual-path__connector" aria-hidden="true" data-path-connector="1"></li>
-      <li class="ritual-path__node" data-path-node="2">
-        <span class="ritual-path__dot" aria-hidden="true"></span>
-        <span class="ritual-path__label">Focus</span>
-      </li>
-      <li class="ritual-path__connector" aria-hidden="true" data-path-connector="2"></li>
-      <li class="ritual-path__node" data-path-node="3">
-        <span class="ritual-path__dot" aria-hidden="true"></span>
-        <span class="ritual-path__label">Finish</span>
-      </li>
-      <li class="ritual-path__connector" aria-hidden="true" data-path-connector="3"></li>
-      <li class="ritual-path__node ritual-path__node--reveal" data-path-node="4">
-        <span class="ritual-path__dot" aria-hidden="true"></span>
-        <span class="ritual-path__label">Your edit</span>
-      </li>
-    </ol>
+    <div class="ritual-path__sticky">
+      <p class="ritual-path__status" data-ritual-status>Step 1 of 3 — choose your occasion</p>
+      <ol class="ritual-path__track">
+        <li class="ritual-path__node is-current" data-path-node="1">
+          <span class="ritual-path__dot" aria-hidden="true"></span>
+          <span class="ritual-path__label">Occasion</span>
+        </li>
+        <li class="ritual-path__connector" aria-hidden="true" data-path-connector="1"></li>
+        <li class="ritual-path__node" data-path-node="2">
+          <span class="ritual-path__dot" aria-hidden="true"></span>
+          <span class="ritual-path__label">Focus</span>
+        </li>
+        <li class="ritual-path__connector" aria-hidden="true" data-path-connector="2"></li>
+        <li class="ritual-path__node" data-path-node="3">
+          <span class="ritual-path__dot" aria-hidden="true"></span>
+          <span class="ritual-path__label">Finish</span>
+        </li>
+        <li class="ritual-path__connector" aria-hidden="true" data-path-connector="3"></li>
+        <li class="ritual-path__node ritual-path__node--reveal" data-path-node="4">
+          <span class="ritual-path__dot" aria-hidden="true"></span>
+          <span class="ritual-path__label">Your edit</span>
+        </li>
+      </ol>
+    </div>
     <div class="ritual-path__picks" data-ritual-picks hidden>
       <p class="ritual-path__picks-label">Locked in so far</p>
       <ul class="ritual-path__chips" data-ritual-chips></ul>
@@ -280,6 +282,7 @@
   };
 
   const pathEl = root.querySelector("[data-ritual-path]");
+  const pathSticky = root.querySelector(".ritual-path__sticky") || pathEl;
   const ritualTop = document.querySelector(".ritual-hero") || root;
 
   const headerOffset = () => {
@@ -291,11 +294,19 @@
   const scrollToGuide = () => {
     const behavior = reduceMotion ? "auto" : "smooth";
     const run = () => {
-      // Align the active panel under the sticky progressive path + site header.
       const panel = root.querySelector(`[data-ritual-panel="${step}"]:not([hidden])`);
-      const target = pathEl || panel || root;
-      const y = target.getBoundingClientRect().top + window.scrollY - headerOffset();
-      window.scrollTo({ top: Math.max(0, y), behavior });
+      if (!panel) return;
+      // Keep locked-in chips + the active step clear of the compact sticky track.
+      const picks = root.querySelector("[data-ritual-picks]:not([hidden])");
+      const target = picks || panel;
+      const stickyBottom = pathSticky
+        ? pathSticky.getBoundingClientRect().bottom
+        : headerOffset();
+      const gap = 12;
+      const delta = target.getBoundingClientRect().top - stickyBottom - gap;
+      if (Math.abs(delta) > 2) {
+        window.scrollBy({ top: delta, behavior });
+      }
     };
     window.requestAnimationFrame(() => window.requestAnimationFrame(run));
   };

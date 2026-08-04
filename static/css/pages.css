@@ -3077,11 +3077,15 @@ article.narrow {
 }
 
 .ritual-path {
+  margin: 0 0 var(--space-6);
+}
+
+.ritual-path__sticky {
   position: sticky;
   top: calc(var(--header-h, 4.25rem) + env(safe-area-inset-top, 0px));
   z-index: 35;
-  margin: 0 0 var(--space-6);
-  padding: var(--space-4) 0.15rem var(--space-5);
+  isolation: isolate;
+  padding: var(--space-4) 0.15rem var(--space-4);
   background-color: var(--page-wash-color, var(--bg-page));
   background-image: var(--page-wash-image, none);
   box-shadow:
@@ -3090,7 +3094,7 @@ article.narrow {
   scroll-margin-top: calc(var(--header-h, 4.25rem) + env(safe-area-inset-top, 0px));
 }
 
-.ritual-path::after {
+.ritual-path__sticky::after {
   content: "";
   position: absolute;
   left: 0;
@@ -3108,7 +3112,10 @@ article.narrow {
 @media (max-width: 899px) {
   .ritual-path {
     margin: 0 0 var(--space-5);
-    padding: 0.85rem 0.35rem 0.95rem;
+  }
+
+  .ritual-path__sticky {
+    padding: 0.85rem 0.35rem 0.85rem;
   }
 
   .ritual-path__status {
@@ -3124,9 +3131,8 @@ article.narrow {
   }
 
   .ritual-path__picks {
-    margin-top: 0.65rem;
-    padding-top: 0.55rem;
-    box-shadow: 0 -1px 0 var(--hairline);
+    margin-top: 0.85rem;
+    padding-top: 0.65rem;
   }
 
   .ritual-path__chips {
@@ -3248,6 +3254,8 @@ article.narrow {
 
 .ritual-path__picks {
   margin-top: var(--space-4);
+  padding-top: var(--space-3);
+  box-shadow: 0 -1px 0 var(--hairline);
 }
 
 .ritual-path__picks-label {
@@ -3304,7 +3312,7 @@ article.narrow {
   display: grid;
   gap: var(--space-4);
   scroll-margin-top: calc(
-    var(--header-h, 4.25rem) + env(safe-area-inset-top, 0px) + 11rem
+    var(--header-h, 4.25rem) + env(safe-area-inset-top, 0px) + 6.5rem
   );
 }
 
