@@ -599,10 +599,22 @@ def _save_bundle(request, bundle=None):
     form = BundleForm(request.POST or None, instance=bundle)
     formset = BundleItemFormSet(request.POST or None, instance=bundle)
     if request.method == "POST" and form.is_valid() and formset.is_valid():
-        obj = form.save()
-        formset.instance = obj
-        formset.save()
-        messages.success(request, f"Saved bundle “{obj.name}”.")
+        from django.db import transaction
+
+        try:
+            with transaction.atomic():
+                obj = form.save()
+                formset.instance = obj
+                formset.save()
+                if obj.items.count() != 3:
+                    raise ValueError("Bundle must have exactly 3 products.")
+        except ValueError as exc:
+            formset._non_form_errors = formset.error_class([str(exc)])
+            return None, form, formset
+        messages.success(
+            request,
+            f"Saved bundle “{obj.name}” with 3 products.",
+        )
         return redirect("desk:bundle_edit", pk=obj.pk), None, None
     return None, form, formset
 
@@ -649,19 +661,25 @@ def bundle_suggest(request):
 
     suggestion = suggest_hot_and_slow_trio()
     products = suggestion.get("products") or []
-    if len(products) < 2:
-        messages.error(request, "Need more in-stock products before we can suggest a bundle.")
+    if len(products) != 3:
+        messages.error(
+            request,
+            "Need 3 in-stock products before we can suggest a bundle.",
+        )
         return redirect("desk:bundle_list")
 
-    bundle = Bundle.objects.create(
-        name=suggestion["name"],
-        description="\n".join(suggestion.get("reasons") or []),
-        price=suggestion["price"],
-        compare_at_price=suggestion.get("compare_at"),
-        is_active=False,
-    )
-    for product in products:
-        BundleItem.objects.create(bundle=bundle, product=product, quantity=1)
+    from django.db import transaction
+
+    with transaction.atomic():
+        bundle = Bundle.objects.create(
+            name=suggestion["name"],
+            description="\n".join(suggestion.get("reasons") or []),
+            price=suggestion["price"],
+            compare_at_price=suggestion.get("compare_at"),
+            is_active=False,
+        )
+        for product in products:
+            BundleItem.objects.create(bundle=bundle, product=product, quantity=1)
 
     messages.success(
         request,

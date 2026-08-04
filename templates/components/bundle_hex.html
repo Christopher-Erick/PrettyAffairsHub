@@ -1,0 +1,53 @@
+{# Three equal rhombus faces inside a flat-top hexagon (isometric Y-split). Expects: bundle #}
+{% with items=bundle.items.all %}
+<div class="bundle-hex" role="img" aria-label="{{ bundle.name }} — {{ items|length }} piece{% if items|length != 1 %}s{% endif %}">
+  <div class="bundle-hex__face">
+    <div class="bundle-hex__mosaic bundle-hex__mosaic--{{ items|length|default:0 }}">
+      {% for item in items|slice:":3" %}
+        {% with product=item.product %}
+          {% if product.primary_image and product.primary_image.image %}
+            <figure class="bundle-hex__cell" style="--face-src: url('{{ product.primary_image.image.url|escape }}')">
+              <span class="bundle-hex__wash" aria-hidden="true"></span>
+              <img
+                src="{{ product.primary_image.image.url }}"
+                alt="{{ product.primary_image.alt_text|default:product.name }}"
+                {% if forloop.first %}fetchpriority="high"{% else %}loading="lazy"{% endif %}
+                decoding="async"
+                width="320"
+                height="400"
+                sizes="(max-width: 720px) 42vw, 220px"
+              >
+            </figure>
+          {% else %}
+            {% with variant=product.default_variant %}
+              {% if variant and variant.image %}
+                <figure class="bundle-hex__cell" style="--face-src: url('{{ variant.image.url|escape }}')">
+                  <span class="bundle-hex__wash" aria-hidden="true"></span>
+                  <img
+                    src="{{ variant.image.url }}"
+                    alt="{{ product.name }}"
+                    {% if forloop.first %}fetchpriority="high"{% else %}loading="lazy"{% endif %}
+                    decoding="async"
+                    width="320"
+                    height="400"
+                    sizes="(max-width: 720px) 42vw, 220px"
+                  >
+                </figure>
+              {% else %}
+                <figure class="bundle-hex__cell">
+                  <div class="product-card__placeholder" role="img" aria-label="{{ product.name }}"></div>
+                  <span class="bundle-hex__name">{{ product.name }}</span>
+                </figure>
+              {% endif %}
+            {% endwith %}
+          {% endif %}
+        {% endwith %}
+      {% empty %}
+        <figure class="bundle-hex__cell bundle-hex__cell--solo">
+          <div class="product-card__placeholder" aria-hidden="true"></div>
+        </figure>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+{% endwith %}

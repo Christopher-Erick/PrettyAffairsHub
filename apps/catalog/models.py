@@ -317,6 +317,10 @@ class Bundle(TimeStampedModel):
     def get_absolute_url(self):
         return reverse("catalog:bundle_detail", kwargs={"slug": self.slug})
 
+    @property
+    def has_full_trio(self):
+        return self.items.count() == 3
+
 
 class BundleItem(models.Model):
     bundle = models.ForeignKey(Bundle, related_name="items", on_delete=models.CASCADE)

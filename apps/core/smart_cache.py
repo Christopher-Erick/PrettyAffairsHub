@@ -31,6 +31,7 @@ FIXED_KEYS = (
     "catalog:shop:shade_studio",
     "catalog:home:rails",
     "catalog:top_seller",
+    "catalog:bundles:active",
     "content:home:page",
     "content:testimonials:featured",
     "content:homepage_sections",

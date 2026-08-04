@@ -3,7 +3,7 @@
 {% block content %}
 <section class="desk-hero">
   <h1>{% if bundle %}Edit bundle{% else %}New bundle{% endif %}</h1>
-  <p>Pick the products that belong together, set the bundle price, then publish when ready.</p>
+  <p>Curate exactly 3 products for the hexagon display, set the bundle price, then publish when ready.</p>
 </section>
 
 <form class="desk-form" method="post">
@@ -23,7 +23,7 @@
 
   <section class="desk-panel">
     <h2>Products in this bundle</h2>
-    <p class="desk-muted">Add at least one product. Use “Delete” on a row to remove it.</p>
+    <p class="desk-muted">Exactly 3 different products are required. Each row is saved to the database with its quantity.</p>
     {{ formset.management_form }}
     {{ formset.non_form_errors }}
     <table class="desk-table">

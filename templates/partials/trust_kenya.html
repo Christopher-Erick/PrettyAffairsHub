@@ -29,9 +29,9 @@
   </div>
   {% if WHATSAPP_NUMBER %}
   <a class="trust-strip__wa btn btn--ghost btn--full"
-     href="https://wa.me/{{ WHATSAPP_NUMBER }}?text=Hi%20Pretty%20Affairs%20Hub%2C%20I%20have%20a%20question%20about%20{{ product.name|urlencode }}"
+     href="https://wa.me/{{ WHATSAPP_NUMBER }}?text=Hi%20Pretty%20Affairs%20Hub%2C%20I%20have%20a%20question{% if product %}%20about%20{{ product.name|urlencode }}{% endif %}"
      target="_blank" rel="noopener">
-    Ask about this product on WhatsApp
+    {% if product %}Ask about this product on WhatsApp{% else %}Ask us on WhatsApp{% endif %}
   </a>
   {% else %}
   <a class="trust-strip__wa btn btn--ghost btn--full" href="{% url 'content:contact' %}">

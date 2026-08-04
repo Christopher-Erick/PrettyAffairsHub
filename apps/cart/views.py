@@ -174,6 +174,79 @@ def cart_add_many(request):
 
 
 @require_POST
+def cart_add_bundle(request):
+    from apps.catalog.models import Bundle
+
+    slug = (request.POST.get("bundle_slug") or "").strip()
+    bundle = (
+        Bundle.objects.filter(is_active=True, slug=slug)
+        .prefetch_related("items__product__variants")
+        .first()
+    )
+    if bundle is None:
+        msg = "That bundle is no longer available."
+        if _wants_json(request):
+            return JsonResponse(
+                {"ok": False, "message": msg, "cart_count": _cart_count(request), "level": "error"},
+                status=404,
+            )
+        messages.error(request, msg, extra_tags="toast-fast")
+        return safe_redirect(request, request.POST.get("next"), fallback="catalog:bundles")
+
+    added_lines = 0
+    added_units = 0
+    errors = []
+    for item in bundle.items.all():
+        product = item.product
+        if not product.is_active:
+            errors.append(f"{product.name} is unavailable.")
+            continue
+        variants = [v for v in product.variants.all() if v.is_active]
+        variant = product.default_variant if variants else None
+        if variants and variant is None:
+            errors.append(f"{product.name} is out of stock.")
+            continue
+        try:
+            _item, units = add_to_cart(
+                request,
+                product_id=product.pk,
+                quantity=max(1, int(item.quantity or 1)),
+                variant_id=variant.pk if variant else None,
+            )
+            added_lines += 1
+            added_units += units
+        except InsufficientStockError as exc:
+            errors.append(str(exc))
+            if not _wants_json(request):
+                messages.error(request, str(exc), extra_tags="toast-fast")
+        except Exception as exc:
+            errors.append(str(exc))
+            if not _wants_json(request):
+                messages.error(request, str(exc), extra_tags="toast-fast")
+
+    if added_lines:
+        msg = f"Added {bundle.name} to your cart."
+    else:
+        msg = errors[0] if errors else "Nothing was added."
+
+    if _wants_json(request):
+        return JsonResponse(
+            {
+                "ok": added_lines > 0,
+                "message": msg,
+                "added": added_units,
+                "errors": errors,
+                "cart_count": _cart_count(request),
+                "level": "success" if added_lines else "error",
+            },
+            status=200 if added_lines else 400,
+        )
+    if added_lines:
+        messages.success(request, msg)
+    return safe_redirect(request, request.POST.get("next"), fallback="cart:detail")
+
+
+@require_POST
 def cart_update(request, item_id):
     try:
         update_cart_item(request, item_id, request.POST.get("quantity", 1))
@@ -221,8 +294,12 @@ def cart_order_preview(request):
         )
 
     cart = get_cart_if_exists(request)
+    context_label = (request.POST.get("context") or "").strip()[:180]
     if cart is None:
-        message = "Hi Pretty Affairs Hub — I'd like to place an order."
+        if context_label:
+            message = f"Hi Pretty Affairs Hub — I'm interested in {context_label}."
+        else:
+            message = "Hi Pretty Affairs Hub — I'd like to place an order."
         count = 0
         total = Decimal("0")
         lead_id = None
@@ -230,6 +307,8 @@ def cart_order_preview(request):
         message, count, total = build_whatsapp_order_message(
             cart, currency_symbol=settings.SITE_CURRENCY_SYMBOL
         )
+        if count < 1 and context_label:
+            message = f"Hi Pretty Affairs Hub — I'm interested in {context_label}."
         lead_id = None
         if count > 0:
             from apps.orders.whatsapp_leads import capture_whatsapp_lead

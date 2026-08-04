@@ -5,6 +5,8 @@ from django.dispatch import receiver
 
 from apps.catalog.models import (
     Brand,
+    Bundle,
+    BundleItem,
     Category,
     Collection,
     Product,
@@ -19,7 +21,17 @@ def _bump(sender, **kwargs):
     invalidate_catalog_cache(reason=f"{sender.__name__} changed")
 
 
-for model in (Brand, Category, Collection, Product, ProductImage, ProductVariant, ProductRelation):
+for model in (
+    Brand,
+    Category,
+    Collection,
+    Product,
+    ProductImage,
+    ProductVariant,
+    ProductRelation,
+    Bundle,
+    BundleItem,
+):
     post_save.connect(_bump, sender=model, dispatch_uid=f"smart_cache_save_{model.__name__}")
     post_delete.connect(_bump, sender=model, dispatch_uid=f"smart_cache_delete_{model.__name__}")
 

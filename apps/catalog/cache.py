@@ -4,7 +4,15 @@ from __future__ import annotations
 
 from django.db.models import Count, Prefetch, Q
 
-from apps.catalog.models import Category, Collection, Product, ProductImage, ProductVariant
+from apps.catalog.models import (
+    Bundle,
+    BundleItem,
+    Category,
+    Collection,
+    Product,
+    ProductImage,
+    ProductVariant,
+)
 from apps.core.smart_cache import get_or_set, versioned_key
 
 ACTIVE_VARIANTS = Prefetch(
@@ -19,6 +27,25 @@ CARD_IMAGES = Prefetch(
     "images",
     queryset=ProductImage.objects.order_by("sort_order", "id").only(
         "id", "product_id", "image", "alt_text", "sort_order"
+    ),
+)
+
+BUNDLE_ITEMS = Prefetch(
+    "items",
+    queryset=BundleItem.objects.select_related("product").order_by("id"),
+)
+
+BUNDLE_PRODUCT_IMAGES = Prefetch(
+    "items__product__images",
+    queryset=ProductImage.objects.order_by("sort_order", "id").only(
+        "id", "product_id", "image", "alt_text", "sort_order"
+    ),
+)
+
+BUNDLE_PRODUCT_VARIANTS = Prefetch(
+    "items__product__variants",
+    queryset=ProductVariant.objects.filter(is_active=True).only(
+        "id", "product_id", "name", "color_hex", "stock", "is_active", "price_override", "image"
     ),
 )
 
@@ -197,3 +224,18 @@ def cached_product_list(filter_fingerprint: str, producer):
 def cached_product_detail(slug: str, producer):
     key = versioned_key("catalog:product_detail", slug)
     return get_or_set(key, producer)
+
+
+def cached_active_bundles():
+    """Live bundles with a full 3-product trio — reused on the storefront list."""
+
+    def producer():
+        return list(
+            Bundle.objects.filter(is_active=True)
+            .annotate(_item_count=Count("items"))
+            .filter(_item_count=3)
+            .prefetch_related(BUNDLE_ITEMS, BUNDLE_PRODUCT_IMAGES)
+            .order_by("name")
+        )
+
+    return get_or_set("catalog:bundles:active", producer)

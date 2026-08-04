@@ -384,7 +384,7 @@
   position: fixed;
   right: max(var(--space-4), env(safe-area-inset-right));
   bottom: max(var(--space-4), env(safe-area-inset-bottom));
-  z-index: 40;
+  z-index: 55;
   display: inline-flex;
   align-items: center;
   justify-content: center;

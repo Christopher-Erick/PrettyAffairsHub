@@ -53,7 +53,11 @@ class ProductVariantInline(admin.TabularInline):
 
 class BundleItemInline(admin.TabularInline):
     model = BundleItem
-    extra = 1
+    extra = 3
+    min_num = 3
+    max_num = 3
+    validate_min = True
+    validate_max = True
     autocomplete_fields = ("product",)
 
 

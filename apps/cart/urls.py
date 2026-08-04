@@ -8,6 +8,7 @@ urlpatterns = [
     path("", views.cart_detail, name="detail"),
     path("add/", views.cart_add, name="add"),
     path("add-many/", views.cart_add_many, name="add_many"),
+    path("add-bundle/", views.cart_add_bundle, name="add_bundle"),
     path("update/<int:item_id>/", views.cart_update, name="update"),
     path("remove/<int:item_id>/", views.cart_remove, name="remove"),
     path("coupon/", views.apply_coupon, name="apply_coupon"),

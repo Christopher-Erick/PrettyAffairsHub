@@ -1,5 +1,6 @@
 from django import forms
-from django.forms import inlineformset_factory
+from django.core.exceptions import ValidationError
+from django.forms import BaseInlineFormSet, inlineformset_factory
 
 from apps.catalog.models import Brand, Bundle, BundleItem, Category, Product, ProductVariant
 from apps.content.models import (
@@ -325,6 +326,10 @@ class BundleForm(forms.ModelForm):
             "compare_at_price": "Was price (optional)",
             "description": "What’s in this edit",
         }
+        help_texts = {
+            "is_active": "Only bundles with exactly 3 products can go live.",
+            "price": "Bundle price saved to the shop.",
+        }
         widgets = {
             "description": forms.Textarea(attrs={"rows": 4}),
         }
@@ -348,16 +353,51 @@ class BundleItemForm(forms.ModelForm):
         product_choices = [("", "---------")] + list(_desk_product_choices())
         self.fields["product"]._choices = product_choices
         self.fields["product"].queryset = Product.objects.filter(is_active=True).only("id", "name")
+        self.fields["quantity"].initial = self.fields["quantity"].initial or 1
         for field in self.fields.values():
             field.widget.attrs["class"] = "field"
+
+    def clean_quantity(self):
+        qty = self.cleaned_data.get("quantity") or 1
+        if qty < 1:
+            raise ValidationError("Quantity must be at least 1.")
+        return qty
+
+
+class BaseBundleItemFormSet(BaseInlineFormSet):
+    """Bundles are always a curated trio for the hexagon shop display."""
+
+    def clean(self):
+        super().clean()
+        if any(self.errors):
+            return
+
+        kept = []
+        for form in self.forms:
+            if not hasattr(form, "cleaned_data") or not form.cleaned_data:
+                continue
+            if self.can_delete and form.cleaned_data.get("DELETE"):
+                continue
+            product = form.cleaned_data.get("product")
+            if not product:
+                continue
+            kept.append(product.pk)
+
+        if len(kept) != 3:
+            raise ValidationError("A bundle must contain exactly 3 products.")
+        if len(set(kept)) != 3:
+            raise ValidationError("Choose 3 different products — duplicates are not allowed.")
 
 
 BundleItemFormSet = inlineformset_factory(
     Bundle,
     BundleItem,
     form=BundleItemForm,
+    formset=BaseBundleItemFormSet,
     extra=3,
     can_delete=True,
-    min_num=1,
+    min_num=3,
+    max_num=3,
     validate_min=True,
+    validate_max=True,
 )

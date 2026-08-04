@@ -52,7 +52,9 @@
     {% block content %}{% endblock %}
   </main>
   {% include "partials/footer.html" %}
+  {% block whatsapp_fab %}
   {% include "partials/whatsapp.html" %}
+  {% endblock %}
   {% if CLIENT_IDLE_ENABLED %}
   <form id="client-idle-logout" method="post" action="{% url 'accounts:logout' %}" hidden>
     {% csrf_token %}

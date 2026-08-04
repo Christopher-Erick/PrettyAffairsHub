@@ -5,6 +5,10 @@
 {% block meta_description %}{{ product.short_description|default:product.description|truncatechars:155 }}{% endblock %}
 {% block og_title %}{{ product.name }}{% endblock %}
 
+{% block whatsapp_fab %}
+{% include "partials/whatsapp.html" with wa_order_context=product.name %}
+{% endblock %}
+
 {% block content %}
 <article class="pdp">
   <div class="pdp__gallery" data-gallery>

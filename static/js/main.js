@@ -672,15 +672,20 @@
       orderWa.classList.add("is-busy");
       // Keep the popup tied to the click (fetch alone would get blocked).
       const waWindow = window.open("about:blank", "_blank");
+      const context = (orderWa.dataset.waContext || "").trim();
+      const body = new URLSearchParams();
+      if (context) body.set("context", context);
 
       fetch(previewUrl, {
         method: "POST",
         headers: {
           Accept: "application/json",
+          "Content-Type": "application/x-www-form-urlencoded",
           "X-Requested-With": "XMLHttpRequest",
           "X-CSRFToken": token,
         },
         credentials: "same-origin",
+        body: body.toString(),
       })
         .then(async (response) => {
           const data = await response.json().catch(() => ({}));

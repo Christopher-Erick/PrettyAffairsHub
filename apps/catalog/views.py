@@ -9,6 +9,7 @@ from django.conf import settings
 import json
 
 from apps.catalog.cache import (
+    cached_active_bundles,
     cached_active_categories,
     cached_active_collections,
     cached_category_descendant_ids,
@@ -18,6 +19,9 @@ from apps.catalog.cache import (
     cached_product_list,
     cached_shade_studio,
     shop_product_qs,
+    BUNDLE_ITEMS,
+    BUNDLE_PRODUCT_IMAGES,
+    BUNDLE_PRODUCT_VARIANTS,
 )
 from apps.catalog.models import Bundle, Category, Collection, Product
 from apps.catalog.ritual import recommend_ritual
@@ -270,9 +274,8 @@ class BundleListView(ListView):
     context_object_name = "bundles"
 
     def get_queryset(self):
-        return Bundle.objects.filter(is_active=True).prefetch_related(
-            "items__product__images"
-        )
+        # Cached until catalogue/bundle writes bump the smart-cache version.
+        return cached_active_bundles()
 
 
 class BundleDetailView(DetailView):
@@ -281,10 +284,24 @@ class BundleDetailView(DetailView):
     context_object_name = "bundle"
 
     def get_queryset(self):
-        return Bundle.objects.filter(is_active=True).prefetch_related(
-            "items__product__images",
-            "items__product__variants",
+        return (
+            Bundle.objects.filter(is_active=True)
+            .annotate(_item_count=Count("items"))
+            .filter(_item_count=3)
+            .prefetch_related(
+                BUNDLE_ITEMS,
+                BUNDLE_PRODUCT_IMAGES,
+                BUNDLE_PRODUCT_VARIANTS,
+            )
         )
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        items = list(self.object.items.all())
+        context["bundle_in_stock"] = bool(items) and all(
+            item.product.in_stock for item in items
+        )
+        return context
 
 
 def ritual_builder(request):
