@@ -3556,6 +3556,58 @@ article.narrow {
   margin-top: var(--space-4);
 }
 
+.ritual-sticky {
+  display: none;
+}
+
+@media (max-width: 799px) {
+  .ritual-sticky:not([hidden]) {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 40;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem max(1rem, env(safe-area-inset-right)) calc(0.75rem + env(safe-area-inset-bottom)) max(1rem, env(safe-area-inset-left));
+    background: color-mix(in srgb, var(--bg-panel) 92%, transparent);
+    backdrop-filter: blur(10px);
+    box-shadow: 0 -1px 0 var(--hairline);
+  }
+
+  .ritual-sticky__info {
+    flex: 1;
+    min-width: 0;
+    display: grid;
+    gap: 0.15rem;
+  }
+
+  .ritual-sticky__name {
+    font-size: 0.85rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .ritual-sticky__price {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+  }
+
+  .ritual-sticky .btn {
+    flex-shrink: 0;
+  }
+
+  body.has-ritual-sticky .section.ritual {
+    padding-bottom: calc(var(--space-8) + 4.5rem);
+  }
+
+  body.has-ritual-sticky .whatsapp-float {
+    bottom: calc(4.75rem + env(safe-area-inset-bottom));
+  }
+}
+
 @keyframes ritual-glow {
   from {
     transform: translate(0, 0) scale(1);

@@ -4,7 +4,7 @@
   href="https://wa.me/{{ WHATSAPP_NUMBER }}"
   target="_blank"
   rel="noopener noreferrer"
-  aria-label="WhatsApp order"
+  aria-label="WhatsApp to Order"
   data-order-wa
   data-wa-number="{{ WHATSAPP_NUMBER }}"
   data-preview-url="{% url 'cart:order_preview' %}"
@@ -12,7 +12,7 @@
   {% if wa_order_context %}data-wa-context="{{ wa_order_context|escape }}"{% endif %}
   {% if wa_bundle_slug %}data-wa-bundle-slug="{{ wa_bundle_slug }}"{% endif %}
 >
-  <span class="whatsapp-float__label">WhatsApp order</span>
+  <span class="whatsapp-float__label">WhatsApp to Order</span>
 </a>
 <form id="order-wa-csrf" hidden>{% csrf_token %}</form>
 {% endif %}

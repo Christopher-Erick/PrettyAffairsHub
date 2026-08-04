@@ -133,7 +133,7 @@
       <p>Ritual total: <strong data-ritual-total>{{ currency_symbol }} 0</strong></p>
       <p class="ritual__save" data-ritual-save hidden></p>
     </div>
-    <form method="post" action="{% url 'cart:add_many' %}" data-ritual-form>
+    <form id="ritual-cart-form" method="post" action="{% url 'cart:add_many' %}" data-ritual-form>
       {% csrf_token %}
       <input type="hidden" name="next" value="{% url 'catalog:ritual_builder' %}">
       <div data-ritual-inputs></div>
@@ -155,6 +155,16 @@
     </form>
   </div>
 </section>
+
+<div class="ritual-sticky" data-ritual-sticky hidden aria-label="Quick add ritual">
+  <div class="ritual-sticky__info">
+    <span class="ritual-sticky__name">Your ritual trio</span>
+    <span class="ritual-sticky__price" data-ritual-sticky-total>{{ currency_symbol }} 0</span>
+  </div>
+  <button class="btn btn--primary" type="submit" form="ritual-cart-form" data-ritual-sticky-add disabled>
+    Add to cart
+  </button>
+</div>
 {% endblock %}
 
 {% block extra_js %}
@@ -212,8 +222,20 @@
   const summary = root.querySelector("[data-ritual-summary]");
   const addBtn = root.querySelector("[data-ritual-add]");
   const waBtn = root.querySelector("[data-ritual-wa]");
+  const stickyBar = document.querySelector("[data-ritual-sticky]");
+  const stickyAdd = document.querySelector("[data-ritual-sticky-add]");
+  const stickyTotal = document.querySelector("[data-ritual-sticky-total]");
   const orderWaFab = document.querySelector("[data-order-wa]");
   let ritualProductIds = [];
+
+  const setStickyReady = (ready, totalText) => {
+    if (stickyBar) {
+      stickyBar.hidden = !ready;
+      document.body.classList.toggle("has-ritual-sticky", ready);
+    }
+    if (stickyAdd) stickyAdd.disabled = !ready;
+    if (stickyTotal && totalText) stickyTotal.textContent = totalText;
+  };
 
   const syncWhatsAppTargets = (ids) => {
     ritualProductIds = Array.isArray(ids) ? ids.map(String).filter(Boolean).slice(0, 3) : [];
@@ -258,6 +280,7 @@
     }
     if (addBtn) addBtn.disabled = true;
     syncWhatsAppTargets([]);
+    setStickyReady(false, `${symbol} 0`);
   };
 
   const clearChoiceSelection = (key) => {
@@ -466,13 +489,15 @@
       inputs.appendChild(input);
     });
     const total = Number(payload.total || 0);
-    totalEl.textContent = `${symbol} ${Math.round(total)}`;
+    const totalText = `${symbol} ${Math.round(total)}`;
+    totalEl.textContent = totalText;
     saveEl.hidden = false;
     saveEl.textContent = picked.length
       ? "Your trio is ready — order on WhatsApp or add it to your cart."
       : "No in-stock matches yet. Go back and try another combination.";
     addBtn.disabled = picked.length === 0;
     syncWhatsAppTargets(picked.map((p) => p.id).filter(Boolean));
+    setStickyReady(picked.length > 0, totalText);
   };
 
   const fetchRitual = async () => {
@@ -485,6 +510,7 @@
     if (summary) summary.textContent = "Reading your mood and what you’ve been exploring…";
     if (addBtn) addBtn.disabled = true;
     syncWhatsAppTargets([]);
+    setStickyReady(false);
 
     try {
       const response = await fetch(recommendUrl, {
