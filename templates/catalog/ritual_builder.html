@@ -291,15 +291,10 @@
   const scrollToGuide = () => {
     const behavior = reduceMotion ? "auto" : "smooth";
     const run = () => {
-      // Sit under the sticky progressive path so the active step is obvious.
-      const pathH = pathEl ? pathEl.getBoundingClientRect().height : 0;
+      // Align the active panel under the sticky progressive path + site header.
       const panel = root.querySelector(`[data-ritual-panel="${step}"]:not([hidden])`);
-      const target = panel || pathEl || root;
-      const y =
-        target.getBoundingClientRect().top +
-        window.scrollY -
-        headerOffset() -
-        (panel && pathEl ? Math.min(pathH, 120) : 0);
+      const target = pathEl || panel || root;
+      const y = target.getBoundingClientRect().top + window.scrollY - headerOffset();
       window.scrollTo({ top: Math.max(0, y), behavior });
     };
     window.requestAnimationFrame(() => window.requestAnimationFrame(run));

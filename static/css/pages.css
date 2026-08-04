@@ -3303,6 +3303,14 @@ article.narrow {
 .ritual__panel {
   display: grid;
   gap: var(--space-4);
+  scroll-margin-top: calc(
+    var(--header-h, 4.25rem) + env(safe-area-inset-top, 0px) + 11rem
+  );
+}
+
+/* `display: grid` above would otherwise override the HTML hidden attribute */
+.ritual__panel[hidden] {
+  display: none !important;
 }
 
 .ritual__panel.is-entering {
