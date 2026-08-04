@@ -3561,50 +3561,73 @@ article.narrow {
 }
 
 @media (max-width: 799px) {
+  /* Same pill float shell as WhatsApp to Order; stacked above it on the right */
   .ritual-sticky:not([hidden]) {
     position: fixed;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    z-index: 40;
-    display: flex;
+    left: auto;
+    right: max(var(--space-4), env(safe-area-inset-right));
+    bottom: calc(2.75rem + var(--space-3) + max(var(--space-4), env(safe-area-inset-bottom)));
+    z-index: 54;
+    display: block;
+    margin: 0;
+    padding: 0;
+    background: transparent;
+    border: 0;
+    box-shadow: none;
+    backdrop-filter: none;
+  }
+
+  .ritual-sticky__btn {
+    appearance: none;
+    display: inline-flex;
     align-items: center;
-    gap: 0.75rem;
-    padding: 0.75rem max(1rem, env(safe-area-inset-right)) calc(0.75rem + env(safe-area-inset-bottom)) max(1rem, env(safe-area-inset-left));
-    background: color-mix(in srgb, var(--bg-panel) 92%, transparent);
-    backdrop-filter: blur(10px);
-    box-shadow: 0 -1px 0 var(--hairline);
+    justify-content: center;
+    min-height: 2.75rem;
+    max-width: min(12.5rem, calc(100vw - 2rem));
+    padding: 0.75rem 1rem;
+    border: 0;
+    border-radius: 999px;
+    background: var(--color-burgundy);
+    color: #fff;
+    font: inherit;
+    font-size: var(--fs-xs);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    box-shadow: var(--shadow-lift);
+    text-align: center;
+    line-height: 1.2;
+    box-sizing: border-box;
+    cursor: pointer;
   }
 
-  .ritual-sticky__info {
-    flex: 1;
-    min-width: 0;
-    display: grid;
-    gap: 0.15rem;
+  .ritual-sticky__btn:hover,
+  .ritual-sticky__btn:focus-visible {
+    filter: brightness(1.06);
+    outline: none;
   }
 
-  .ritual-sticky__name {
-    font-size: 0.85rem;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+  .ritual-sticky__btn:disabled,
+  .ritual-sticky__btn.is-busy {
+    opacity: 0.72;
+    pointer-events: none;
   }
 
-  .ritual-sticky__price {
-    font-size: 0.8rem;
-    color: var(--text-secondary);
-  }
-
-  .ritual-sticky .btn {
-    flex-shrink: 0;
+  .ritual-sticky__label {
+    display: block;
+    width: 100%;
+    text-align: center;
   }
 
   body.has-ritual-sticky .section.ritual {
-    padding-bottom: calc(var(--space-8) + 4.5rem);
+    padding-bottom: calc(var(--space-8) + 8rem);
   }
+}
 
-  body.has-ritual-sticky .whatsapp-float {
-    bottom: calc(4.75rem + env(safe-area-inset-bottom));
+@media (max-width: 380px) {
+  .ritual-sticky__btn {
+    letter-spacing: 0.06em;
+    padding: 0.7rem 0.85rem;
+    font-size: 0.68rem;
   }
 }
 
