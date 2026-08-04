@@ -7,10 +7,30 @@
   <div class="ritual-hero__glow" aria-hidden="true"></div>
   <p class="eyebrow">Your personal edit</p>
   <h1 class="ritual-hero__title">Build your ritual</h1>
-  <p class="ritual-hero__text">One answer at a time. We shape your trio from your mood, the time of day, and what you’ve been exploring in the shop.</p>
+  <p class="ritual-hero__text">
+    Answer three short questions — occasion, focus, and finish — and we’ll build a 3-piece beauty set shaped around your mood and what you’ve been exploring in the shop.
+  </p>
+  <ol class="ritual-hero__steps" aria-label="How your personal edit works">
+    <li>
+      <span class="ritual-hero__step-num">1</span>
+      <span class="ritual-hero__step-copy"><strong>Occasion</strong> — everyday, evening, or bold</span>
+    </li>
+    <li>
+      <span class="ritual-hero__step-num">2</span>
+      <span class="ritual-hero__step-copy"><strong>Focus</strong> — lips, eyes, or full face</span>
+    </li>
+    <li>
+      <span class="ritual-hero__step-num">3</span>
+      <span class="ritual-hero__step-copy"><strong>Finish</strong> — matte, gloss, or soft</span>
+    </li>
+  </ol>
+  <div class="ritual-hero__actions">
+    <a class="btn btn--primary" href="#ritual-start">Start with your occasion</a>
+    <a class="btn btn--ghost" href="{% url 'catalog:shop' %}">Or browse the shop</a>
+  </div>
 </section>
 
-<section class="section ritual" data-ritual data-ritual-url="{{ ritual_recommend_url }}">
+<section class="section ritual" id="ritual-start" data-ritual data-ritual-url="{{ ritual_recommend_url }}">
   <div class="ritual-path" data-ritual-path aria-label="Ritual progress">
     <div class="ritual-path__sticky">
       <p class="ritual-path__status" data-ritual-status>Step 1 of 3 — choose your occasion</p>
