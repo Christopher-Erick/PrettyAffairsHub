@@ -45,24 +45,68 @@ def can_view_order_confirmation(request, order: Order) -> bool:
     return order.order_number in (session.get(ORDER_CONFIRMATION_SESSION_KEY) or [])
 
 
+def _component_stock_target(product, variants_by_id):
+    """Pick the stock row to decrement for a product (default variant or product)."""
+    variants = [v for v in product.variants.all() if v.is_active]
+    if variants:
+        chosen = None
+        for variant in variants:
+            if variant.stock > 0:
+                chosen = variant
+                break
+        if chosen is None:
+            chosen = variants[0]
+        return variants_by_id.get(chosen.id) or chosen
+    return product
+
+
 @transaction.atomic
 def create_order_from_cart(request, cleaned_data):
     cart = get_or_create_cart(request)
-    items = list(cart.items.select_related("product", "variant"))
+    items = list(
+        cart.items.select_related("product", "variant", "bundle").prefetch_related(
+            "bundle__items__product__variants"
+        )
+    )
     if not items:
         raise ValueError("Your cart is empty.")
 
-    product_ids = {item.product_id for item in items}
-    variant_ids = {item.variant_id for item in items if item.variant_id}
+    product_ids = set()
+    variant_ids = set()
+    for item in items:
+        if item.bundle_id:
+            for bi in item.bundle.items.all():
+                product_ids.add(bi.product_id)
+                for v in bi.product.variants.all():
+                    if v.is_active:
+                        variant_ids.add(v.id)
+        else:
+            product_ids.add(item.product_id)
+            if item.variant_id:
+                variant_ids.add(item.variant_id)
+
     products = {
-        p.id: p for p in Product.objects.select_for_update().filter(id__in=product_ids)
+        p.id: p
+        for p in Product.objects.select_for_update()
+        .filter(id__in=product_ids)
+        .prefetch_related("variants")
     }
     variants = {
         v.id: v for v in ProductVariant.objects.select_for_update().filter(id__in=variant_ids)
     }
 
     for item in items:
-        available_obj = variants.get(item.variant_id) if item.variant_id else products[item.product_id]
+        if item.bundle_id:
+            for bi in item.bundle.items.all():
+                product = products[bi.product_id]
+                need = max(1, int(bi.quantity or 1)) * item.quantity
+                stock_obj = _component_stock_target(product, variants)
+                if need > stock_obj.stock:
+                    raise ValueError(f"Insufficient stock for {product.name} in {item.bundle.name}.")
+            continue
+        available_obj = (
+            variants.get(item.variant_id) if item.variant_id else products[item.product_id]
+        )
         if item.quantity > available_obj.stock:
             raise ValueError(f"Insufficient stock for {item.product.name}.")
 
@@ -112,7 +156,36 @@ def create_order_from_cart(request, cleaned_data):
     OrderEvent.objects.create(order=order, status=Order.STATUS_PENDING, note="Order placed")
 
     for item in items:
-        available_obj = variants.get(item.variant_id) if item.variant_id else products[item.product_id]
+        if item.bundle_id:
+            includes = []
+            for bi in item.bundle.items.all():
+                product = products[bi.product_id]
+                need = max(1, int(bi.quantity or 1)) * item.quantity
+                stock_obj = _component_stock_target(product, variants)
+                # Re-fetch locked instance if it's a variant from the locked map
+                if isinstance(stock_obj, ProductVariant):
+                    locked = variants[stock_obj.id]
+                else:
+                    locked = products[product.id]
+                locked.stock = max(0, locked.stock - need)
+                locked.save(update_fields=["stock"])
+                includes.append(product.name)
+            OrderItem.objects.create(
+                order=order,
+                product=None,
+                bundle=item.bundle,
+                product_name=item.bundle.name,
+                variant_name="Includes: " + " · ".join(includes),
+                sku=f"BUNDLE:{item.bundle.slug}",
+                quantity=item.quantity,
+                unit_price=item.unit_price,
+                line_total=item.line_total,
+            )
+            continue
+
+        available_obj = (
+            variants.get(item.variant_id) if item.variant_id else products[item.product_id]
+        )
         available_obj.stock = max(0, available_obj.stock - item.quantity)
         available_obj.save(update_fields=["stock"])
         OrderItem.objects.create(
@@ -130,7 +203,6 @@ def create_order_from_cart(request, cleaned_data):
     cart.coupon_code = ""
     cart.save(update_fields=["coupon_code"])
 
-    # Stock changed — drop stale "in stock" catalogue payloads.
     invalidate_catalog_cache(reason="order placed")
     send_order_confirmation(order)
     return order
@@ -147,6 +219,8 @@ def send_order_confirmation(order):
     ]
     for item in order.items.all():
         lines.append(f"- {item.product_name} x{item.quantity}")
+        if item.variant_name:
+            lines.append(f"  {item.variant_name}")
     send_mail(
         subject,
         "\n".join(lines),

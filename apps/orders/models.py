@@ -82,6 +82,9 @@ class OrderItem(models.Model):
     product = models.ForeignKey(
         "catalog.Product", null=True, blank=True, on_delete=models.SET_NULL
     )
+    bundle = models.ForeignKey(
+        "catalog.Bundle", null=True, blank=True, on_delete=models.SET_NULL
+    )
     product_name = models.CharField(max_length=200)
     variant_name = models.CharField(max_length=120, blank=True)
     sku = models.CharField(max_length=64, blank=True)
@@ -91,6 +94,10 @@ class OrderItem(models.Model):
 
     def __str__(self):
         return f"{self.product_name} x{self.quantity}"
+
+    @property
+    def is_bundle(self):
+        return bool(self.bundle_id) or self.sku.startswith("BUNDLE:")
 
 
 class OrderEvent(models.Model):

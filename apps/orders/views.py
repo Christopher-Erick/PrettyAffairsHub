@@ -39,7 +39,9 @@ def checkout(request):
         return redirect_to_login(request.get_full_path(), login_url="accounts:login")
 
     cart = get_or_create_cart(request)
-    items = cart.items.select_related("product", "variant")
+    items = cart.items.select_related("product", "variant", "bundle").prefetch_related(
+        "bundle__items__product"
+    )
     if not items.exists():
         messages.info(request, "Your cart is empty.")
         return redirect("cart:detail")

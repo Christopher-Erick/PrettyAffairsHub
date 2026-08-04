@@ -2,8 +2,10 @@
 {% block title %}Bundles — {{ SITE_NAME }}{% endblock %}
 {% block content %}
 <section class="section bundles-page">
-  <h1 class="section__title">Combos & bundles</h1>
-  <p class="section__intro">Curated sets — see all three pieces at a glance, then open for the full edit.</p>
+  <div class="section__intro">
+    <h1 class="section__title">Combos & bundles</h1>
+    <p class="section__text">Curated sets — see all three pieces at a glance, then open for the full edit.</p>
+  </div>
   <div class="product-grid bundle-grid">
     {% for bundle in bundles %}
     {% with items=bundle.items.all %}

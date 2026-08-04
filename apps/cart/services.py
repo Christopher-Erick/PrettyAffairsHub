@@ -1,8 +1,9 @@
 from decimal import Decimal
 
 from django.db import transaction
+from django.db.models import Q
 
-from apps.catalog.models import Product, ProductVariant
+from apps.catalog.models import Bundle, Product, ProductVariant
 from apps.cart.models import Cart, CartItem
 from apps.cart.context_processors import refresh_cart_item_count
 
@@ -61,9 +62,33 @@ def get_or_create_cart(request, guest_session_key=None):
 
 
 def _merge_carts(source, target):
-    for item in source.items.select_related("product", "variant"):
+    for item in source.items.select_related("product", "variant", "bundle"):
+        if item.bundle_id:
+            available = bundle_sets_available(item.bundle)
+            existing = target.items.filter(bundle_id=item.bundle_id).first()
+            if existing:
+                merged = min(existing.quantity + item.quantity, max(available, 0))
+                if merged <= 0:
+                    existing.delete()
+                else:
+                    existing.quantity = merged
+                    existing.unit_price = item.bundle.price
+                    existing.save(update_fields=["quantity", "unit_price"])
+                item.delete()
+            else:
+                if available <= 0:
+                    item.delete()
+                    continue
+                item.quantity = min(item.quantity, available)
+                item.cart = target
+                item.unit_price = item.bundle.price
+                item.save(update_fields=["cart", "quantity", "unit_price"])
+            continue
+
         available = _stock_for(item.product, item.variant)
-        existing = target.items.filter(product=item.product, variant=item.variant).first()
+        existing = target.items.filter(
+            product=item.product, variant=item.variant, bundle__isnull=True
+        ).first()
         if existing:
             merged = min(existing.quantity + item.quantity, max(available, 0))
             if merged <= 0:
@@ -88,6 +113,23 @@ def _stock_for(product, variant):
     return int(product.stock)
 
 
+def bundle_sets_available(bundle: Bundle) -> int:
+    """How many full sets can be fulfilled from component stock."""
+    caps = []
+    for bi in bundle.items.select_related("product").prefetch_related("product__variants"):
+        product = bi.product
+        if not product.is_active:
+            return 0
+        variants = [v for v in product.variants.all() if v.is_active]
+        variant = product.default_variant if variants else None
+        if variants and variant is None:
+            return 0
+        stock = _stock_for(product, variant)
+        need = max(1, int(bi.quantity or 1))
+        caps.append(stock // need)
+    return min(caps) if caps else 0
+
+
 @transaction.atomic
 def add_to_cart(request, product_id, quantity=1, variant_id=None):
     product = Product.objects.published().get(pk=product_id)
@@ -108,6 +150,7 @@ def add_to_cart(request, product_id, quantity=1, variant_id=None):
         cart=cart,
         product=product,
         variant=variant,
+        bundle=None,
         defaults={"quantity": quantity, "unit_price": unit_price},
     )
     if not created:
@@ -121,19 +164,64 @@ def add_to_cart(request, product_id, quantity=1, variant_id=None):
     return item, quantity
 
 
+@transaction.atomic
+def add_bundle_to_cart(request, bundle_slug, quantity=1):
+    """Add a curated bundle as one cart line at the bundle price."""
+    bundle = (
+        Bundle.objects.filter(is_active=True, slug=bundle_slug)
+        .prefetch_related("items__product__variants")
+        .first()
+    )
+    if bundle is None:
+        raise ValueError("That bundle is no longer available.")
+    if bundle.items.count() != 3:
+        raise ValueError("That bundle is incomplete.")
+
+    quantity = max(1, int(quantity))
+    available = bundle_sets_available(bundle)
+    if available < quantity:
+        raise InsufficientStockError(available, bundle.name)
+
+    cart = get_or_create_cart(request)
+    item, created = CartItem.objects.get_or_create(
+        cart=cart,
+        bundle=bundle,
+        product=None,
+        variant=None,
+        defaults={"quantity": quantity, "unit_price": bundle.price},
+    )
+    if not created:
+        new_qty = item.quantity + quantity
+        if new_qty > available:
+            raise InsufficientStockError(available, bundle.name)
+        item.quantity = new_qty
+        item.unit_price = bundle.price
+        item.save(update_fields=["quantity", "unit_price"])
+    refresh_cart_item_count(request, cart)
+    return item, quantity
+
+
 def update_cart_item(request, item_id, quantity):
     cart = get_or_create_cart(request)
-    item = cart.items.select_related("product", "variant").get(pk=item_id)
+    item = cart.items.select_related("product", "variant", "bundle").get(pk=item_id)
     quantity = int(quantity)
     if quantity <= 0:
         item.delete()
         refresh_cart_item_count(request, cart)
         return None
-    available = _stock_for(item.product, item.variant)
-    if quantity > available:
-        raise InsufficientStockError(available, item.product.name)
-    item.quantity = quantity
-    item.save(update_fields=["quantity"])
+    if item.bundle_id:
+        available = bundle_sets_available(item.bundle)
+        if quantity > available:
+            raise InsufficientStockError(available, item.bundle.name)
+        item.quantity = quantity
+        item.unit_price = item.bundle.price
+        item.save(update_fields=["quantity", "unit_price"])
+    else:
+        available = _stock_for(item.product, item.variant)
+        if quantity > available:
+            raise InsufficientStockError(available, item.product.name)
+        item.quantity = quantity
+        item.save(update_fields=["quantity"])
     refresh_cart_item_count(request, cart)
     return item
 
@@ -175,7 +263,7 @@ def clear_cart(request):
 
 def build_whatsapp_order_message(cart, currency_symbol="KSh"):
     """Plain-text order draft for wa.me prefill."""
-    items = list(cart.items.select_related("product", "variant"))
+    items = list(cart.items.select_related("product", "variant", "bundle").prefetch_related("bundle__items__product"))
     if not items:
         return (
             "Hi Pretty Affairs Hub — I'd like to place an order.",
@@ -187,6 +275,17 @@ def build_whatsapp_order_message(cart, currency_symbol="KSh"):
     total = Decimal("0")
     count = 0
     for item in items:
+        if item.bundle_id:
+            name = f"{item.bundle.name} (bundle)"
+            includes = item.includes_label
+            line_total = item.unit_price * item.quantity
+            total += line_total
+            count += item.quantity
+            price = int(line_total) if line_total == line_total.to_integral_value() else line_total
+            lines.append(f"- {name} x {item.quantity} — {currency_symbol} {price}")
+            if includes:
+                lines.append(f"  {includes}")
+            continue
         name = item.product.name
         if item.variant_id:
             name = f"{name} ({item.variant.name})"
@@ -198,6 +297,22 @@ def build_whatsapp_order_message(cart, currency_symbol="KSh"):
     total_fmt = int(total) if total == total.to_integral_value() else total
     lines.extend(["", f"Total: {currency_symbol} {total_fmt}", "", "Please confirm availability and payment. Thank you!"])
     return "\n".join(lines), count, total
+
+
+def build_whatsapp_bundle_enquiry(bundle: Bundle, currency_symbol="KSh"):
+    """WA draft when enquiring about a bundle without adding to cart."""
+    price = bundle.price
+    price_fmt = int(price) if price == price.to_integral_value() else price
+    lines = [
+        f"Hi Pretty Affairs Hub — I'm interested in the bundle “{bundle.name}”.",
+        "",
+        f"Bundle price: {currency_symbol} {price_fmt}",
+    ]
+    names = [bi.product.name for bi in bundle.items.select_related("product")]
+    if names:
+        lines.append("Includes: " + " · ".join(names))
+    lines.extend(["", "Please confirm availability and how to order. Thank you!"])
+    return "\n".join(lines)
 
 
 def cart_totals(cart, discount_amount=Decimal("0"), shipping_amount=Decimal("0"), tax_rate=Decimal("0")):

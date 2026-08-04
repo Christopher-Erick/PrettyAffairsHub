@@ -673,8 +673,10 @@
       // Keep the popup tied to the click (fetch alone would get blocked).
       const waWindow = window.open("about:blank", "_blank");
       const context = (orderWa.dataset.waContext || "").trim();
+      const bundleSlug = (orderWa.dataset.waBundleSlug || "").trim();
       const body = new URLSearchParams();
       if (context) body.set("context", context);
+      if (bundleSlug) body.set("bundle_slug", bundleSlug);
 
       fetch(previewUrl, {
         method: "POST",

@@ -61,7 +61,15 @@
       {% for item in items %}
       <li class="checkout-summary__item">
         <span class="checkout-summary__media" aria-hidden="true">
-          {% if item.variant and item.variant.image %}
+          {% if item.is_bundle %}
+            {% with first=item.bundle.items.all.0 %}
+              {% if first and first.product.primary_image and first.product.primary_image.image %}
+                <img src="{{ first.product.primary_image.image.url }}" alt="" loading="lazy" width="56" height="70">
+              {% else %}
+                <span class="product-card__placeholder"></span>
+              {% endif %}
+            {% endwith %}
+          {% elif item.variant and item.variant.image %}
             <img src="{{ item.variant.image.url }}" alt="" loading="lazy" width="56" height="70">
           {% elif item.product.primary_image and item.product.primary_image.image %}
             <img src="{{ item.product.primary_image.image.url }}" alt="" loading="lazy" width="56" height="70">
@@ -70,9 +78,15 @@
           {% endif %}
         </span>
         <span class="checkout-summary__copy">
-          <strong>{{ item.product.name }}</strong>
-          {% if item.variant %}<span>Shade: {{ item.variant.name }}</span>{% endif %}
-          <span>× {{ item.quantity }}</span>
+          {% if item.is_bundle %}
+            <strong>{{ item.bundle.name }}</strong>
+            <span>{{ item.includes_label }}</span>
+            <span>× {{ item.quantity }}</span>
+          {% else %}
+            <strong>{{ item.product.name }}</strong>
+            {% if item.variant %}<span>Shade: {{ item.variant.name }}</span>{% endif %}
+            <span>× {{ item.quantity }}</span>
+          {% endif %}
         </span>
         <span class="checkout-summary__price">{{ SITE_CURRENCY_SYMBOL }} {{ item.line_total }}</span>
       </li>

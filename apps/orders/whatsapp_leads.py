@@ -26,13 +26,14 @@ DEDUPE_WINDOW = timedelta(minutes=30)
 def _fingerprint_for_items(items: list[dict]) -> str:
     normalized = [
         {
+            "b": int(item.get("bundle_id") or 0),
             "p": int(item.get("product_id") or 0),
             "v": int(item.get("variant_id") or 0),
             "q": int(item.get("quantity") or 0),
         }
         for item in items
     ]
-    normalized.sort(key=lambda row: (row["p"], row["v"]))
+    normalized.sort(key=lambda row: (row["b"], row["p"], row["v"]))
     raw = json.dumps(normalized, separators=(",", ":"), sort_keys=True)
     return hashlib.sha256(raw.encode("utf-8")).hexdigest()
 
@@ -41,10 +42,31 @@ def cart_items_snapshot(cart) -> tuple[list[dict], int, Decimal]:
     rows = []
     total = Decimal("0")
     count = 0
-    for item in cart.items.select_related("product", "variant"):
+    for item in cart.items.select_related("product", "variant", "bundle").prefetch_related(
+        "bundle__items__product"
+    ):
         line_total = item.unit_price * item.quantity
         total += line_total
         count += item.quantity
+        if item.bundle_id:
+            includes = [bi.product.name for bi in item.bundle.items.all()]
+            rows.append(
+                {
+                    "bundle_id": item.bundle_id,
+                    "bundle_slug": item.bundle.slug,
+                    "product_id": None,
+                    "variant_id": None,
+                    "product_name": item.bundle.name,
+                    "variant_name": "Includes: " + " · ".join(includes),
+                    "sku": f"BUNDLE:{item.bundle.slug}",
+                    "quantity": item.quantity,
+                    "unit_price": str(item.unit_price),
+                    "line_total": str(line_total),
+                    "is_bundle": True,
+                    "includes": includes,
+                }
+            )
+            continue
         rows.append(
             {
                 "product_id": item.product_id,
@@ -59,6 +81,7 @@ def cart_items_snapshot(cart) -> tuple[list[dict], int, Decimal]:
                 "quantity": item.quantity,
                 "unit_price": str(item.unit_price),
                 "line_total": str(line_total),
+                "is_bundle": False,
             }
         )
     return rows, count, total
@@ -154,14 +177,35 @@ def delete_false_alarm(lead: WhatsAppLead) -> None:
 @transaction.atomic
 def confirm_whatsapp_sale(lead: WhatsAppLead, *, manager, cleaned_data: dict) -> Order:
     """Confirm sale → Order in DB, then remove the lead."""
+    from apps.catalog.models import Bundle
+    from apps.orders.services import _component_stock_target
+
     items = list(lead.items_json or [])
     if not items:
         raise ValueError("This WhatsApp lead has no products.")
 
     product_ids = {int(row["product_id"]) for row in items if row.get("product_id")}
     variant_ids = {int(row["variant_id"]) for row in items if row.get("variant_id")}
+    bundle_ids = {int(row["bundle_id"]) for row in items if row.get("bundle_id")}
+
+    bundles = {
+        b.id: b
+        for b in Bundle.objects.select_for_update()
+        .filter(id__in=bundle_ids)
+        .prefetch_related("items__product__variants")
+    }
+    for bundle in bundles.values():
+        for bi in bundle.items.all():
+            product_ids.add(bi.product_id)
+            for v in bi.product.variants.all():
+                if v.is_active:
+                    variant_ids.add(v.id)
+
     products = {
-        p.id: p for p in Product.objects.select_for_update().filter(id__in=product_ids)
+        p.id: p
+        for p in Product.objects.select_for_update()
+        .filter(id__in=product_ids)
+        .prefetch_related("variants")
     }
     variants = {
         v.id: v
@@ -172,6 +216,21 @@ def confirm_whatsapp_sale(lead: WhatsAppLead, *, manager, cleaned_data: dict) ->
         qty = int(row.get("quantity") or 0)
         if qty < 1:
             raise ValueError("Invalid quantity on a lead line.")
+        if row.get("is_bundle") or row.get("bundle_id"):
+            bundle = bundles.get(int(row["bundle_id"])) if row.get("bundle_id") else None
+            if bundle is None:
+                raise ValueError(f"Missing bundle for “{row.get('product_name')}”.")
+            for bi in bundle.items.all():
+                product = products[bi.product_id]
+                need = max(1, int(bi.quantity or 1)) * qty
+                stock_obj = _component_stock_target(product, variants)
+                locked = variants.get(stock_obj.id) if isinstance(stock_obj, ProductVariant) else products[product.id]
+                if need > locked.stock:
+                    raise ValueError(
+                        f"Insufficient stock for {product.name} in {bundle.name} "
+                        f"(need {need}, have {locked.stock})."
+                    )
+            continue
         variant_id = int(row["variant_id"]) if row.get("variant_id") else None
         product_id = int(row["product_id"])
         stock_obj = variants.get(variant_id) if variant_id else products.get(product_id)
@@ -217,12 +276,35 @@ def confirm_whatsapp_sale(lead: WhatsAppLead, *, manager, cleaned_data: dict) ->
 
     for row in items:
         qty = int(row["quantity"])
+        unit_price = Decimal(str(row.get("unit_price") or 0))
+        if row.get("is_bundle") or row.get("bundle_id"):
+            bundle = bundles[int(row["bundle_id"])]
+            includes = []
+            for bi in bundle.items.all():
+                product = products[bi.product_id]
+                need = max(1, int(bi.quantity or 1)) * qty
+                stock_obj = _component_stock_target(product, variants)
+                locked = variants.get(stock_obj.id) if isinstance(stock_obj, ProductVariant) else products[product.id]
+                locked.stock = max(0, locked.stock - need)
+                locked.save(update_fields=["stock"])
+                includes.append(product.name)
+            OrderItem.objects.create(
+                order=order,
+                product=None,
+                bundle=bundle,
+                product_name=row.get("product_name") or bundle.name,
+                variant_name=row.get("variant_name") or ("Includes: " + " · ".join(includes)),
+                sku=row.get("sku") or f"BUNDLE:{bundle.slug}",
+                quantity=qty,
+                unit_price=unit_price,
+                line_total=Decimal(str(row.get("line_total") or unit_price * qty)),
+            )
+            continue
         variant_id = int(row["variant_id"]) if row.get("variant_id") else None
         product_id = int(row["product_id"])
         stock_obj = variants.get(variant_id) if variant_id else products[product_id]
         stock_obj.stock = max(0, stock_obj.stock - qty)
         stock_obj.save(update_fields=["stock"])
-        unit_price = Decimal(str(row.get("unit_price") or 0))
         OrderItem.objects.create(
             order=order,
             product_id=product_id,

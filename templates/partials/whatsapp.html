@@ -10,6 +10,7 @@
   data-preview-url="{% url 'cart:order_preview' %}"
   data-clear-url="{% url 'cart:clear' %}"
   {% if wa_order_context %}data-wa-context="{{ wa_order_context|escape }}"{% endif %}
+  {% if wa_bundle_slug %}data-wa-bundle-slug="{{ wa_bundle_slug }}"{% endif %}
 >
   <span class="whatsapp-float__label">WhatsApp order</span>
 </a>

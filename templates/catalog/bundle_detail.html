@@ -4,7 +4,7 @@
 {% block og_title %}{{ bundle.name }}{% endblock %}
 
 {% block whatsapp_fab %}
-{% include "partials/whatsapp.html" with wa_order_context=bundle.name %}
+{% include "partials/whatsapp.html" with wa_order_context=bundle.name wa_bundle_slug=bundle.slug %}
 {% endblock %}
 
 {% block content %}
@@ -86,7 +86,7 @@
       {% if WHATSAPP_NUMBER %}
       <a
         class="btn btn--ghost pdp-sticky__wa"
-        href="https://wa.me/{{ WHATSAPP_NUMBER }}?text=Hi%20Pretty%20Affairs%20Hub%20—%20{{ bundle.name|urlencode }}"
+        href="https://wa.me/{{ WHATSAPP_NUMBER }}?text={{ sticky_wa_text|urlencode }}"
         target="_blank"
         rel="noopener"
       >Chat</a>

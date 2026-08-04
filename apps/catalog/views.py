@@ -26,6 +26,7 @@ from apps.catalog.cache import (
 from apps.catalog.models import Bundle, Category, Collection, Product
 from apps.catalog.ritual import recommend_ritual
 from apps.catalog.services import get_recently_viewed_ids, track_product_view, track_shop_search
+from apps.cart.services import build_whatsapp_bundle_enquiry
 from apps.core.http import is_same_origin_request
 from apps.core.ratelimit import rate_limit_exceeded
 from apps.core.smart_cache import get_or_set
@@ -300,6 +301,9 @@ class BundleDetailView(DetailView):
         items = list(self.object.items.all())
         context["bundle_in_stock"] = bool(items) and all(
             item.product.in_stock for item in items
+        )
+        context["sticky_wa_text"] = build_whatsapp_bundle_enquiry(
+            self.object, currency_symbol=settings.SITE_CURRENCY_SYMBOL
         )
         return context
 

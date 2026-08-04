@@ -1295,6 +1295,14 @@
     linear-gradient(160deg, color-mix(in srgb, var(--bg-media) 88%, #fff) 0%, var(--bg-media) 100%);
 }
 
+/* One set on a phone should sit centered, not stranded in a 2-col left cell */
+@media (max-width: 639px) {
+  .bundles-page .bundle-grid {
+    grid-template-columns: minmax(0, 22rem);
+    justify-content: center;
+  }
+}
+
 .bundle-collage {
   display: grid;
   width: 100%;
@@ -1634,6 +1642,32 @@
 @media (max-width: 799px) {
   .bundle-pdp {
     padding-bottom: 5.5rem;
+  }
+
+  .bundle-pdp .pdp__info {
+    text-align: center;
+  }
+
+  .bundle-pdp .pdp__details,
+  .bundle-pdp .pdp__detail ul {
+    text-align: left;
+  }
+
+  .bundle-pdp .pdp__detail h2 {
+    text-align: center;
+  }
+
+  .bundle-pdp .pdp__buttons {
+    justify-content: center;
+  }
+
+  .bundle-pdp .pdp__buttons .btn {
+    flex: 1 1 100%;
+    justify-content: center;
+  }
+
+  .bundle-pdp .share-row {
+    justify-content: center;
   }
 
   .bundle-hex {
