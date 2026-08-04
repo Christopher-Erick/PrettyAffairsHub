@@ -32,6 +32,7 @@ from apps.core.ratelimit import rate_limit_exceeded
 from apps.core.smart_cache import get_or_set
 from apps.reviews.forms import ReviewForm
 from apps.reviews.models import Review
+from decimal import Decimal, InvalidOperation
 
 
 def products_for_category_slug(qs, slug):
@@ -65,14 +66,29 @@ class ProductListView(ListView):
         )
         return "&".join(f"{key}={get.get(key, '')}" for key in keys)
 
+    def _parse_price(self, raw):
+        """Return a non-negative Decimal price filter, or None if empty/invalid."""
+        if raw is None:
+            return None
+        text = str(raw).strip()
+        if not text:
+            return None
+        try:
+            value = Decimal(text)
+        except (InvalidOperation, ValueError):
+            return None
+        if value < 0:
+            return None
+        return value
+
     def _build_queryset(self):
         qs = _shop_product_qs()
         q = self.request.GET.get("q", "").strip()
         category = self.request.GET.get("category")
         collection = self.request.GET.get("collection")
         sort = self.request.GET.get("sort", "newest")
-        min_price = self.request.GET.get("min_price")
-        max_price = self.request.GET.get("max_price")
+        min_price = self._parse_price(self.request.GET.get("min_price"))
+        max_price = self._parse_price(self.request.GET.get("max_price"))
         flag = self.request.GET.get("flag")
 
         if q:
@@ -87,9 +103,9 @@ class ProductListView(ListView):
             qs = products_for_category_slug(qs, category)
         if collection:
             qs = qs.filter(collections__slug=collection)
-        if min_price:
+        if min_price is not None:
             qs = qs.filter(price__gte=min_price)
-        if max_price:
+        if max_price is not None:
             qs = qs.filter(price__lte=max_price)
         if flag == "new":
             qs = qs.new_arrivals()
@@ -150,7 +166,14 @@ class ProductListView(ListView):
         context["category_tree"] = cached_category_tree()
         context["categories"] = cached_active_categories()
         context["collections"] = cached_active_collections()
-        context["current_filters"] = self.request.GET
+        filters = self.request.GET.copy()
+        for key in ("min_price", "max_price"):
+            parsed = self._parse_price(filters.get(key))
+            if parsed is None:
+                filters[key] = ""
+            else:
+                filters[key] = format(parsed.normalize(), "f").rstrip("0").rstrip(".") or "0"
+        context["current_filters"] = filters
         page_obj = context.get("page_obj")
         context["result_count"] = (
             page_obj.paginator.count if page_obj is not None else len(context["products"])
@@ -165,7 +188,6 @@ class ProductListView(ListView):
                 or shop_product_qs().order_by("-average_rating", "-review_count").first()
             ),
         )
-        filters = self.request.GET
         browsing_clean = not any(
             filters.get(key)
             for key in ("category", "collection", "flag", "q", "min_price", "max_price")

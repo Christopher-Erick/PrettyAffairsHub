@@ -10,6 +10,7 @@ from apps.cart.context_processors import refresh_cart_item_count
 from apps.cart.services import (
     InsufficientStockError,
     add_bundle_to_cart,
+    add_ritual_to_cart,
     add_to_cart,
     build_whatsapp_bundle_enquiry,
     build_whatsapp_order_message,
@@ -139,42 +140,54 @@ def cart_add(request):
 @require_POST
 def cart_add_many(request):
     ids = request.POST.getlist("product_id")
-    added = 0
-    errors = []
-    for product_id in ids:
-        try:
-            add_to_cart(request, product_id=product_id, quantity=1)
-            added += 1
-        except InsufficientStockError as exc:
-            errors.append(str(exc))
-            if not _wants_json(request):
-                messages.error(request, str(exc), extra_tags="toast-fast")
-        except Exception as exc:
-            errors.append(str(exc))
-            if not _wants_json(request):
-                messages.error(request, str(exc), extra_tags="toast-fast")
-    if added == 1:
-        msg = "Added 1 ritual piece to your cart."
-    elif added > 1:
-        msg = f"Added {added} ritual pieces to your cart."
-    else:
-        msg = errors[0] if errors else "Nothing was added."
-    if _wants_json(request):
-        return JsonResponse(
-            {
-                "ok": added > 0,
-                "message": msg,
-                "added": added,
-                "errors": errors,
-                "cart_count": _cart_count(request),
-                "level": "success" if added else "error",
-            },
-            status=200 if added else 400,
-        )
-    if added == 1:
+    try:
+        added, _group = add_ritual_to_cart(request, ids)
+        if added == 1:
+            msg = "Added 1 ritual piece to your cart."
+        else:
+            msg = f"Added your ritual ({added} pieces) to your cart."
+        if _wants_json(request):
+            return JsonResponse(
+                {
+                    "ok": True,
+                    "message": msg,
+                    "added": added,
+                    "errors": [],
+                    "cart_count": _cart_count(request),
+                    "level": "success",
+                }
+            )
         messages.success(request, msg)
-    elif added > 1:
-        messages.success(request, msg)
+    except InsufficientStockError as exc:
+        refresh_cart_item_count(request)
+        if _wants_json(request):
+            return JsonResponse(
+                {
+                    "ok": False,
+                    "message": str(exc),
+                    "added": 0,
+                    "errors": [str(exc)],
+                    "cart_count": _cart_count(request),
+                    "level": "error",
+                },
+                status=400,
+            )
+        messages.error(request, str(exc), extra_tags="toast-fast")
+    except Exception as exc:
+        refresh_cart_item_count(request)
+        if _wants_json(request):
+            return JsonResponse(
+                {
+                    "ok": False,
+                    "message": str(exc),
+                    "added": 0,
+                    "errors": [str(exc)],
+                    "cart_count": _cart_count(request),
+                    "level": "error",
+                },
+                status=400,
+            )
+        messages.error(request, str(exc), extra_tags="toast-fast")
     return safe_redirect(request, request.POST.get("next"), fallback="cart:detail")
 
 
@@ -241,8 +254,11 @@ def cart_update(request, item_id):
 
 @require_POST
 def cart_remove(request, item_id):
-    remove_cart_item(request, item_id)
-    messages.success(request, "Item removed from your cart.")
+    deleted = remove_cart_item(request, item_id)
+    if deleted > 1:
+        messages.success(request, "Ritual removed from your cart.")
+    else:
+        messages.success(request, "Item removed from your cart.")
     return redirect("cart:detail")
 
 

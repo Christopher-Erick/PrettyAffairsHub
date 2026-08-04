@@ -49,6 +49,8 @@ class CartItem(models.Model):
     bundle = models.ForeignKey(
         "catalog.Bundle", null=True, blank=True, on_delete=models.CASCADE
     )
+    # Shared by ritual pieces added together so remove/clear treats them as one set.
+    ritual_group = models.CharField(max_length=36, blank=True, default="", db_index=True)
     quantity = models.PositiveIntegerField(default=1)
     unit_price = models.DecimalField(max_digits=10, decimal_places=2)
 
@@ -79,6 +81,10 @@ class CartItem(models.Model):
     @property
     def is_bundle(self):
         return self.bundle_id is not None
+
+    @property
+    def is_ritual(self):
+        return bool(self.ritual_group) and not self.bundle_id
 
     @property
     def display_name(self):

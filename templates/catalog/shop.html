@@ -76,11 +76,11 @@
         <div class="filter-row">
           <div>
             <label class="field-label" for="min_price">Min price</label>
-            <input class="field" id="min_price" type="number" name="min_price" value="{{ current_filters.min_price }}">
+            <input class="field" id="min_price" type="number" name="min_price" value="{{ current_filters.min_price }}" min="0" step="1" inputmode="numeric">
           </div>
           <div>
             <label class="field-label" for="max_price">Max price</label>
-            <input class="field" id="max_price" type="number" name="max_price" value="{{ current_filters.max_price }}">
+            <input class="field" id="max_price" type="number" name="max_price" value="{{ current_filters.max_price }}" min="0" step="1" inputmode="numeric">
           </div>
         </div>
           <button class="btn btn--primary btn--full" type="submit">Apply</button>

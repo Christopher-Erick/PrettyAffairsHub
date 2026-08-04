@@ -169,9 +169,8 @@ def _candidate_queryset(signals: RitualSignals):
         .distinct()
         .order_by("-is_bestseller", "-is_featured", "-is_trending", "name")[:POOL_CAP]
     )
-    # Always prefer in-stock; fall back if the store is thin.
-    in_stock = [p for p in matched if p.in_stock]
-    return in_stock or matched[:POOL_CAP]
+    # Never surface out-of-stock (or unsellable variant) products in a ritual.
+    return [p for p in matched if p.in_stock and p.available_stock > 0]
 
 
 def score_product(product: Product, signals: RitualSignals) -> tuple[int, list[str]]:
@@ -384,6 +383,17 @@ def recommend_ritual(request, *, occasion: str, focus: str, finish: str) -> dict
         }
 
     candidates = _candidate_queryset(signals)
+    if not candidates:
+        return {
+            "ok": True,
+            "message": "No in-stock matches yet. Go back and try another combination.",
+            "products": [],
+            "summary": "Nothing available in stock for that mood right now.",
+            "total": 0,
+            "daypart": signals.daypart,
+            "signals": [],
+        }
+
     scored: list[tuple[Product, int, list[str]]] = []
     for product in candidates:
         score, reasons = score_product(product, signals)
@@ -391,14 +401,16 @@ def recommend_ritual(request, *, occasion: str, focus: str, finish: str) -> dict
     scored.sort(key=lambda item: (-item[1], float(item[0].price), item[0].name))
 
     picked = assemble_trio(scored, focus=signals.focus)
+    # Belt-and-suspenders: never return a piece that can't be sold.
+    picked = [(p, sc, rs) for p, sc, rs in picked if p.in_stock and p.available_stock > 0]
     products = [serialize_product(p, score=sc) for p, sc, _ in picked]
     total = sum((Decimal(str(p["price"])) for p in products), Decimal("0"))
-    summary = build_story(signals, picked)
+    summary = build_story(signals, picked) if picked else "No in-stock matches for that combination."
 
     fired = sorted({r for _, _, rs in picked for r in rs})
     return {
         "ok": True,
-        "message": "",
+        "message": "" if products else "No in-stock matches yet. Go back and try another combination.",
         "products": products,
         "summary": summary,
         "total": float(total),

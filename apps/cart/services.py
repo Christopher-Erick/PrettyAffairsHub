@@ -1,4 +1,5 @@
 from decimal import Decimal
+import uuid
 
 from django.db import transaction
 from django.db.models import Q
@@ -95,7 +96,11 @@ def _merge_carts(source, target):
                 existing.delete()
             else:
                 existing.quantity = merged
-                existing.save(update_fields=["quantity"])
+                update_fields = ["quantity"]
+                if item.ritual_group and not existing.ritual_group:
+                    existing.ritual_group = item.ritual_group
+                    update_fields.append("ritual_group")
+                existing.save(update_fields=update_fields)
             item.delete()
         else:
             if available <= 0:
@@ -111,6 +116,19 @@ def _stock_for(product, variant):
     if variant is not None:
         return int(variant.stock)
     return int(product.stock)
+
+
+def _resolve_line_variant(product, variant_id=None):
+    """Match cart stock to Product.in_stock: use an in-stock variant when shades exist."""
+    if variant_id:
+        return ProductVariant.objects.get(pk=variant_id, product=product, is_active=True)
+    active = [v for v in product.variants.all() if v.is_active]
+    if not active:
+        return None
+    variant = product.default_variant
+    if variant is None:
+        raise InsufficientStockError(0, product.name)
+    return variant
 
 
 def bundle_sets_available(bundle: Bundle) -> int:
@@ -131,14 +149,10 @@ def bundle_sets_available(bundle: Bundle) -> int:
 
 
 @transaction.atomic
-def add_to_cart(request, product_id, quantity=1, variant_id=None):
-    product = Product.objects.published().get(pk=product_id)
-    variant = None
-    if variant_id:
-        variant = ProductVariant.objects.get(pk=variant_id, product=product, is_active=True)
-        unit_price = variant.price
-    else:
-        unit_price = product.price
+def add_to_cart(request, product_id, quantity=1, variant_id=None, *, ritual_group="", refresh=True):
+    product = Product.objects.published().prefetch_related("variants").get(pk=product_id)
+    variant = _resolve_line_variant(product, variant_id)
+    unit_price = variant.price if variant is not None else product.price
 
     quantity = max(1, int(quantity))
     available = _stock_for(product, variant)
@@ -146,12 +160,17 @@ def add_to_cart(request, product_id, quantity=1, variant_id=None):
         raise InsufficientStockError(available, product.name)
 
     cart = get_or_create_cart(request)
+    group = (ritual_group or "").strip()[:36]
     item, created = CartItem.objects.get_or_create(
         cart=cart,
         product=product,
         variant=variant,
         bundle=None,
-        defaults={"quantity": quantity, "unit_price": unit_price},
+        defaults={
+            "quantity": quantity,
+            "unit_price": unit_price,
+            "ritual_group": group,
+        },
     )
     if not created:
         new_qty = item.quantity + quantity
@@ -159,9 +178,63 @@ def add_to_cart(request, product_id, quantity=1, variant_id=None):
             raise InsufficientStockError(available, product.name)
         item.quantity = new_qty
         item.unit_price = unit_price
-        item.save(update_fields=["quantity", "unit_price"])
-    refresh_cart_item_count(request, cart)
+        update_fields = ["quantity", "unit_price"]
+        if group:
+            item.ritual_group = group
+            update_fields.append("ritual_group")
+        item.save(update_fields=update_fields)
+    if refresh:
+        refresh_cart_item_count(request, cart)
     return item, quantity
+
+
+@transaction.atomic
+def add_ritual_to_cart(request, product_ids):
+    """Add ritual pieces as one linked set. All-or-nothing; remove clears the whole set."""
+    ids = []
+    seen = set()
+    for raw in product_ids or []:
+        try:
+            pk = int(raw)
+        except (TypeError, ValueError):
+            continue
+        if pk < 1 or pk in seen:
+            continue
+        seen.add(pk)
+        ids.append(pk)
+
+    if not ids:
+        raise ValueError("Nothing to add.")
+
+    products = list(
+        Product.objects.published().filter(id__in=ids).prefetch_related("variants")
+    )
+    by_id = {p.id: p for p in products}
+    if len(by_id) != len(ids):
+        raise ValueError("One or more ritual pieces are no longer available.")
+
+    cart = get_or_create_cart(request)
+    # Validate every piece can be fulfilled before mutating the cart.
+    for pid in ids:
+        product = by_id[pid]
+        variant = _resolve_line_variant(product, None)
+        available = _stock_for(product, variant)
+        existing = cart.items.filter(
+            product=product, variant=variant, bundle__isnull=True
+        ).first()
+        need = 1 + (existing.quantity if existing else 0)
+        if need > available:
+            raise InsufficientStockError(available, product.name)
+
+    group = str(uuid.uuid4())
+    added = 0
+    for pid in ids:
+        add_to_cart(
+            request, product_id=pid, quantity=1, ritual_group=group, refresh=False
+        )
+        added += 1
+    refresh_cart_item_count(request, cart)
+    return added, group
 
 
 @transaction.atomic
@@ -206,7 +279,10 @@ def update_cart_item(request, item_id, quantity):
     item = cart.items.select_related("product", "variant", "bundle").get(pk=item_id)
     quantity = int(quantity)
     if quantity <= 0:
-        item.delete()
+        if item.ritual_group:
+            cart.items.filter(ritual_group=item.ritual_group).delete()
+        else:
+            item.delete()
         refresh_cart_item_count(request, cart)
         return None
     if item.bundle_id:
@@ -227,9 +303,18 @@ def update_cart_item(request, item_id, quantity):
 
 
 def remove_cart_item(request, item_id):
+    """Remove a line; ritual pieces sharing ritual_group are cleared together."""
     cart = get_or_create_cart(request)
-    cart.items.filter(pk=item_id).delete()
+    item = cart.items.filter(pk=item_id).first()
+    if item is None:
+        refresh_cart_item_count(request, cart)
+        return 0
+    if item.ritual_group:
+        deleted, _ = cart.items.filter(ritual_group=item.ritual_group).delete()
+    else:
+        deleted, _ = cart.items.filter(pk=item_id).delete()
     refresh_cart_item_count(request, cart)
+    return deleted
 
 
 def get_cart_if_exists(request):
@@ -367,15 +452,16 @@ def ritual_products_snapshot(products) -> tuple[list[dict], int, Decimal]:
     rows = []
     total = Decimal("0")
     for product in products:
-        unit = product.price
+        variant = product.default_variant
+        unit = variant.price if variant is not None else product.price
         total += unit
         rows.append(
             {
                 "product_id": product.id,
-                "variant_id": None,
+                "variant_id": variant.id if variant is not None else None,
                 "product_name": product.name,
-                "variant_name": "",
-                "sku": product.sku or "",
+                "variant_name": variant.name if variant is not None else "",
+                "sku": (variant.sku if variant is not None and variant.sku else product.sku) or "",
                 "quantity": 1,
                 "unit_price": str(unit),
                 "line_total": str(unit),

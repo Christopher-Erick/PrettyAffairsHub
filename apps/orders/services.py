@@ -91,6 +91,17 @@ def create_order_from_cart(request, cleaned_data):
         .filter(id__in=product_ids)
         .prefetch_related("variants")
     }
+    # Product-only lines may sell through shades — lock those variant rows too.
+    for item in items:
+        if item.bundle_id or item.variant_id:
+            continue
+        product = products.get(item.product_id)
+        if not product:
+            continue
+        for v in product.variants.all():
+            if v.is_active:
+                variant_ids.add(v.id)
+
     variants = {
         v.id: v for v in ProductVariant.objects.select_for_update().filter(id__in=variant_ids)
     }
@@ -104,9 +115,14 @@ def create_order_from_cart(request, cleaned_data):
                 if need > stock_obj.stock:
                     raise ValueError(f"Insufficient stock for {product.name} in {item.bundle.name}.")
             continue
-        available_obj = (
-            variants.get(item.variant_id) if item.variant_id else products[item.product_id]
-        )
+        if item.variant_id:
+            available_obj = variants.get(item.variant_id) or products[item.product_id]
+        else:
+            available_obj = _component_stock_target(products[item.product_id], variants)
+            if isinstance(available_obj, ProductVariant):
+                available_obj = variants.get(available_obj.id) or available_obj
+            else:
+                available_obj = products[item.product_id]
         if item.quantity > available_obj.stock:
             raise ValueError(f"Insufficient stock for {item.product.name}.")
 
@@ -183,17 +199,32 @@ def create_order_from_cart(request, cleaned_data):
             )
             continue
 
-        available_obj = (
-            variants.get(item.variant_id) if item.variant_id else products[item.product_id]
-        )
+        if item.variant_id:
+            available_obj = variants.get(item.variant_id) or products[item.product_id]
+        else:
+            stock_obj = _component_stock_target(products[item.product_id], variants)
+            if isinstance(stock_obj, ProductVariant):
+                available_obj = variants.get(stock_obj.id) or stock_obj
+            else:
+                available_obj = products[item.product_id]
         available_obj.stock = max(0, available_obj.stock - item.quantity)
         available_obj.save(update_fields=["stock"])
         OrderItem.objects.create(
             order=order,
             product=item.product,
             product_name=item.product.name,
-            variant_name=item.variant.name if item.variant else "",
-            sku=item.variant.sku if item.variant and item.variant.sku else item.product.sku,
+            variant_name=item.variant.name if item.variant else (
+                available_obj.name if isinstance(available_obj, ProductVariant) else ""
+            ),
+            sku=(
+                item.variant.sku
+                if item.variant and item.variant.sku
+                else (
+                    available_obj.sku
+                    if isinstance(available_obj, ProductVariant) and available_obj.sku
+                    else item.product.sku
+                )
+            ),
             quantity=item.quantity,
             unit_price=item.unit_price,
             line_total=item.line_total,

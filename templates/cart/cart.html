@@ -86,8 +86,10 @@
             {% if item.variant.color_hex %}
             <span class="cart-row__swatch" style="--swatch: {{ item.variant.color_hex }}" aria-hidden="true"></span>
             {% endif %}
-            Shade: {{ item.variant.name }}
+            Shade: {{ item.variant.name }}{% if item.is_ritual %} · Part of your ritual{% endif %}
           </p>
+          {% elif item.is_ritual %}
+          <p class="cart-row__meta">Part of your ritual</p>
           {% endif %}
           <p class="cart-row__price">{{ SITE_CURRENCY_SYMBOL }} {{ item.unit_price }} each</p>
           <div class="cart-row__actions">
@@ -109,9 +111,9 @@
             </form>
             <form action="{% url 'cart:remove' item.id %}" method="post" class="cart-remove-form">
               {% csrf_token %}
-              <button class="cart-remove" type="submit" aria-label="Remove {{ item.product.name }} from cart">
+              <button class="cart-remove" type="submit" aria-label="{% if item.is_ritual %}Remove ritual from cart{% else %}Remove {{ item.product.name }} from cart{% endif %}">
                 <span class="cart-remove__icon" aria-hidden="true">×</span>
-                <span>Remove</span>
+                <span>{% if item.is_ritual %}Remove ritual{% else %}Remove{% endif %}</span>
               </button>
             </form>
           </div>

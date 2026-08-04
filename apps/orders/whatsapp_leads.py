@@ -225,6 +225,17 @@ def confirm_whatsapp_sale(lead: WhatsAppLead, *, manager, cleaned_data: dict) ->
         .filter(id__in=product_ids)
         .prefetch_related("variants")
     }
+    # Product-only lead lines may sell through shades — lock those rows too.
+    for row in items:
+        if row.get("is_bundle") or row.get("bundle_id") or row.get("variant_id"):
+            continue
+        product = products.get(int(row["product_id"])) if row.get("product_id") else None
+        if not product:
+            continue
+        for v in product.variants.all():
+            if v.is_active:
+                variant_ids.add(v.id)
+
     variants = {
         v.id: v
         for v in ProductVariant.objects.select_for_update().filter(id__in=variant_ids)
@@ -251,7 +262,18 @@ def confirm_whatsapp_sale(lead: WhatsAppLead, *, manager, cleaned_data: dict) ->
             continue
         variant_id = int(row["variant_id"]) if row.get("variant_id") else None
         product_id = int(row["product_id"])
-        stock_obj = variants.get(variant_id) if variant_id else products.get(product_id)
+        if variant_id:
+            stock_obj = variants.get(variant_id)
+        else:
+            product = products.get(product_id)
+            if product is None:
+                stock_obj = None
+            else:
+                stock_obj = _component_stock_target(product, variants)
+                if isinstance(stock_obj, ProductVariant):
+                    stock_obj = variants.get(stock_obj.id) or stock_obj
+                else:
+                    stock_obj = products[product_id]
         if stock_obj is None:
             raise ValueError(f"Missing product for “{row.get('product_name') or product_id}”.")
         if qty > stock_obj.stock:
@@ -320,14 +342,22 @@ def confirm_whatsapp_sale(lead: WhatsAppLead, *, manager, cleaned_data: dict) ->
             continue
         variant_id = int(row["variant_id"]) if row.get("variant_id") else None
         product_id = int(row["product_id"])
-        stock_obj = variants.get(variant_id) if variant_id else products[product_id]
+        if variant_id:
+            stock_obj = variants.get(variant_id) or products[product_id]
+        else:
+            stock_obj = _component_stock_target(products[product_id], variants)
+            if isinstance(stock_obj, ProductVariant):
+                stock_obj = variants.get(stock_obj.id) or stock_obj
+            else:
+                stock_obj = products[product_id]
         stock_obj.stock = max(0, stock_obj.stock - qty)
         stock_obj.save(update_fields=["stock"])
         OrderItem.objects.create(
             order=order,
             product_id=product_id,
             product_name=row.get("product_name") or "",
-            variant_name=row.get("variant_name") or "",
+            variant_name=row.get("variant_name")
+            or (stock_obj.name if isinstance(stock_obj, ProductVariant) else ""),
             sku=row.get("sku") or "",
             quantity=qty,
             unit_price=unit_price,
