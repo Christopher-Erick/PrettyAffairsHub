@@ -214,6 +214,17 @@
     clearResults();
   };
 
+  const restoreChoiceSelection = (atStep) => {
+    const key = STEP_KEYS[atStep];
+    const value = answers[key];
+    if (!key || !value) return;
+    root.querySelectorAll(`[data-choice="${key}"]`).forEach((btn) => {
+      const on = btn.dataset.value === value;
+      btn.classList.toggle("is-selected", on);
+      btn.setAttribute("aria-pressed", on ? "true" : "false");
+    });
+  };
+
   const syncPath = () => {
     if (statusEl) statusEl.textContent = STATUS[step] || "";
 
@@ -222,7 +233,17 @@
       node.classList.toggle("is-done", n < step);
       node.classList.toggle("is-current", n === step);
       node.classList.toggle("is-upcoming", n > step);
+      node.classList.toggle("is-jumpable", n >= 1 && n <= 3 && n < step);
       node.setAttribute("aria-current", n === step ? "step" : "false");
+      if (n >= 1 && n <= 3 && n < step) {
+        node.setAttribute("role", "button");
+        node.setAttribute("tabindex", "0");
+        node.setAttribute("aria-label", `Go back to ${node.querySelector(".ritual-path__label")?.textContent || "step"}`);
+      } else {
+        node.removeAttribute("role");
+        node.removeAttribute("tabindex");
+        node.removeAttribute("aria-label");
+      }
     });
 
     connectors.forEach((line) => {
@@ -246,7 +267,7 @@
         btn.type = "button";
         btn.className = "ritual-path__chip";
         btn.dataset.editStep = String(chip.step);
-        btn.innerHTML = `<span>${chip.label}</span><span class="ritual-path__chip-edit">Edit</span>`;
+        btn.innerHTML = `<span>${chip.label}</span><span class="ritual-path__chip-edit">Change</span>`;
         btn.addEventListener("click", () => goBackTo(chip.step));
         li.appendChild(btn);
         chipsEl.appendChild(li);
@@ -291,7 +312,10 @@
   const goBackTo = (targetStep) => {
     cancelAdvance();
     const dest = Math.max(1, Math.min(3, targetStep));
-    clearFromStep(dest);
+    // Keep the answer at the step you land on so you can keep or change it —
+    // no need to press Edit first.
+    clearFromStep(dest + 1);
+    restoreChoiceSelection(dest);
     showStep(dest, { scroll: true });
   };
 
@@ -437,6 +461,21 @@
     btn.addEventListener("click", () => {
       if (step <= 1) return;
       goBackTo(step - 1);
+    });
+  });
+
+  nodes.forEach((node) => {
+    const jump = () => {
+      const n = Number(node.dataset.pathNode);
+      if (n < 1 || n > 3 || n >= step) return;
+      goBackTo(n);
+    };
+    node.addEventListener("click", jump);
+    node.addEventListener("keydown", (event) => {
+      if (event.key === "Enter" || event.key === " ") {
+        event.preventDefault();
+        jump();
+      }
     });
   });
 

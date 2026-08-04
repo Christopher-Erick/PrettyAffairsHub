@@ -15,6 +15,7 @@ urlpatterns = [
     path("bundles/new/", views.bundle_create, name="bundle_create"),
     path("bundles/suggest/", views.bundle_suggest, name="bundle_suggest"),
     path("bundles/<int:pk>/", views.bundle_edit, name="bundle_edit"),
+    path("bundles/<int:pk>/discard/", views.bundle_discard, name="bundle_discard"),
     path("bundles/<int:pk>/delete/", views.bundle_delete, name="bundle_delete"),
     path("orders/", views.order_list, name="order_list"),
     path("orders/<str:order_number>/", views.order_detail, name="order_detail"),

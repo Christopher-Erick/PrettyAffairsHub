@@ -3,19 +3,15 @@
 {% block content %}
 <section class="desk-hero">
   <h1>{% if bundle %}Edit bundle{% else %}New bundle{% endif %}</h1>
-  <p>Curate exactly 3 products for the hexagon display, set the bundle price, then publish when ready.</p>
+  <p>Curate exactly 3 products for the hexagon display, set the bundle price, choose Live or Hidden, then save.</p>
 </section>
 
 <form class="desk-form" method="post">
   {% csrf_token %}
   {% for field in form %}
   <div>
-    {% if field.field.widget.input_type == "checkbox" %}
-      <label>{{ field }} {{ field.label }}</label>
-    {% else %}
-      <label for="{{ field.id_for_label }}">{{ field.label }}</label>
-      {{ field }}
-    {% endif %}
+    <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+    {{ field }}
     {% if field.help_text %}<span class="help">{{ field.help_text }}</span>{% endif %}
     {{ field.errors }}
   </div>
@@ -62,12 +58,22 @@
 
   <div class="desk-form-actions">
     <button class="btn btn--primary" type="submit">Save bundle</button>
+    {% if pending_discard %}
+    <button class="btn btn--ghost" type="submit" form="bundle-discard-form">Cancel</button>
+    {% else %}
     <a class="btn btn--ghost" href="{% url 'desk:bundle_list' %}">Cancel</a>
-    {% if bundle %}<a class="btn btn--ghost" href="{{ bundle.get_absolute_url }}" target="_blank" rel="noopener">View on shop</a>{% endif %}
+    {% endif %}
+    {% if bundle and not pending_discard %}<a class="btn btn--ghost" href="{{ bundle.get_absolute_url }}" target="_blank" rel="noopener">View on shop</a>{% endif %}
   </div>
 </form>
 
-{% if delete_url %}
+{% if pending_discard %}
+<form id="bundle-discard-form" class="visually-hidden" method="post" action="{% url 'desk:bundle_discard' bundle.pk %}">
+  {% csrf_token %}
+</form>
+{% endif %}
+
+{% if delete_url and not pending_discard %}
 <form class="desk-form desk-form--danger" method="post" action="{{ delete_url }}" onsubmit="return confirm('Delete “{{ bundle.name|escapejs }}”? This cannot be undone.');">
   {% csrf_token %}
   <button class="btn btn--ghost" type="submit">Delete bundle</button>

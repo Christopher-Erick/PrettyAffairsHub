@@ -595,6 +595,9 @@ def bundle_list(request):
     )
 
 
+PENDING_BUNDLE_SESSION_KEY = "desk_pending_bundle_id"
+
+
 def _save_bundle(request, bundle=None):
     form = BundleForm(request.POST or None, instance=bundle)
     formset = BundleItemFormSet(request.POST or None, instance=bundle)
@@ -611,11 +614,12 @@ def _save_bundle(request, bundle=None):
         except ValueError as exc:
             formset._non_form_errors = formset.error_class([str(exc)])
             return None, form, formset
+        request.session.pop(PENDING_BUNDLE_SESSION_KEY, None)
         messages.success(
             request,
             f"Saved bundle “{obj.name}” with 3 products.",
         )
-        return redirect("desk:bundle_edit", pk=obj.pk), None, None
+        return redirect("desk:bundle_list"), None, None
     return None, form, formset
 
 
@@ -627,7 +631,7 @@ def bundle_create(request):
     return render(
         request,
         "desk/bundle_form.html",
-        {"form": form, "formset": formset, "bundle": None},
+        {"form": form, "formset": formset, "bundle": None, "pending_discard": False},
     )
 
 
@@ -640,6 +644,7 @@ def bundle_edit(request, pk):
     redirect_response, form, formset = _save_bundle(request, bundle)
     if redirect_response:
         return redirect_response
+    pending_id = request.session.get(PENDING_BUNDLE_SESSION_KEY)
     return render(
         request,
         "desk/bundle_form.html",
@@ -648,6 +653,7 @@ def bundle_edit(request, pk):
             "formset": formset,
             "bundle": bundle,
             "delete_url": reverse("desk:bundle_delete", args=[pk]),
+            "pending_discard": pending_id == bundle.pk,
         },
     )
 
@@ -681,11 +687,26 @@ def bundle_suggest(request):
         for product in products:
             BundleItem.objects.create(bundle=bundle, product=product, quantity=1)
 
+    request.session[PENDING_BUNDLE_SESSION_KEY] = bundle.pk
     messages.success(
         request,
-        "Draft bundle suggested (hidden). Review the products and price, then set it live.",
+        "Draft bundle suggested (hidden). Review the products and price, then set it live — or Cancel to discard.",
     )
     return redirect("desk:bundle_edit", pk=bundle.pk)
+
+
+@store_manager_required
+@require_POST
+def bundle_discard(request, pk):
+    """Cancel a suggested draft before Save — remove it from the list."""
+    pending_id = request.session.get(PENDING_BUNDLE_SESSION_KEY)
+    bundle = get_object_or_404(Bundle, pk=pk)
+    if pending_id == bundle.pk:
+        name = bundle.name
+        bundle.delete()
+        request.session.pop(PENDING_BUNDLE_SESSION_KEY, None)
+        messages.info(request, f"Discarded draft bundle “{name}”.")
+    return redirect("desk:bundle_list")
 
 
 @store_manager_required
@@ -693,6 +714,9 @@ def bundle_suggest(request):
 def bundle_delete(request, pk):
     bundle = get_object_or_404(Bundle, pk=pk)
     name = bundle.name
+    pending_id = request.session.get(PENDING_BUNDLE_SESSION_KEY)
+    if pending_id == bundle.pk:
+        request.session.pop(PENDING_BUNDLE_SESSION_KEY, None)
     bundle.delete()
     messages.success(request, f"Deleted bundle “{name}”.")
     return redirect("desk:bundle_list")

@@ -3208,6 +3208,20 @@ article.narrow {
   color: var(--color-burgundy);
 }
 
+.ritual-path__node.is-jumpable {
+  cursor: pointer;
+}
+
+.ritual-path__node.is-jumpable:hover .ritual-path__dot,
+.ritual-path__node.is-jumpable:focus-visible .ritual-path__dot {
+  transform: scale(1.12);
+  box-shadow: inset 0 0 0 1px var(--color-burgundy);
+}
+
+.ritual-path__node.is-jumpable:focus-visible {
+  outline: none;
+}
+
 .ritual-path__node.is-done .ritual-path__dot {
   background: var(--color-burgundy);
   box-shadow: none;

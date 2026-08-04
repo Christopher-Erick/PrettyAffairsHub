@@ -322,23 +322,29 @@ class BundleForm(forms.ModelForm):
             "is_active",
         ]
         labels = {
-            "is_active": "Show on the shop",
+            "is_active": "Visibility",
             "compare_at_price": "Was price (optional)",
             "description": "What’s in this edit",
         }
         help_texts = {
-            "is_active": "Only bundles with exactly 3 products can go live.",
+            "is_active": "Live bundles appear on the shop. Hidden ones stay in Manage only.",
             "price": "Bundle price saved to the shop.",
         }
         widgets = {
             "description": forms.Textarea(attrs={"rows": 4}),
+            "is_active": forms.Select(
+                choices=(
+                    (True, "Live — visible on the shop"),
+                    (False, "Hidden — managers only"),
+                )
+            ),
         }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        if not self.instance.pk and "is_active" not in self.initial:
+            self.fields["is_active"].initial = False
         for name, field in self.fields.items():
-            if name == "is_active":
-                continue
             field.widget.attrs["class"] = "field"
 
 
